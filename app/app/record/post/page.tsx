@@ -8,7 +8,7 @@
 // upload initiator; stranded uploads are recovered by the root auth layout.
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense, useMemo } from "react";
 import {
   getPendingUpload,
   updatePendingUpload,
@@ -75,6 +75,29 @@ function PostRecordScreen() {
   );
 
   const uploadStartedRef = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  // Create a local object URL for playback from the in-memory blob.
+  // Revoke on unmount to avoid memory leaks.
+  const audioUrl = useMemo(
+    () => (upload?.blob ? URL.createObjectURL(upload.blob) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [upload?.tempId], // re-create only if the recording changes
+  );
+  useEffect(() => {
+    return () => { if (audioUrl) URL.revokeObjectURL(audioUrl); };
+  }, [audioUrl]);
+
+  function togglePlay() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) {
+      audio.pause();
+    } else {
+      audio.play().catch(() => {});
+    }
+  }
 
   // Load the pending upload from IndexedDB on mount
   useEffect(() => {
@@ -388,6 +411,38 @@ function PostRecordScreen() {
 
       {/* Actions */}
       <div className="space-y-4 pb-14">
+        {/* Hidden audio element + play/pause button */}
+        {audioUrl && (
+          <>
+            <audio
+              ref={audioRef}
+              src={audioUrl}
+              onPlay={() => setPlaying(true)}
+              onPause={() => setPlaying(false)}
+              onEnded={() => setPlaying(false)}
+            />
+            <Button onClick={togglePlay} variant="secondary" fullWidth size="lg">
+              <span className="flex items-center justify-center gap-2">
+                {playing ? (
+                  <>
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="size-5" aria-hidden>
+                      <rect x="6" y="4" width="4" height="16" rx="1" />
+                      <rect x="14" y="4" width="4" height="16" rx="1" />
+                    </svg>
+                    Pause playback
+                  </>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="size-5" aria-hidden>
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    Play recording
+                  </>
+                )}
+              </span>
+            </Button>
+          </>
+        )}
         <Button onClick={handleDone} fullWidth size="lg">
           Done
         </Button>

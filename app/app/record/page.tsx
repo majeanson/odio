@@ -49,11 +49,17 @@ function LiveWaveform({ analyserRef }: { analyserRef: RefObject<AnalyserNode | n
       ctx.lineJoin = "round";
       ctx.beginPath();
 
+      // Amplify: raw values are 0–255 centered at 128 (silence = 128).
+      // Without amplification, a quiet mic barely deviates and looks like
+      // a flat line. We boost the deviation from center by a gain factor
+      // so even moderate signal fills a good portion of the canvas height.
+      const GAIN = 6;
       const sliceWidth = width / data.length;
       let x = 0;
       for (let i = 0; i < data.length; i++) {
-        const v = data[i] / 128.0;
-        const y = (v * height) / 2;
+        const raw = (data[i] - 128) / 128;           // -1 to +1
+        const boosted = Math.max(-1, Math.min(1, raw * GAIN)); // clamp after gain
+        const y = height / 2 + boosted * (height / 2) * 0.88; // 88% = small margin
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         x += sliceWidth;
       }

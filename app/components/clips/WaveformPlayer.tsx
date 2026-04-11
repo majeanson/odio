@@ -190,7 +190,12 @@ export function WaveformPlayer({
           {stamps.map((stamp) => (
             <button
               key={stamp.id}
-              onClick={() => wsRef.current?.setTime(stamp.timestampMs / 1000)}
+              onClick={() => {
+              // Update ref synchronously so the play button doesn't re-seek
+              // to the old position if pressed immediately after a stamp click.
+              currentTimeMsRef.current = stamp.timestampMs;
+              wsRef.current?.setTime(stamp.timestampMs / 1000);
+            }}
               aria-label={`Jump to ${formatDuration(stamp.timestampMs)}`}
               className="icon-sm flex-shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs active:scale-95 transition-transform"
               style={{
@@ -214,10 +219,6 @@ export function WaveformPlayer({
             if (ws.isPlaying()) {
               ws.pause();
             } else {
-              // Explicitly re-seek to the last known position before playing.
-              // WaveSurfer's click-to-seek while paused updates the visual cursor
-              // via timeupdate but the audio element's currentTime can lag behind.
-              ws.setTime(currentTimeMsRef.current / 1000);
               ws.play();
             }
           }}
