@@ -24,6 +24,17 @@ import { promises as fs } from "fs";
 export const runtime = "nodejs"; // FFmpeg requires Node.js runtime, not Edge
 export const maxDuration = 300;  // Vercel Pro: 5 minutes max function duration
 
+const sanitize = (s: string) => s.replace(/[/\\?:*"<>|]/g, "-").trim();
+
+/** Build a human-readable Drive filename for the frozen render.
+ *  If the user supplied a finalName, use it directly (e.g. "Death Metal Jam.aac").
+ *  Otherwise fall back to "<clipName> - final.aac" so it pairs cleanly with the source file.
+ */
+function buildFinalFileName(clipName: string, finalName?: string): string {
+  const base = finalName?.trim() ? sanitize(finalName.trim()) : `${sanitize(clipName)} - final`;
+  return `${base}.aac`;
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ clipId: string }> },
@@ -59,7 +70,7 @@ export async function POST(
   if (clip.transcodeStatus === "PENDING") return apiError("Audio is still processing", 409);
 
   const body = await req.json().catch(() => null);
-  const { versionId } = body ?? {};
+  const { versionId, finalName } = body ?? {};
   if (!versionId) return apiError("versionId is required");
 
   const version = clip.versions.find((v) => v.id === versionId);
@@ -82,25 +93,19 @@ export async function POST(
     return apiError("Drive connection unavailable — ask band creator to re-authorize", 503);
   }
 
-  // Mark as frozen immediately (prevents further edits while rendering)
+  // Block further edits while rendering, but don't mark frozen until render succeeds.
+  // This allows the user to retry if the render fails.
   await prisma.clip.update({
     where: { id: clipId },
-    data: { frozen: true, frozenVersionId: versionId, transcodeStatus: "PENDING" },
+    data: { transcodeStatus: "PENDING" },
   });
 
-  const inputPath = await downloadToTmp(accessToken, clip.driveFileId, "aac").catch(
-    async (err) => {
-      await prisma.clip.update({
-        where: { id: clipId },
-        data: { transcodeStatus: "FAILED" },
-      });
-      throw err;
-    },
-  );
-
   const outputPath = getTmpOutputPath("aac");
+  let inputPath: string | null = null;
 
   try {
+    inputPath = await downloadToTmp(accessToken, clip.driveFileId, "aac");
+
     await renderAudioWithCuts(
       inputPath,
       outputPath,
@@ -110,7 +115,7 @@ export async function POST(
 
     // Read rendered buffer and upload to Drive
     const outputBuffer = await fs.readFile(outputPath);
-    const outputFileName = `${clipId}-final.aac`;
+    const outputFileName = buildFinalFileName(clip.name, finalName);
 
     const finalDriveFileId = await uploadDriveFile(
       accessToken,
@@ -120,9 +125,12 @@ export async function POST(
       outputBuffer,
     );
 
+    // Render succeeded — now freeze
     await prisma.clip.update({
       where: { id: clipId },
       data: {
+        frozen: true,
+        frozenVersionId: versionId,
         finalDriveFileId,
         transcodeStatus: "DONE",
       },
@@ -134,6 +142,7 @@ export async function POST(
       versionId,
     });
   } catch (err) {
+    // Reset transcodeStatus so the clip is not stuck; frozen stays false so user can retry.
     await prisma.clip.update({
       where: { id: clipId },
       data: { transcodeStatus: "FAILED" },
@@ -143,6 +152,9 @@ export async function POST(
     return apiError(`Render failed: ${message}`, 500);
   } finally {
     // Clean up /tmp files
-    await Promise.allSettled([fs.unlink(inputPath), fs.unlink(outputPath)]);
+    await Promise.allSettled([
+      inputPath ? fs.unlink(inputPath) : Promise.resolve(),
+      fs.unlink(outputPath),
+    ]);
   }
 }

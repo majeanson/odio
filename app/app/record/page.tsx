@@ -134,6 +134,31 @@ function RecordingScreen() {
 
   return (
     <div className="flex min-h-svh flex-col bg-base text-primary px-6 pt-safe">
+      {/* Cancel / back — only shown when idle (not mid-recording) */}
+      {!isRecording && !isStopping && state !== "stopped" && (
+        <div className="flex h-[72px] items-center">
+          <button
+            onClick={() => router.back()}
+            aria-label="Cancel"
+            className="flex items-center gap-2 text-secondary hover:text-primary transition-colors"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="size-7"
+              aria-hidden
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            <span className="text-base font-semibold">Cancel</span>
+          </button>
+        </div>
+      )}
+
       {/* Status bar area */}
       <div className="flex flex-col gap-2 pt-10">
         {/* Elapsed timer */}

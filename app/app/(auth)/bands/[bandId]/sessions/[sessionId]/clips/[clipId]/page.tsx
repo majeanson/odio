@@ -47,6 +47,7 @@ export default async function ClipDetailPage({
     >
       <ClipDetailClient
         clipId={clip.id}
+        clipName={clip.name}
         bandId={bandId}
         sessionId={sessionId}
         sourceDurationMs={clip.sourceDurationMs ?? 0}

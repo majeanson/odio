@@ -31,6 +31,7 @@ const STAGE_COLOR: Record<ClipStage, string> = {
 
 interface ClipActionsClientProps {
   clipId: string;
+  clipName: string;
   initialStage: ClipStage;
   frozen: boolean;
   transcodeStatus: "PENDING" | "DONE" | "FAILED";
@@ -44,6 +45,7 @@ interface ClipActionsClientProps {
 
 export function ClipActionsClient({
   clipId,
+  clipName,
   initialStage,
   frozen,
   transcodeStatus,
@@ -67,6 +69,7 @@ export function ClipActionsClient({
     frozenVersionId ?? versions[versions.length - 1]?.id ?? "",
   );
 
+  const [finalName, setFinalName] = useState(clipName);
   const [freezing, setFreezing] = useState(false);
   const [freezeError, setFreezeError] = useState<string | null>(null);
   const [unfreezing, setUnfreezing] = useState(false);
@@ -98,7 +101,7 @@ export function ClipActionsClient({
     const res = await fetch(`/api/clips/${clipId}/freeze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ versionId: selectedVersionId }),
+      body: JSON.stringify({ versionId: selectedVersionId, finalName: finalName.trim() || clipName }),
     });
     if (res.ok) {
       setFreezeSheetOpen(false);
@@ -334,35 +337,57 @@ export function ClipActionsClient({
 
       {/* ── Freeze picker sheet ── */}
       <BottomSheet open={freezeSheetOpen} onClose={() => setFreezeSheetOpen(false)} title="Freeze clip">
-        <div className="space-y-3">
-          <p className="text-sm text-secondary">Choose which version to lock as the final render:</p>
-          <div className="space-y-2">
-            {versions.map((v) => (
-              <button
-                key={v.id}
-                onClick={() => setSelectedVersionId(v.id)}
-                className={`w-full flex items-center gap-3 rounded-2xl px-5 py-4 text-left transition-colors ${
-                  selectedVersionId === v.id ? "bg-accent/20 text-accent" : "bg-surface text-primary hover:bg-elevated"
-                }`}
-              >
-                <span className="text-base font-semibold w-8">v{v.versionNumber}</span>
-                {v.description && (
-                  <span className="flex-1 text-sm text-muted truncate">{v.description}</span>
-                )}
-                {v.resultDurationMs != null && (
-                  <span className="font-mono text-sm text-muted ml-auto">
-                    {Math.floor(v.resultDurationMs / 60000)}:
-                    {String(Math.floor((v.resultDurationMs % 60000) / 1000)).padStart(2, "0")}
-                  </span>
-                )}
-                {selectedVersionId === v.id && (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="size-4 shrink-0" aria-hidden>
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                )}
-              </button>
-            ))}
+        <div className="space-y-4">
+          {/* Final file name */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-muted">
+              Final file name
+            </label>
+            <input
+              type="text"
+              value={finalName}
+              onChange={(e) => setFinalName(e.target.value)}
+              placeholder={clipName}
+              maxLength={100}
+              className="w-full rounded-2xl border border-border bg-surface px-5 py-4 text-base text-primary placeholder:text-muted focus:border-accent focus:outline-none"
+            />
+            <p className="text-xs text-muted">
+              Saved to Drive as <span className="font-mono">{(finalName.trim() || clipName).replace(/[/\\?:*"<>|]/g, "-").trim()}.aac</span>
+            </p>
           </div>
+
+          {/* Version picker */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted">Version to lock</p>
+            <div className="space-y-2">
+              {versions.map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => setSelectedVersionId(v.id)}
+                  className={`w-full flex items-center gap-3 rounded-2xl px-5 py-4 text-left transition-colors ${
+                    selectedVersionId === v.id ? "bg-accent/20 text-accent" : "bg-surface text-primary hover:bg-elevated"
+                  }`}
+                >
+                  <span className="text-base font-semibold w-8">v{v.versionNumber}</span>
+                  {v.description && (
+                    <span className="flex-1 text-sm text-muted truncate">{v.description}</span>
+                  )}
+                  {v.resultDurationMs != null && (
+                    <span className="font-mono text-sm text-muted ml-auto">
+                      {Math.floor(v.resultDurationMs / 60000)}:
+                      {String(Math.floor((v.resultDurationMs % 60000) / 1000)).padStart(2, "0")}
+                    </span>
+                  )}
+                  {selectedVersionId === v.id && (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="size-4 shrink-0" aria-hidden>
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {freezeError && <p className="text-sm text-danger">{freezeError}</p>}
           <Button onClick={handleFreeze} disabled={freezing || !selectedVersionId} fullWidth size="lg">
             {freezing ? "Freezing…" : "Freeze this version"}

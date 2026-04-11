@@ -50,8 +50,10 @@ export async function POST(req: Request) {
     throw err;
   }
 
-  // Generate a unique filename in Drive
-  const fileName = `${tempId ?? crypto.randomUUID()}-source`;
+  // Generate a human-readable source filename in Drive
+  // Sanitize to strip characters Drive disallows, keep base name consistent with the final render
+  const sanitize = (s: string) => s.replace(/[/\\?:*"<>|]/g, "-").trim();
+  const fileName = `${sanitize(clipName)} - source`;
 
   // Pass the app origin so Drive includes CORS headers on the browser's PUT.
   const appOrigin = new URL(req.url).origin;

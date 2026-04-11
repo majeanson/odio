@@ -19,6 +19,7 @@ import type { ClipVersion, Stamp, Vote, Comment, ClipStage, BandRole } from "@/t
 
 interface ClipDetailClientProps {
   clipId: string;
+  clipName: string;
   bandId: string;
   sessionId: string;
   sourceDurationMs: number;
@@ -41,6 +42,7 @@ interface ClipDetailClientProps {
 
 export function ClipDetailClient({
   clipId,
+  clipName,
   bandId: _bandId,
   sessionId: _sessionId,
   sourceDurationMs,
@@ -181,6 +183,7 @@ export function ClipDetailClient({
           {/* Stage / Freeze / Share / Cleanup */}
           <ClipActionsClient
             clipId={clipId}
+            clipName={clipName}
             initialStage={initialStage}
             frozen={frozen}
             transcodeStatus={transcodeStatus}
