@@ -53,12 +53,16 @@ export async function POST(req: Request) {
   // Generate a unique filename in Drive
   const fileName = `${tempId ?? crypto.randomUUID()}-source`;
 
+  // Pass the app origin so Drive includes CORS headers on the browser's PUT.
+  const appOrigin = new URL(req.url).origin;
+
   const { uploadSessionUrl, driveFileId } = await generateResumableUploadUrl({
     accessToken,
     folderId: driveFolderId,
     fileName,
     mimeType,
     fileSize,
+    appOrigin,
   });
 
   return apiOk({ uploadSessionUrl, driveFileId });

@@ -134,19 +134,20 @@ export async function generateResumableUploadUrl(params: {
   fileName: string; // e.g. "{clipId}-source"
   mimeType: string; // "audio/aac" or "audio/webm"
   fileSize: number; // bytes
+  appOrigin: string; // e.g. "https://retrodio.vercel.app" — Drive echoes this in CORS headers on the browser PUT
 }): Promise<{ uploadSessionUrl: string; driveFileId: string }> {
-  const { accessToken, folderId, fileName, mimeType, fileSize } = params;
+  const { accessToken, folderId, fileName, mimeType, fileSize, appOrigin } = params;
 
-  // Pre-allocate a Drive file ID so the client doesn't need to parse the
-  // upload response body (which is cross-origin and unreadable from the browser).
+  // Pre-allocate a Drive file ID so the client has it before the upload,
+  // as a fallback in case CORS still prevents reading the PUT response body.
   const drive = getDriveClient(accessToken);
   const idsRes = await drive.files.generateIds({ count: 1, space: "drive" });
   const driveFileId = idsRes.data.ids?.[0];
   if (!driveFileId) throw new Error("Drive did not return a pre-allocated file ID");
 
-  // We call the Drive API upload endpoint directly to get the session URI.
-  // The googleapis client doesn't expose the raw resumable URI easily,
-  // so we use a manual fetch here.
+  // Include the app Origin in the session initiation request.
+  // Drive echoes it back as Access-Control-Allow-Origin on the browser's
+  // subsequent PUT, making the cross-origin fetch succeed without CORS errors.
   const res = await fetch(
     "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable",
     {
@@ -156,6 +157,7 @@ export async function generateResumableUploadUrl(params: {
         "Content-Type": "application/json",
         "X-Upload-Content-Type": mimeType,
         "X-Upload-Content-Length": String(fileSize),
+        Origin: appOrigin,
       },
       body: JSON.stringify({
         id: driveFileId,
