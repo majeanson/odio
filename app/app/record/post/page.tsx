@@ -294,7 +294,7 @@ function PostRecordScreen() {
               setNameInput(clipName);
               setEditingName(true);
             }}
-            className="flex items-center gap-2 group"
+            className="flex items-center gap-2"
             aria-label="Rename clip"
           >
             <span className="text-2xl font-semibold text-primary">{clipName}</span>
@@ -305,7 +305,7 @@ function PostRecordScreen() {
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="size-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity"
+              className="size-4 text-muted"
               aria-hidden
             >
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -337,7 +337,7 @@ function PostRecordScreen() {
       {/* Upload status */}
       <div
         className={[
-          "mt-6 rounded-xl px-4 py-3 text-sm",
+          "mt-6 rounded-2xl px-4 py-3 text-sm",
           isDone
             ? "bg-surface text-secondary"
             : isError
@@ -378,6 +378,9 @@ function PostRecordScreen() {
         <Button onClick={handleDone} fullWidth>
           Done
         </Button>
+        {status === "uploading" && (
+          <p className="text-center text-xs text-muted">Upload continues in the background</p>
+        )}
         <Button onClick={handleNextSong} variant="secondary" fullWidth>
           Record another song
         </Button>

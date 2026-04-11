@@ -192,7 +192,7 @@ export function SessionHeaderClient({
       <BottomSheet
         open={qrOpen}
         onClose={() => setQrOpen(false)}
-        title="Join this session"
+        title="Share session link"
       >
         <div className="flex flex-col items-center gap-4 py-4">
           {sessionUrl && (
@@ -201,7 +201,7 @@ export function SessionHeaderClient({
             </div>
           )}
           <p className="text-center text-sm text-secondary">
-            Scan to open this session on another device
+            Scan to open on another device or share with a bandmate
           </p>
           <p className="break-all font-mono text-xs text-muted text-center select-all">
             {sessionUrl}

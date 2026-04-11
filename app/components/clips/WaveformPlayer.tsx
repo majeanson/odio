@@ -34,6 +34,7 @@ export function WaveformPlayer({
   const [wsState, setWsState] = useState<"loading" | "ready" | "error">("loading");
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
+  const [retryKey, setRetryKey] = useState(0);
 
   // Keep ref in sync so the timeupdate handler (stale closure) sees current cuts
   useEffect(() => {
@@ -60,6 +61,8 @@ export function WaveformPlayer({
 
   useEffect(() => {
     if (!containerRef.current) return;
+    setWsState("loading");
+    setCurrentTimeMs(0);
     const regions = RegionsPlugin.create();
     regionsRef.current = regions;
 
@@ -93,7 +96,7 @@ export function WaveformPlayer({
       ws.destroy();
       wsRef.current = null;
     };
-  }, [clipId]);
+  }, [clipId, retryKey]);
 
   const virtualDurationMs =
     activeCuts.length > 0 ? calcResultDuration(sourceDurationMs, activeCuts) : sourceDurationMs;
@@ -119,10 +122,16 @@ export function WaveformPlayer({
           </div>
         )}
         {wsState === "error" && (
-          <div className="h-[88px] flex items-center justify-center">
+          <div className="h-[88px] flex flex-col items-center justify-center gap-2">
             <p className="text-sm text-danger text-center">
               Audio unavailable — Drive connection may need renewal
             </p>
+            <button
+              onClick={() => setRetryKey((k) => k + 1)}
+              className="text-xs text-accent underline underline-offset-2"
+            >
+              Try again
+            </button>
           </div>
         )}
       </div>

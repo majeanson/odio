@@ -47,7 +47,7 @@ export default async function BandsPage() {
             <li key={band.id}>
               <Link
                 href={`/bands/${band.id}`}
-                className="flex items-center justify-between rounded-xl bg-surface px-4 py-4 transition-colors active:bg-elevated"
+                className="flex items-center justify-between rounded-2xl bg-surface px-4 py-4 transition-colors active:bg-elevated"
               >
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-primary">{band.name}</p>

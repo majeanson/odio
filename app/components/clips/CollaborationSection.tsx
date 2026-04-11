@@ -235,7 +235,7 @@ export function CollaborationSection({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-muted mb-1.5">
-                        {comment.userEmail}
+                        {comment.userEmail.split("@")[0]}
                         <span className="mx-1.5 text-muted/40">·</span>
                         {formatRelativeTime(comment.createdAt)}
                         {comment.editedAt && <span className="ml-1 italic"> (edited)</span>}

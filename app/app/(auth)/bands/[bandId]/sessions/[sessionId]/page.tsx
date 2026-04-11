@@ -42,6 +42,7 @@ export default async function SessionPage({
   if (!jamSession) notFound();
 
   const canRecord = membership.role !== "MEMBER";
+  const canDelete = membership.role === "RECORDER";
 
   // Map Prisma result to our Clip type
   const clips: Clip[] = jamSession.clips.map((c) => ({
@@ -98,7 +99,7 @@ export default async function SessionPage({
           <ul className="space-y-2" role="list">
             {clips.map((clip) => (
               <li key={clip.id}>
-                <ClipCard clip={clip} bandId={bandId} />
+                <ClipCard clip={clip} bandId={bandId} canDelete={canDelete} />
               </li>
             ))}
           </ul>

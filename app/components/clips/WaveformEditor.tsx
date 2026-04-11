@@ -395,15 +395,20 @@ export function WaveformEditor({
           )}
         </div>
 
-        {/* Stamps */}
+        {/* Stamps — tappable to seek, same as WaveformPlayer */}
         {stamps.length > 0 && wsState === "ready" && (
           <div className="px-5 pb-2 flex gap-2 overflow-x-auto">
             {stamps.map((s) => (
-              <div key={s.id} className="flex-shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs"
-                style={{ backgroundColor: `${STAMP_COLORS[s.type]}20`, color: STAMP_COLORS[s.type] }}>
+              <button
+                key={s.id}
+                onClick={() => wsRef.current?.setTime(s.timestampMs / 1000)}
+                aria-label={`Jump to ${formatDuration(s.timestampMs)}`}
+                className="flex-shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs active:scale-95 transition-transform"
+                style={{ backgroundColor: `${STAMP_COLORS[s.type]}20`, color: STAMP_COLORS[s.type] }}
+              >
                 <span>{STAMP_EMOJI[s.type]}</span>
                 <span className="font-mono">{formatDuration(s.timestampMs)}</span>
-              </div>
+              </button>
             ))}
           </div>
         )}

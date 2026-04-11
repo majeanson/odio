@@ -24,10 +24,11 @@ const STAGE_VARIANTS: Record<ClipStage, "default" | "accent" | "warning" | "succ
 interface ClipCardProps {
   clip: Clip;
   bandId: string;
+  canDelete?: boolean;
   onDelete?: (clipId: string) => void;
 }
 
-export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
+export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCardProps) {
   const router = useRouter();
   const [name, setName] = useState(clip.name);
   const [editingName, setEditingName] = useState(false);
@@ -117,8 +118,11 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
             </button>
           )}
 
-          {/* Meta row: duration · stage · version count */}
+          {/* Meta row: time · duration · stage · version count */}
           <div className="mt-1 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted">
+              {new Date(clip.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+            </span>
             {clip.sourceDurationMs != null && (
               <span className="font-mono text-xs text-muted">
                 {formatDuration(clip.sourceDurationMs)}
@@ -158,18 +162,20 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
             </svg>
           ) : null}
 
-          {/* "···" — opens delete sheet. Stops propagation so card doesn't navigate. */}
-          <button
-            onClick={(e) => { e.stopPropagation(); setDeleteSheetOpen(true); }}
-            aria-label="More actions"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:text-secondary hover:bg-elevated transition-colors"
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="size-4" aria-hidden>
-              <circle cx="5" cy="12" r="1.5" />
-              <circle cx="12" cy="12" r="1.5" />
-              <circle cx="19" cy="12" r="1.5" />
-            </svg>
-          </button>
+          {/* "···" — only shown to users who can delete (RECORDER role). */}
+          {canDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setDeleteSheetOpen(true); }}
+              aria-label="More actions"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:text-secondary hover:bg-elevated transition-colors"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-4" aria-hidden>
+                <circle cx="5" cy="12" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="19" cy="12" r="1.5" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 

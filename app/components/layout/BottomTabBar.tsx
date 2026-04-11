@@ -96,8 +96,11 @@ export function BottomTabBar({
       href: `/bands/${bandId}`,
       label: "Sessions",
       icon: <CalendarIcon />,
+      // Active on band home only — not on specific session/clip pages (Clips tab handles those)
       match: (p: string) =>
-        p.startsWith(`/bands/${bandId}`) && !p.includes("/settings"),
+        p.startsWith(`/bands/${bandId}`) &&
+        !p.startsWith(`/bands/${bandId}/sessions/`) &&
+        !p.includes("/settings"),
     },
     {
       href: `/record?bandId=${bandId}${sessionId ? `&sessionId=${sessionId}` : ""}`,
