@@ -68,6 +68,7 @@ function PostRecordScreen() {
   const [nameInput, setNameInput] = useState("");
   const [status, setStatus] = useState<UploadStatus>("loading");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [finalizeError, setFinalizeError] = useState<string | null>(null);
   const [resultSessionId, setResultSessionId] = useState<string | null>(
     sessionIdParam ?? null,
   );
@@ -195,12 +196,16 @@ function PostRecordScreen() {
           await deletePendingUpload(u.tempId);
           setStatus("done");
         } else {
+          const errBody = await finalRes.json().catch(() => ({}));
+          console.error("[finalize] failed", finalRes.status, errBody);
+          setFinalizeError(`${finalRes.status}: ${errBody?.error ?? "unknown"}`);
           setStatus("paused");
           await updatePendingUpload(u.tempId, { status: "paused" });
           uploadStartedRef.current = false;
         }
-      } catch {
+      } catch (err) {
         // Network error — leave in IndexedDB for root layout recovery
+        console.error("[doUpload] caught", err);
         setStatus("paused");
         await updatePendingUpload(u.tempId, { status: "paused" }).catch(() => {});
         uploadStartedRef.current = false;
@@ -370,6 +375,9 @@ function PostRecordScreen() {
           )}
           <span>{statusLabel(status)}</span>
         </div>
+        {finalizeError && (
+          <p className="mt-1 text-xs font-mono opacity-80">{finalizeError}</p>
+        )}
       </div>
 
       {/* Spacer */}
