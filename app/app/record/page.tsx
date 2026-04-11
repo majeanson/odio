@@ -6,14 +6,75 @@
 // Mic picker shown when multiple audio inputs are detected.
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useState, Suspense, useRef, useEffect } from "react";
 import { useRecorder } from "@/hooks/useRecorder";
+import type { RefObject } from "react";
 import { DevicePicker } from "@/components/recording/DevicePicker";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { formatDuration } from "@/lib/utils";
 import type { StampType } from "@/types";
 import { STAMP_EMOJI, STAMP_COLORS } from "@/types";
+
+// Live oscilloscope drawn from the Web Audio AnalyserNode.
+// Reads time-domain data ~60fps and draws a waveform line on canvas.
+// Uses the element's CSS `color` so it inherits text-accent from the parent.
+function LiveWaveform({ analyserRef }: { analyserRef: RefObject<AnalyserNode | null> }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    function draw() {
+      const analyser = analyserRef.current;
+      if (!analyser || !canvas || !ctx) {
+        rafRef.current = requestAnimationFrame(draw);
+        return;
+      }
+
+      const data = new Uint8Array(analyser.fftSize);
+      analyser.getByteTimeDomainData(data);
+
+      const { width, height } = canvas;
+      ctx.clearRect(0, 0, width, height);
+
+      // Derive stroke color from the canvas element's computed color (text-accent)
+      const color = getComputedStyle(canvas).color;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+
+      const sliceWidth = width / data.length;
+      let x = 0;
+      for (let i = 0; i < data.length; i++) {
+        const v = data[i] / 128.0;
+        const y = (v * height) / 2;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        x += sliceWidth;
+      }
+      ctx.stroke();
+      rafRef.current = requestAnimationFrame(draw);
+    }
+
+    rafRef.current = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [analyserRef]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={800}
+      height={128}
+      className="w-full text-accent"
+      aria-hidden
+    />
+  );
+}
 
 // Stamp button config
 const STAMPS: { type: StampType; label: string }[] = [
@@ -39,6 +100,7 @@ function RecordingScreen() {
     devices,
     selectedDeviceId,
     deviceFallbackWarning,
+    analyserRef,
     selectDevice,
     start,
     stop,
@@ -93,19 +155,15 @@ function RecordingScreen() {
           {state === "stopped" && "Saving…"}
         </p>
 
-        {/* Level meter */}
-        <div
-          className="mt-3 h-2 w-full rounded-full bg-elevated overflow-hidden"
-          role="meter"
-          aria-label="Audio level"
-          aria-valuenow={Math.round(level * 100)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <div
-            className="h-full rounded-full bg-accent transition-all duration-75"
-            style={{ width: `${level * 100}%` }}
-          />
+        {/* Waveform / level meter */}
+        <div className="mt-3" aria-label="Audio level" role="meter" aria-valuenow={Math.round(level * 100)} aria-valuemin={0} aria-valuemax={100}>
+          {isRecording ? (
+            <LiveWaveform analyserRef={analyserRef} />
+          ) : (
+            <div className="h-2 w-full rounded-full bg-elevated overflow-hidden">
+              <div className="h-full rounded-full bg-accent transition-all duration-75" style={{ width: `${level * 100}%` }} />
+            </div>
+          )}
         </div>
       </div>
 

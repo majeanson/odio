@@ -108,8 +108,6 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
     }
   }
 
-  const isProcessing = clip.transcodeStatus === "PENDING";
-
   return (
     <>
       <div
@@ -172,17 +170,9 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
           </div>
         </div>
 
-        {/* Right side icons */}
-        <div className="flex flex-col items-end gap-1 shrink-0 pt-0.5">
-          {/* Processing spinner */}
-          {isProcessing && (
-            <span
-              className="size-4 rounded-full border-2 border-secondary border-t-transparent animate-spin"
-              aria-label="Processing audio"
-            />
-          )}
-          {/* Frozen lock */}
-          {clip.frozen && (
+        {/* Right side — frozen lock only; delete via long-press */}
+        {clip.frozen && (
+          <div className="shrink-0 pt-0.5">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -196,34 +186,8 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
-          )}
-          {/* Delete hint */}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setDeleteSheetOpen(true);
-            }}
-            aria-label="Delete clip"
-            className="p-1 text-muted hover:text-danger transition-colors"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-4"
-              aria-hidden
-            >
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6l-1 14H6L5 6" />
-              <path d="M10 11v6M14 11v6" />
-              <path d="M9 6V4h6v2" />
-            </svg>
-          </button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Delete confirmation sheet */}

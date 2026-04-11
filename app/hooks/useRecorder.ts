@@ -50,6 +50,8 @@ export interface UseRecorderReturn {
   selectDevice: (deviceId: string | null) => void;
   /** Set when selected device was unavailable and we fell back to the default */
   deviceFallbackWarning: boolean;
+  /** Web Audio analyser node — non-null while recording, for live visualisation */
+  analyserRef: React.RefObject<AnalyserNode | null>;
   start: () => Promise<void>;
   stop: () => void;
   addStamp: (type: StampType) => void;
@@ -327,6 +329,7 @@ export function useRecorder(params: {
     devices,
     selectedDeviceId,
     deviceFallbackWarning,
+    analyserRef,
     selectDevice,
     start,
     stop,

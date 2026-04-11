@@ -27,9 +27,6 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
   const sessionMatch = pathname.match(/\/sessions\/([^/]+)/);
   const sessionId = sessionMatch?.[1] ?? searchParams.get("sessionId") ?? undefined;
 
-  // Hide tab bar only on full-screen clip editor (/edit routes)
-  const showTabBar = !pathname.includes("/edit");
-
   const { pendingUploads, retryUpload, discardUpload, saveToDevice } = usePendingUploads();
 
   // Fetch current user's role in this band — gates the Record tab for MEMBERs.
@@ -51,7 +48,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         onSaveToDevice={saveToDevice}
       />
       {children}
-      {showTabBar && bandId && (
+      {bandId && (
         <BottomTabBar bandId={bandId} sessionId={sessionId} memberRole={memberRole} />
       )}
     </>
