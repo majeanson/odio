@@ -95,6 +95,11 @@ export default async function BandHomePage({
                       {s._count.clips} clip{s._count.clips !== 1 ? "s" : ""} ·{" "}
                       {formatRelativeTime(s.createdAt)}
                     </p>
+                    {s.notes && (
+                      <p className="mt-1.5 text-sm text-muted line-clamp-1 italic">
+                        {s.notes}
+                      </p>
+                    )}
                   </div>
                   <svg
                     viewBox="0 0 24 24"
