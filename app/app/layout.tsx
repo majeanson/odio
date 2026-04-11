@@ -1,14 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Big_Shoulders_Display, DM_Sans, DM_Mono } from "next/font/google";
+import { Barlow_Condensed, DM_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 
-// ─── Fonts ────────────────────────────────────────────────────────────────────
-// Big Shoulders Display: high-visibility display type (transit/signage DNA)
+// Barlow Condensed: high-visibility display type (transit/signage DNA)
 // DM Sans: clean body font with personality — reads great large and small
 // DM Mono: studio-readout feel for timers and technical values
 
-const bigShoulders = Big_Shoulders_Display({
+const barlowCondensed = Barlow_Condensed({
   subsets: ["latin"],
   variable: "--font-heading",
   weight: ["700", "800", "900"],
@@ -48,7 +47,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full ${bigShoulders.variable} ${dmSans.variable} ${dmMono.variable}`}
+      className={`h-full ${barlowCondensed.variable} ${dmSans.variable} ${dmMono.variable}`}
       style={{ colorScheme: "dark" }}
     >
       <body className="min-h-full flex flex-col">
