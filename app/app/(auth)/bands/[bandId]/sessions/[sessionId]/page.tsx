@@ -4,7 +4,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/Button";
 import { ClipCard } from "@/components/clips/ClipCard";
@@ -18,6 +18,7 @@ export default async function SessionPage({
 }) {
   const { bandId, sessionId } = await params;
   const session = await auth();
+  if (!session?.user) redirect("/login");
 
   // Verify membership
   const membership = await prisma.bandMember.findUnique({

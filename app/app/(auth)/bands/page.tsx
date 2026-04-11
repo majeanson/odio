@@ -14,6 +14,7 @@ import { signOut } from "@/lib/auth";
 
 export default async function BandsPage() {
   const session = await auth();
+  if (!session?.user) redirect("/login");
 
   const memberships = await prisma.bandMember.findMany({
     where: { userEmail: session!.user!.email! },

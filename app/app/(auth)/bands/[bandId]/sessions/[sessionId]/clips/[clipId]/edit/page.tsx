@@ -16,6 +16,7 @@ export default async function ClipEditPage({
 }) {
   const { bandId, sessionId, clipId } = await params;
   const session = await auth();
+  if (!session?.user) redirect("/login");
 
   const [membership, clip] = await Promise.all([
     prisma.bandMember.findUnique({

@@ -3,7 +3,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { BandSettingsClient } from "@/components/bands/BandSettingsClient";
 import type { BandMember } from "@/types";
@@ -15,6 +15,7 @@ export default async function BandSettingsPage({
 }) {
   const { bandId } = await params;
   const session = await auth();
+  if (!session?.user) redirect("/login");
 
   const membership = await prisma.bandMember.findUnique({
     where: {

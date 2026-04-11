@@ -16,6 +16,7 @@ export default async function JoinBandPage({
 }) {
   const { inviteCode } = await params;
   const session = await auth();
+  if (!session?.user) redirect("/login");
   const userEmail = session!.user!.email!;
 
   // Look up band by invite code
