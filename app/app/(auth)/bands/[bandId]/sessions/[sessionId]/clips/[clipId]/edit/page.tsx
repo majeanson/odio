@@ -76,12 +76,8 @@ export default async function ClipEditPage({
       <div className="flex-1 overflow-y-auto px-4 py-4">
         <WaveformEditor
           clipId={clip.id}
-          bandId={bandId}
-          sessionId={sessionId}
           sourceDurationMs={clip.sourceDurationMs ?? 0}
-          frozen={clip.frozen}
           frozenVersionId={clip.frozenVersionId}
-          canEdit={true}
           initialVersions={versions}
           stamps={stamps}
         />
