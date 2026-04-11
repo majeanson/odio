@@ -37,10 +37,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     error: "/auth-error",
   },
   callbacks: {
-    // Proxy/middleware: redirect to /login if there is no active session.
-    authorized({ auth: session }) {
-      return !!session;
-    },
     // Expose the user's email and id on the session object
     async session({ session, user }) {
       if (session.user) {
