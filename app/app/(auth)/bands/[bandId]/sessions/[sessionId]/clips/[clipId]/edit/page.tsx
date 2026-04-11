@@ -48,6 +48,7 @@ export default async function ClipEditPage({
   const stamps = clip.stamps.map(mapStamp);
 
   const backHref = `/bands/${bandId}/sessions/${sessionId}/clips/${clipId}`;
+  const sessionHref = `/bands/${bandId}/sessions/${sessionId}`;
 
   return (
     <div className="flex flex-col h-dvh bg-base">
@@ -80,6 +81,7 @@ export default async function ClipEditPage({
           frozenVersionId={clip.frozenVersionId}
           initialVersions={versions}
           stamps={stamps}
+          sessionHref={sessionHref}
         />
       </div>
     </div>

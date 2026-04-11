@@ -36,6 +36,8 @@ interface WaveformEditorProps {
   frozenVersionId?: string | null;
   initialVersions: ClipVersion[];
   stamps: Stamp[];
+  /** URL of the session page — used to navigate after a split so both new clips are visible. */
+  sessionHref: string;
 }
 
 interface CutMark {
@@ -77,6 +79,7 @@ export function WaveformEditor({
   frozenVersionId,
   initialVersions,
   stamps,
+  sessionHref,
 }: WaveformEditorProps) {
   const router = useRouter();
 
@@ -292,7 +295,7 @@ export function WaveformEditor({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ splitMs }),
       });
-      if (res.ok) { setSplitSheetOpen(false); setSplitMode(false); router.back(); }
+      if (res.ok) { setSplitSheetOpen(false); setSplitMode(false); router.push(sessionHref); }
       else { const b = await res.json().catch(() => ({})); setSplitError(b.error ?? "Split failed"); setSplitting(false); }
     } catch { setSplitError("Network error"); setSplitting(false); }
   }
@@ -363,7 +366,7 @@ export function WaveformEditor({
             {/* Drag overlay — captures pointer events; tap = seek, drag = create region */}
             {wsState === "ready" && !splitMode && (
               <div
-                className="absolute inset-0 cursor-crosshair"
+                className="absolute inset-0 cursor-crosshair touch-none"
                 onPointerDown={handleDragStart}
                 onPointerMove={handleDragMove}
                 onPointerUp={handleDragEnd}

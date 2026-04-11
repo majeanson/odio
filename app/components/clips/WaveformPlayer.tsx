@@ -45,13 +45,16 @@ export function WaveformPlayer({
     if (wsState !== "ready" || !regionsRef.current) return;
     regionsRef.current.clearRegions();
     activeCuts.forEach((m) => {
-      regionsRef.current!.addRegion({
+      const region = regionsRef.current!.addRegion({
         start: m.startMs / 1000,
         end: m.endMs / 1000,
         color: "rgba(59, 130, 246, 0.18)",
         drag: false,
         resize: false,
       });
+      // Display-only overlay — must not intercept pointer events so
+      // WaveSurfer's native click-to-seek still fires underneath.
+      if (region.element) region.element.style.pointerEvents = "none";
     });
   }, [activeCuts, wsState]);
 
