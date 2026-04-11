@@ -14,6 +14,7 @@ import {
   updatePendingUpload,
   deletePendingUpload,
 } from "@/lib/pendingUploads";
+import { usePendingUploadsStore } from "@/store/pendingUploadsStore";
 import { formatDuration, generateClipName } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -123,6 +124,7 @@ function PostRecordScreen() {
         if (initRes.status === 401) {
           setStatus("session-error");
           await updatePendingUpload(u.tempId, { status: "session-error" });
+          usePendingUploadsStore.getState().refresh();
           return;
         }
 
@@ -135,6 +137,7 @@ function PostRecordScreen() {
             setStatus("paused");
             await updatePendingUpload(u.tempId, { status: "paused" });
           }
+          usePendingUploadsStore.getState().refresh();
           return;
         }
 
@@ -160,6 +163,7 @@ function PostRecordScreen() {
         if (!uploadRes.ok) {
           setStatus("paused");
           await updatePendingUpload(u.tempId, { status: "paused" });
+          usePendingUploadsStore.getState().refresh();
           uploadStartedRef.current = false;
           return;
         }
@@ -184,6 +188,11 @@ function PostRecordScreen() {
           const data = await finalRes.json();
           setResultSessionId(data.sessionId);
           await deletePendingUpload(u.tempId);
+          // Sync the Zustand store so the UploadBanner in AuthShell dismisses
+          // immediately. Without this, the store still holds the "uploading"
+          // entry in memory (it only reads IndexedDB on mount) and the banner
+          // spins forever until the next full page refresh.
+          usePendingUploadsStore.getState().refresh();
           setStatus("done");
         } else {
           const errBody = await finalRes.json().catch(() => ({}));
@@ -191,6 +200,7 @@ function PostRecordScreen() {
           setFinalizeError(`${finalRes.status}: ${errBody?.error ?? "unknown"}`);
           setStatus("paused");
           await updatePendingUpload(u.tempId, { status: "paused" });
+          usePendingUploadsStore.getState().refresh();
           uploadStartedRef.current = false;
         }
       } catch (err) {
@@ -198,6 +208,7 @@ function PostRecordScreen() {
         console.error("[doUpload] caught", err);
         setStatus("paused");
         await updatePendingUpload(u.tempId, { status: "paused" }).catch(() => {});
+        usePendingUploadsStore.getState().refresh();
         uploadStartedRef.current = false;
       }
     },
