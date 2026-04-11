@@ -40,7 +40,7 @@ export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }:
   const [fileStatus, setFileStatus] = useState<Record<string, FileStatus>>({});
   const [syncing, setSyncing] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [confirmItem, setConfirmItem] = useState<{ clipId: string; clipName: string; type: "source" | "final" } | null>(null);
+  const [confirmItem, setConfirmItem] = useState<{ clipId: string; clipName: string; type: "source" | "clip" } | null>(null);
 
   const driveFolderUrl = `https://drive.google.com/drive/folders/${driveFolderId}`;
 
@@ -81,13 +81,25 @@ export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }:
         setItems((prev) =>
           prev.map((i) => i.clipId === clipId ? { ...i, driveFileId: null } : i)
         );
-        // Mark it as no longer present in status map
         setFileStatus((prev) => {
           const next = { ...prev };
           const item = items.find((i) => i.clipId === clipId);
           if (item?.driveFileId) delete next[item.driveFileId];
           return next;
         });
+      }
+    } finally {
+      setDeleting(null);
+      setConfirmItem(null);
+    }
+  }
+
+  async function handleDeleteClip(clipId: string) {
+    setDeleting(clipId + ":clip");
+    try {
+      const res = await fetch(`/api/clips/${clipId}`, { method: "DELETE" });
+      if (res.ok) {
+        setItems((prev) => prev.filter((i) => i.clipId !== clipId));
       }
     } finally {
       setDeleting(null);
@@ -168,11 +180,12 @@ export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }:
               <div className="space-y-2">
                 {clips.map((item) => {
                   const deletingSrc = deleting === item.clipId + ":source";
+                  const deletingClip = deleting === item.clipId + ":clip";
                   const srcMissing = item.driveFileId && fileStatus[item.driveFileId] === "missing";
 
                   return (
                     <div key={item.clipId} className="rounded-2xl bg-surface px-5 py-4 space-y-3">
-                      {/* Clip name + duration */}
+                      {/* Clip name + duration + delete clip */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="font-display font-semibold text-primary truncate">{item.clipName}</p>
@@ -180,12 +193,21 @@ export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }:
                             <p className="text-xs text-muted font-mono mt-0.5">{formatMins(item.sourceDurationMs)}</p>
                           )}
                         </div>
-                        {item.frozen && (
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4 text-accent shrink-0 mt-0.5" aria-label="Frozen">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                          </svg>
-                        )}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {item.frozen && (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4 text-accent" aria-label="Frozen">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                          )}
+                          <button
+                            onClick={() => setConfirmItem({ clipId: item.clipId, clipName: item.clipName, type: "clip" })}
+                            disabled={deletingClip}
+                            className="rounded-lg px-2.5 py-1 text-xs font-medium bg-danger/10 text-danger hover:bg-danger/20 transition-colors disabled:opacity-50"
+                          >
+                            {deletingClip ? "Deleting…" : "Delete clip"}
+                          </button>
+                        </div>
                       </div>
 
                       {/* File rows */}
@@ -230,32 +252,35 @@ export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }:
         </div>
       )}
 
-      {/* Delete source confirmation sheet */}
+      {/* Confirmation sheet */}
       <BottomSheet
         open={confirmItem !== null}
         onClose={() => setConfirmItem(null)}
-        title="Delete source audio?"
+        title={confirmItem?.type === "clip" ? "Delete clip?" : "Delete source audio?"}
       >
         {confirmItem && (
           <div className="space-y-4">
             <div className="rounded-2xl bg-elevated px-5 py-4 space-y-1">
               <p className="text-sm font-semibold text-primary">{confirmItem.clipName}</p>
               <p className="text-sm text-secondary">
-                {confirmItem.type === "source"
-                  ? "The raw source file will be deleted from Drive. The clip and all its versions stay in Odio. If the clip is not frozen, audio will no longer be playable."
-                  : "The final rendered file will be deleted from Drive."}
+                {confirmItem.type === "clip"
+                  ? "The clip, all its versions, and both Drive files (source + final) will be permanently deleted. This cannot be undone."
+                  : "The raw source file will be deleted from Drive. The clip and all its versions stay in Odio. If the clip is not frozen, audio will no longer be playable."}
               </p>
             </div>
-            <p className="text-xs text-muted">This cannot be undone.</p>
             <Button
-              onClick={() => handleDeleteSource(confirmItem.clipId)}
+              onClick={() =>
+                confirmItem.type === "clip"
+                  ? handleDeleteClip(confirmItem.clipId)
+                  : handleDeleteSource(confirmItem.clipId)
+              }
               disabled={deleting !== null}
               loading={deleting !== null}
               variant="danger"
               fullWidth
               size="lg"
             >
-              Delete from Drive
+              {confirmItem.type === "clip" ? "Delete clip + Drive files" : "Delete from Drive"}
             </Button>
             <Button onClick={() => setConfirmItem(null)} variant="ghost" fullWidth>
               Cancel
