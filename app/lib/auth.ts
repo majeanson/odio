@@ -34,7 +34,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   pages: {
     signIn: "/login",
-    error: "/login",
+    error: "/auth-error",
   },
   callbacks: {
     // Proxy/middleware: redirect to /login if there is no active session.
