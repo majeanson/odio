@@ -40,9 +40,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account, isNewUser }) {
       console.log("[AUTH] signIn", { userId: user.id, provider: account?.provider, isNewUser });
     },
-    async createSession({ session }) {
-      console.log("[AUTH] createSession", { token: session.sessionToken.slice(0, 8) });
-    },
     async session({ session }) {
       console.log("[AUTH] session", { userId: (session as { userId?: string }).userId });
     },
