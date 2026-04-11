@@ -110,10 +110,11 @@ export async function POST(req: Request) {
     clipName ?? generateClipName(clipCount + 1);
 
   // Determine transcode status.
-  // Safari records AAC/MP4 — already compatible, mark as DONE.
-  // Chrome/Android records WebM/Opus — needs FFmpeg transcode before Safari can play it.
-  const isAAC = mimeType?.includes("mp4") || mimeType?.includes("aac");
-  const transcodeStatus = isAAC ? "DONE" : "PENDING";
+  // FFmpeg transcode is not yet implemented (feat-ffmpeg-poc pending).
+  // Mark all clips DONE so audio is immediately playable in the recording browser.
+  // Chrome records WebM (plays in Chrome), Safari records AAC (plays in Safari).
+  // Cross-browser playback will require server-side transcode when that feature ships.
+  const transcodeStatus = "DONE";
 
   // Create clip + v1 version + stamps in a transaction
   const { clip } = await prisma.$transaction(async (tx) => {

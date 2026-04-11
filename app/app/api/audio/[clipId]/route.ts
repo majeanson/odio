@@ -52,10 +52,6 @@ export async function GET(
 
   if (!fileId) return apiError("Audio not yet available", 404);
 
-  if (clip.transcodeStatus === "PENDING") {
-    return apiError("Audio is still processing", 202);
-  }
-
   // Get creator's token to proxy the file
   let accessToken: string;
   try {
