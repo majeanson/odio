@@ -13,6 +13,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getCreatorTokens, getDriveClient } from "@/lib/google";
 import { apiError, apiOk, generateClipName, generateSessionName } from "@/lib/utils";
 
 export async function POST(req: Request) {
@@ -21,16 +22,17 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null);
   const {
+    tempId,       // used to look up Drive file by name when driveFileId is missing
     bandId,
     sessionId,
     clipName,
     mimeType,
     durationMs,
-    driveFileId,  // the file ID returned after Drive upload completes
+    driveFileId: driveFileIdFromClient, // pre-allocated; may be absent for older uploads
     stamps = [],  // [{timestampMs, type}] buffered during recording
   } = body ?? {};
 
-  if (!bandId || !driveFileId || !durationMs) {
+  if (!bandId || !durationMs) {
     return apiError("Missing required fields");
   }
 
@@ -39,10 +41,35 @@ export async function POST(req: Request) {
     where: {
       bandId_userEmail: { bandId, userEmail: session.user.email },
     },
-    include: { band: { select: { createdBy: true } } },
+    include: { band: { select: { createdBy: true, driveFolderId: true } } },
   });
   if (!membership || membership.role === "MEMBER") {
     return apiError("Forbidden", 403);
+  }
+
+  // Resolve Drive file ID — use the pre-allocated ID from the client when
+  // available. Fall back to a server-side Drive lookup by filename when not:
+  // the Drive resumable upload response is cross-origin so the browser can't
+  // read its body, but the file IS there — we just need to find its ID.
+  let driveFileId: string = driveFileIdFromClient ?? "";
+  if (!driveFileId && tempId) {
+    const { createdBy, driveFolderId } = membership.band;
+    try {
+      const { accessToken } = await getCreatorTokens(createdBy);
+      const drive = getDriveClient(accessToken);
+      const listRes = await drive.files.list({
+        q: `name='${tempId}-source' and '${driveFolderId}' in parents and trashed=false`,
+        fields: "files(id)",
+        spaces: "drive",
+      });
+      driveFileId = listRes.data.files?.[0]?.id ?? "";
+    } catch {
+      return apiError("Drive file lookup failed", 503);
+    }
+  }
+
+  if (!driveFileId) {
+    return apiError("Missing required fields");
   }
 
   // Find or create the session for today
