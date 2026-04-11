@@ -1,12 +1,19 @@
 {
-  "featureKey": "odio-feat-render",
+  "featureKey": "odio-2026-014",
   "title": "Render — Server-Side FFmpeg on Freeze + Public Share",
   "status": "frozen",
-  "priority": "high",
+  "priority": 2,
   "buildOrder": 11,
   "schemaVersion": 1,
   "domain": "render",
-  "tags": ["ffmpeg", "server-side", "freeze", "render", "next.js-api", "public-share"],
+  "tags": [
+    "ffmpeg",
+    "server-side",
+    "freeze",
+    "render",
+    "next.js-api",
+    "public-share"
+  ],
   "problem": "When a version is frozen, a real audio file must be produced — so the band can download it, share it outside the band, or export it. This cannot happen client-side. The frozen clip should also be shareable publicly without requiring sign-in.",
   "analysis": "Next.js API route POST /api/render: fetch source .aac from Drive (via recorder's stored token), run FFmpeg atrim+concat to apply cutMarks, output final .aac at 192kbps, upload result as {clipId}-final.aac to Drive. Update clips row: frozen=true, frozenVersionId, frozenDriveFileId. Progress communicated via Postgres poll — client polls GET /api/clips/{id} every 3s until frozen=true. For public share: frozen clips get a public Drive permission set ('anyone with link can read') and a short public token stored in Postgres. Public page /share/[token] fetches clip metadata from Postgres and streams audio from the Drive public URL — no sign-in required.",
   "successCriteria": "- Freeze triggers render within 2s of user confirmation\n- Rendered file available within 10s for a typical 2-8 min output clip\n- Clip page shows lock icon and download button after successful render\n- Render failure shows clear error with retry option\n- Public share toggle: generates /share/[token] URL, shareable outside the band\n- Public page: waveform player + stamps + clip name + date — no other session data exposed\n- Public listener does not need a Google account\n- Download of rendered file available on clip page (authenticated) and public page",
@@ -34,8 +41,15 @@
   "componentFile": "app/api/clips/[clipId]/freeze/route.ts",
   "userGuide": "On a clip's detail page, tap 'Freeze' on any version to produce the final audio file. The page shows 'Rendering…' for a few seconds, then displays a lock icon and download button. To share publicly: tap the Share icon on a frozen clip and copy the /share/[token] link. Anyone with the link can listen without signing in. To revoke public access, tap Share again and toggle it off.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    }
   ]
 }

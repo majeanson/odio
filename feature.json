@@ -4,7 +4,18 @@
   "status": "draft",
   "schemaVersion": 1,
   "domain": "audio/collaboration",
-  "tags": ["audio", "recording", "jam", "musicians", "collaboration", "pwa", "web", "versioning", "google-drive", "next.js"],
+  "tags": [
+    "audio",
+    "recording",
+    "jam",
+    "musicians",
+    "collaboration",
+    "pwa",
+    "web",
+    "versioning",
+    "google-drive",
+    "next.js"
+  ],
   "problem": "Musicians lose the best moments from their jam sessions. When they do record, the raw file is long, unedited, buried — nobody goes back and cleans it up. No tool lets a small band record on any device, pass the recording around in the car on the way home, each person trimming a song into its final form, and arrive with a clean versioned archive — all from a browser, no install, no DAW.",
   "analysis": "Pure web PWA (Next.js). No native app. Browser MediaRecorder API covers recording on iOS Safari 14.5+, Android Chrome, and desktop. The core primitive is versioning: every clip starts as v1 (raw recording), band members create new versions by marking cut regions, and any version can be frozen — triggering a server-side FFmpeg render. Versions are metadata only (cutMarks + annotations JSON) pointing at the same source audio. No simultaneous editing; linear versioning. Storage split: audio files (.aac) in Google Drive (recorder's account, free), all structured metadata (sessions, clips, versions, votes, comments, stamps) in a free-tier Postgres (Neon or Vercel Postgres). No Supabase. Auth: NextAuth.js + Google OAuth (drive.file scope). Real-time: polling every 5-10s. Edit state in localStorage as safety net; submit requires connection. External services: Google + free Postgres. Cost: $0/month.",
   "successCriteria": "- Recorder opens browser (any device), records a session, all clips uploaded to Google Drive and metadata saved to Postgres\n- Band member opens a link in mobile browser, opens a clip in the editor within 2 taps\n- Editor loads waveform via Drive audio proxy, marks cuts, previews result without re-encoding\n- Submitting a version writes to Postgres; others see it within 5-10s via polling\n- Three people can each edit a different clip simultaneously, each producing their own version\n- Freeze triggers server-side render, produces downloadable file within 10s for a typical 2-8 min clip\n- Version history shows full chain with author, timestamp, description, and result duration\n- Total infrastructure cost: $0/month",
@@ -64,51 +75,69 @@
     {
       "date": "2026-04-10",
       "author": "marc+claude",
-      "fields_changed": ["problem", "tags", "domain"],
+      "fields_changed": [
+        "problem",
+        "tags",
+        "domain"
+      ],
       "reason": "Initial project creation"
     },
     {
       "date": "2026-04-10",
       "author": "marc+claude",
-      "fields_changed": ["problem", "analysis", "successCriteria", "implementation", "decisions", "knownLimitations", "tags"],
+      "fields_changed": [
+        "problem",
+        "analysis",
+        "successCriteria",
+        "implementation",
+        "decisions",
+        "knownLimitations",
+        "tags"
+      ],
       "reason": "Platform pivot to web-only PWA. Versioning as core primitive. PRD v0.2 + Architecture v0.2 + Epics v0.2."
     },
     {
       "date": "2026-04-10",
       "author": "marc+claude",
-      "fields_changed": ["analysis", "implementation", "decisions", "knownLimitations", "tags"],
+      "fields_changed": [
+        "analysis",
+        "implementation",
+        "decisions",
+        "knownLimitations",
+        "tags"
+      ],
       "reason": "Removed Supabase entirely. Google Drive for audio. Postgres for all metadata. NextAuth.js. localStorage safety net only. Architecture v0.3."
     },
     {
       "date": "2026-04-11",
       "author": "marc+claude",
-      "fields_changed": ["knownLimitations", "lineage"],
+      "fields_changed": [
+        "knownLimitations",
+        "lineage"
+      ],
       "reason": "Removed stale .meta.json reference (all metadata is now Postgres). Added new child features: clip-detail, public-share-player, upload-banner."
     }
   ],
-  "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" }
-  ],
+  "statusHistory": [],
   "lineage": {
     "children": [
-      "odio-feat-ffmpeg-poc",
-      "odio-feat-auth",
-      "odio-feat-app-shell",
-      "odio-feat-band-space",
-      "odio-feat-recording",
-      "odio-feat-session-mgmt",
-      "odio-feat-multi-recorder",
-      "odio-feat-recording-resilience",
-      "odio-feat-upload-banner",
-      "odio-feat-timeline-editor",
-      "odio-feat-versioning",
-      "odio-feat-render",
-      "odio-feat-ffmpeg-poc",
-      "odio-feat-clip-detail",
-      "odio-feat-public-share-player",
-      "odio-feat-collaboration",
-      "odio-feat-storage-mgmt",
-      "odio-feat-audio-input"
+      "odio-2026-002",
+      "odio-2026-003",
+      "odio-2026-004",
+      "odio-2026-005",
+      "odio-2026-006",
+      "odio-2026-007",
+      "odio-2026-008",
+      "odio-2026-009",
+      "odio-2026-010",
+      "odio-2026-011",
+      "odio-2026-012",
+      "odio-2026-014",
+      "odio-2026-013",
+      "odio-2026-015",
+      "odio-2026-016",
+      "odio-2026-017",
+      "odio-2026-018"
     ]
   }
 }

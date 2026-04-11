@@ -1,12 +1,26 @@
 {
-  "featureKey": "odio-feat-timeline-editor",
+  "featureKey": "odio-2026-011",
   "title": "Timeline Editor — WaveformPlayer, WaveformEditor, Cut Regions, Version Submit",
   "status": "active",
-  "priority": "high",
+  "priority": 2,
   "buildOrder": 9,
   "schemaVersion": 1,
   "domain": "editing",
-  "tags": ["wavesurfer", "waveform", "cut-regions", "preview", "web", "touch", "localstorage", "waveform-player", "waveform-editor", "skip-cuts", "split", "trim", "stamps"],
+  "tags": [
+    "wavesurfer",
+    "waveform",
+    "cut-regions",
+    "preview",
+    "web",
+    "touch",
+    "localstorage",
+    "waveform-player",
+    "waveform-editor",
+    "skip-cuts",
+    "split",
+    "trim",
+    "stamps"
+  ],
   "problem": "Band members need to trim dead air and setup noise from a recording — visually, in a browser, on a phone in a car or on a laptop at home — and preview the result before committing it as a new version. The clip detail page needs a pure playback experience that skips cuts during listen; the edit page needs a full-screen editor for creating cut regions.",
   "analysis": "Two dedicated components with separate concerns:\n\n**WaveformPlayer** (clip detail page) — pure playback. Receives activeCuts from parent (ClipDetailClient). Visualises cuts as blue non-draggable regions (pointerEvents: none on regions so they don't block click-to-seek). Skip-cuts during playback via timeupdate handler. H:MM:SS clock + virtual duration display. Stamp chips are tappable <button> elements — each seeks to that timestamp. Big 64px play button.\n\n**WaveformEditor** (edit page, always edit mode) — cut creation only. Custom pointer overlay (absolute inset-0, touch-none) handles both tap-to-seek and drag-to-create-region via onPointerDown/Move/Up + setPointerCapture. Red draggable/resizable regions. Trim shortcut (pre-seeds start+end cuts). Clear All button. Split mode (mark a time position, confirm → creates Part B as new clip, navigates to session page). 'Start from' version pills pre-load a previous version's cuts. Submit → new version in Postgres, router.back(). Draft auto-saved to localStorage on every cut change; draft banner with Resume/Dismiss on reopen.\n\nAudio for both is served from /api/audio/[clipId] — a Next.js route that proxies Drive with Range request support, forwarding the user's stored token server-side. WaveSurfer interact: true enables click-to-seek in both components.",
   "successCriteria": "- Waveform renders within 3 seconds of opening on a typical 10-min clip\n- Audio plays via Drive proxied URL — seeking supported via Range requests\n- Click-to-seek works — clicking anywhere on the waveform moves the playhead; play starts from that position\n- Stamp chips in WaveformPlayer are tappable <button> elements that seek to their timestamp\n- Cut regions in WaveformPlayer are blue overlays with pointerEvents:none — they display cuts but never block click-to-seek\n- Skip-cuts playback works in WaveformPlayer: entering a cut region during play immediately jumps to region end\n- Drag on the WaveformEditor waveform creates a red cut region\n- Tap (< 8px movement) in WaveformEditor seeks without creating a region\n- Trim button pre-seeds start cut + end cut from clip boundaries\n- Clear All button removes all cuts\n- Split: marks a time → creates Part B clip + v2 on original → navigates to session page showing both\n- 'Start from vN' pills load a previous version's cuts as starting point\n- Submit button always active — description optional\n- Draft auto-saved on every cut change; Resume/Dismiss banner shown on reopen after crash\n- Tab bar hidden during editing (edit page is near full-screen)\n- Virtual result duration updates in real time in WaveformEditor top bar",
@@ -69,12 +83,38 @@
   "componentFile": "components/clips/WaveformEditor.tsx",
   "userGuide": "From a clip's detail page, the waveform player shows cuts as blue overlays. Tap any stamp chip to jump to that moment. Click-to-seek works anywhere on the waveform — even on cut overlays. Tap 'Edit cuts' to open the full-screen editor. In the editor: drag on the waveform to create a red cut region; tap Trim to pre-seed start/end cuts; tap Clear all to reset; tap Split to divide the song into two clips at a chosen time position. Tap 'Start from vN' to load a previous version's cuts as a starting point. Tap 'Submit edit' to save as a new version — description is optional. Draft cuts survive browser crashes and are recovered on reopen.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" },
-    { "from": "frozen", "to": "active", "date": "2026-04-11", "reason": "Major architectural redesign: WaveformPlayer (pure playback) split from WaveformEditor (pure edit). Custom pointer overlay replaces enableDragSelection. pointerEvents:none on display-only regions fixes click-to-seek. Stamp chips changed to tappable buttons. Split navigates to session page. Trim/Clear All/Split buttons added." }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "frozen",
+      "to": "active",
+      "date": "2026-04-11",
+      "reason": "Major architectural redesign: WaveformPlayer (pure playback) split from WaveformEditor (pure edit). Custom pointer overlay replaces enableDragSelection. pointerEvents:none on display-only regions fixes click-to-seek. Stamp chips changed to tappable buttons. Split navigates to session page. Trim/Clear All/Split buttons added."
+    }
   ],
   "revisions": [
-    { "date": "2026-04-11", "author": "marc+claude", "fields_changed": ["title", "analysis", "implementation", "decisions", "knownLimitations", "successCriteria", "userGuide", "tags"], "reason": "Separated WaveformPlayer (pure playback, pointerEvents:none on regions, tappable stamp chips) from WaveformEditor (custom pointer overlay, no enableDragSelection, Trim/Clear/Split tools, localStorage draft banner, sessionHref for split navigation)." }
+    {
+      "date": "2026-04-11",
+      "author": "marc+claude",
+      "fields_changed": [
+        "title",
+        "analysis",
+        "implementation",
+        "decisions",
+        "knownLimitations",
+        "successCriteria",
+        "userGuide",
+        "tags"
+      ],
+      "reason": "Separated WaveformPlayer (pure playback, pointerEvents:none on regions, tappable stamp chips) from WaveformEditor (custom pointer overlay, no enableDragSelection, Trim/Clear/Split tools, localStorage draft banner, sessionHref for split navigation)."
+    }
   ]
 }

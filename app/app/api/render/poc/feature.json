@@ -1,12 +1,19 @@
 {
-  "featureKey": "odio-feat-ffmpeg-poc",
+  "featureKey": "odio-2026-002",
   "title": "FFmpeg POC — Validate Bundle Size and Render Pipeline on Vercel",
   "status": "frozen",
-  "priority": "critical",
+  "priority": 1,
   "buildOrder": 1,
   "schemaVersion": 1,
   "domain": "render",
-  "tags": ["ffmpeg", "poc", "vercel", "bundle-size", "spike", "render"],
+  "tags": [
+    "ffmpeg",
+    "poc",
+    "vercel",
+    "bundle-size",
+    "spike",
+    "render"
+  ],
   "problem": "@ffmpeg-installer/ffmpeg bundles the FFmpeg binary at ~38MB compressed. Vercel's serverless function size limit is ~50MB (250MB uncompressed). This is the single highest-risk technical constraint in the project. If the bundle is too large or the render takes too long (Vercel function timeout: 10s on Hobby), the entire render architecture needs to change before feat-render can be built. This POC must validate or invalidate the approach before any production code is written.",
   "analysis": "The POC validates three things in isolation:\n\n1. **Bundle size:** Does a Next.js API route that imports @ffmpeg-installer/ffmpeg + fluent-ffmpeg deploy successfully to Vercel Hobby without hitting the 50MB compressed / 250MB uncompressed limit? The binary alone is ~38MB compressed — leaving ~12MB for the rest of the function bundle.\n\n2. **Cold start:** Vercel serverless functions have a cold start on first invocation. A 38MB binary means a large cold start. Is the first render under 30 seconds? Subsequent renders (warm function) should be under 10s for a typical 2–8 min clip output.\n\n3. **Render correctness:** Does a fluent-ffmpeg atrim+concat command correctly produce a trimmed AAC file from a source AAC file on Vercel's runtime environment?\n\nIf bundle size fails: alternatives are (a) Vercel Pro (1GB function size limit, $20/month — viable), (b) a dedicated render worker (Railway, Fly.io free tier), (c) client-side WASM FFmpeg (slow on mobile, acceptable for desktop-only), or (d) a cloud transcoding service (AWS MediaConvert — adds cost and complexity).\n\nIf timeout fails: the 10s Vercel Hobby limit may be too tight for longer clips. Vercel Pro raises the limit to 300s. The POC should test with a worst-case 30-min source clip.\n\nThe POC is a standalone Next.js route — not integrated into the app — that accepts a test audio file and returns the trimmed output.",
   "successCriteria": "- Next.js project with @ffmpeg-installer/ffmpeg + fluent-ffmpeg deploys to Vercel Hobby without bundle size error\n- Deployed function executes an atrim+concat operation on a test .aac file\n- Output file is a valid .aac file playable in browser\n- Cold start + render time for a 2-8 min clip is under 30s total (10s preferred)\n- Render time for a 30-min source clip with multiple cut regions is measured and documented\n- If any constraint fails: document exactly which limit was hit and the recommended alternative with cost/complexity trade-off",
@@ -26,8 +33,15 @@
   "componentFile": "app/api/render/poc/route.ts",
   "userGuide": "This is an internal validation endpoint, not a user-facing feature. To test: GET /api/render/poc?url=<public-audio-url>. The endpoint downloads the audio, applies a test cut (removes seconds 0-10), and returns the trimmed file. Used during development to confirm Vercel can run FFmpeg before building the real render pipeline.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    }
   ]
 }

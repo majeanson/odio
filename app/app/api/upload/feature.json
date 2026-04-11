@@ -1,12 +1,19 @@
 {
-  "featureKey": "odio-feat-multi-recorder",
+  "featureKey": "odio-2026-008",
   "title": "Multi-Recorder — Any Editor Can Record Into the Band's Drive",
   "status": "frozen",
-  "priority": "high",
+  "priority": 2,
   "buildOrder": 7,
   "schemaVersion": 1,
   "domain": "recording",
-  "tags": ["recording", "multi-recorder", "roles", "permissions", "google-drive", "upload"],
+  "tags": [
+    "recording",
+    "multi-recorder",
+    "roles",
+    "permissions",
+    "google-drive",
+    "upload"
+  ],
   "problem": "On jam night, the person who created the band may not always be the one with a phone free to record. Any Editor-role band member should be able to hit Record and have the audio land in the band's shared Drive — without requiring each member to set up their own Drive folder or the band creator to be physically present.",
   "analysis": "The existing recording upload flow already makes multi-recorder architecturally trivial: when a member hits Record, the server's /api/upload/init route generates a Google Drive resumable upload session URL using the band creator's stored refresh_token (saved via NextAuth DB adapter). The member's browser then uploads the audio blob directly to the creator's Drive — the member's own Drive is never involved. The audio lands in the correct band Drive folder regardless of who recorded it.\n\nWhat needs to change is a role-permission gate: currently /api/upload/init checks that the caller is the band creator (Recorder role). Expanding this to allow Editor-role members is the full scope of the server-side change.\n\nOn the client: the Record tab in the bottom nav is shown only to Recorder and Editor roles. Member-only users do not see the Record tab.\n\nOne critical edge case: the creator's Drive token can expire. The server must attempt a token refresh before generating the upload session URL. If the refresh fails (e.g., creator revoked app access), the error must be surfaced clearly — 'Band creator needs to re-authorize Drive access' — with a notification mechanism to alert the creator.\n\nThe resulting clip row in Postgres records both the band creator (driveOwnerEmail) and the actual recording member (recordedByEmail) so the activity feed can correctly show 'Recorded by [member]'.",
   "successCriteria": "- Any Editor-role band member sees the Record tab in the bottom nav and can start a recording\n- Member-only role does not see Record tab and cannot access /record\n- /api/upload/init: accepts requests from Editor+ roles; fetches and uses band creator's stored refresh_token to generate Drive upload session URL\n- Token refresh attempt before generating upload URL; returns clear error if creator's token is invalid: 'Band creator needs to re-authorize Drive access'\n- Audio lands in the correct band Drive folder regardless of which Editor recorded\n- Clip row stores both driveOwnerEmail (always the band creator) and recordedByEmail (actual recorder)\n- Activity feed and clip list show 'Recorded by [name]' when recorder differs from band creator\n- If multiple Editors record simultaneously: each gets their own upload session URL; clips created as separate Postgres rows with no conflict\n- Post-record screen and upload banner work identically for all recording members",
@@ -39,8 +46,15 @@
   "componentFile": "app/api/upload/init/route.ts",
   "userGuide": "Any Editor-role band member can record — not just the band creator. Editors see the Record tab in the nav and can start a recording from their own device. The audio automatically lands in the band's Drive folder (owned by the band creator). If the creator's Drive connection expires, a banner appears: 'Drive connection needs renewal — ask [creator name] to re-authorize.' The clip card shows 'Recorded by X' when the recorder is not the band creator.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    }
   ]
 }

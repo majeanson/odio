@@ -1,12 +1,18 @@
 {
-  "featureKey": "odio-feat-auth",
+  "featureKey": "odio-2026-003",
   "title": "Auth — Google OAuth via NextAuth.js",
   "status": "frozen",
-  "priority": "critical",
+  "priority": 1,
   "buildOrder": 2,
   "schemaVersion": 1,
   "domain": "auth",
-  "tags": ["auth", "google-oauth", "nextauth", "session", "drive.file"],
+  "tags": [
+    "auth",
+    "google-oauth",
+    "nextauth",
+    "session",
+    "drive.file"
+  ],
   "problem": "Band members need a shared identity layer — without creating yet another account. Google sign-in is universal in the target audience and doubles as the credential for Google Drive access.",
   "analysis": "NextAuth.js with Google provider. Scopes requested at sign-in: openid, email, profile, https://www.googleapis.com/auth/drive.file (access only to files Odio creates in the user's Drive). No Supabase. The access_token and refresh_token are stored server-side in the NextAuth session (encrypted cookie or database adapter). All Drive API calls are proxied through Next.js API routes — the token is never exposed to the client. Auth state (user email, displayName, avatar) held in Zustand. The public frozen clip page (/share/[token]) is the only unauthenticated route.",
   "successCriteria": "- Sign in with Google works on iOS Safari, Android Chrome, and desktop\n- Session persists across browser restarts (refresh token handled by NextAuth)\n- All private routes redirect to /login if unauthenticated\n- Sign-out clears session and redirects to landing\n- drive.file scope requested at initial sign-in (needed for audio upload and clip access)\n- Token refreshed automatically by NextAuth before expiry\n- Auth state available synchronously on client via Zustand (no flicker)",
@@ -33,8 +39,15 @@
   "componentFile": "lib/auth.ts",
   "userGuide": "Users visit the app and click 'Sign in with Google'. They are prompted to grant Google Drive access (files created by Odio only). After sign-in, they are redirected to the bands home page. Sessions persist across browser restarts. Sign-out via the Band settings page. The /share/[token] public page requires no sign-in.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    }
   ]
 }

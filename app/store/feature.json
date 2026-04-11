@@ -1,12 +1,20 @@
 {
-  "featureKey": "odio-feat-recording-resilience",
+  "featureKey": "odio-2026-009",
   "title": "Recording Resilience — IndexedDB Safety Net, Upload Retry, Save-to-Device Fallback",
   "status": "frozen",
-  "priority": "high",
+  "priority": 2,
   "buildOrder": 8,
   "schemaVersion": 1,
   "domain": "recording",
-  "tags": ["recording", "indexeddb", "resilience", "offline", "retry", "upload", "fallback"],
+  "tags": [
+    "recording",
+    "indexeddb",
+    "resilience",
+    "offline",
+    "retry",
+    "upload",
+    "fallback"
+  ],
   "problem": "A recording is a one-time, irreplaceable event. Currently, if the internet drops during upload or the band creator's Drive token is invalid, the audio blob — which only exists in memory — is permanently lost when the user navigates away or the tab closes. A live jam session cannot be re-played. The recording must survive any upload failure and remain recoverable until it reaches Drive.",
   "analysis": "The audio blob lives in RAM from record-start until upload completes. If anything breaks during the upload window — network drop, Drive token expiry, browser crash, tab close — the blob is gone. This is the highest-risk data loss scenario in the app.\n\nThe fix is a two-layer safety net:\n\nLayer 1 — IndexedDB persistence (immediate): The moment recording stops and the blob is assembled, write it to IndexedDB before starting the upload. IndexedDB stores binary blobs up to the device's available storage (typically several GB on modern phones), survives page refresh and browser restarts, and is cleared only explicitly. Key: odio-pending-upload-{tempId}. Also store: tempId, recordedAt, durationMs, bandId, sessionId, blob.\n\nLayer 2 — Resumable upload retry: Google Drive resumable uploads natively support resume from a byte offset. If the upload is interrupted mid-transfer, the server stores the upload session URL in the pending record. On retry, the client queries Drive for the current byte offset and resumes from there — no re-upload of already-transferred bytes.",
   "successCriteria": "- Audio blob written to IndexedDB immediately on recording stop, before upload begins\n- IndexedDB entry keyed by tempId; stores blob + recordedAt + durationMs + bandId + sessionId + uploadSessionUrl (if partially started)\n- If upload succeeds: IndexedDB entry cleared; no other change\n- If network drops during upload: banner shows 'Upload paused — waiting for connection'; auto-retries on window 'online' event; resumable upload continues from last committed byte\n- If creator's Drive token is invalid: banner shows 'Drive connection needs renewal — ask [creator name] to re-authorize'; IndexedDB blob retained; retry button enabled once token is refreshed\n- If recording member's own session token expires mid-upload: client silently calls getSession() to refresh; if refresh succeeds, upload resumes automatically; if refresh fails, banner shows 'Session expired — sign in again to resume'; after re-sign-in, IndexedDB blob is still present and recovery banner activates\n- On app reopen: check IndexedDB for pending recordings on mount; if found, show recovery banner: 'You have [N] recording(s) waiting to upload'\n- Recovery banner persists until all pending recordings are uploaded or manually discarded\n- 'Save to device' fallback button available on any failed upload: triggers browser download of blob (.webm or .aac depending on browser)\n- User can discard a pending recording from the recovery UI (with confirmation: 'Discard this recording? It cannot be recovered.')\n- 'Pending uploads' count visible in the Record tab (badge) and on the session screen\n- Successful retry creates the clip in Postgres and Drive exactly as a normal upload would",
@@ -46,8 +54,15 @@
   "componentFile": "hooks/usePendingUploads.ts",
   "userGuide": "Recording resilience is automatic and invisible when things work. If an upload fails (network drops, Drive token expires), a banner appears at the top of the screen: 'You have [N] recording(s) waiting to upload'. Tap 'Retry' to resume when reconnected. Tap 'Save to device' to download the raw audio file to your phone or computer if Drive is permanently unavailable. Tap 'Discard' (with confirmation) to remove a pending recording from recovery. When the app reopens after a crash, pending recordings are detected automatically.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    }
   ]
 }

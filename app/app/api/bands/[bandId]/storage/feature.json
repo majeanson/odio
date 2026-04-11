@@ -1,12 +1,18 @@
 {
-  "featureKey": "odio-feat-storage-mgmt",
+  "featureKey": "odio-2026-017",
   "title": "Storage Management — Drive Quota, Cleanup, Archive",
   "status": "frozen",
-  "priority": "medium",
+  "priority": 3,
   "buildOrder": 13,
   "schemaVersion": 1,
   "domain": "storage",
-  "tags": ["storage", "google-drive", "cleanup", "archive", "quota"],
+  "tags": [
+    "storage",
+    "google-drive",
+    "cleanup",
+    "archive",
+    "quota"
+  ],
   "problem": "Audio files in Google Drive grow over time (~43MB per raw clip, ~10MB per frozen render). The recorder's free Drive tier (15GB) supports roughly 350 raw clips before action is needed. The app must surface this, and provide a clean way to free space after songs are finalized.",
   "analysis": "Storage indicator shown in band settings and session list: total Drive storage used by Odio files for this band (queried via Drive API quotas endpoint). Post-freeze cleanup: once a clip is frozen and the band is satisfied, the source .aac (raw recording) can be deleted from Drive — the frozen render and Postgres metadata remain. Archive: delete all versions of a clip from Postgres + Drive (both source and render). Bulk cleanup: session-level 'Archive all frozen clips' removes source audio for all frozen clips in a session at once.",
   "successCriteria": "- Band settings shows Drive storage used by Odio files (MB / GB)\n- Post-freeze: 'Clean up source audio' button removes raw .aac from Drive, keeps frozen render\n- Confirmation dialog shows exactly what will be deleted and what will remain\n- Archive clip: removes Postgres records + Drive files; cannot be undone\n- Bulk cleanup: 'Clean up all frozen clips in session' removes source audio for all frozen clips at once\n- Storage indicator updates after cleanup\n- Cleaned-up clips remain playable via their frozen render file",
@@ -27,8 +33,15 @@
   "componentFile": "app/api/bands/[bandId]/storage/route.ts",
   "userGuide": "In the Band tab, tap Settings to see Drive storage usage. The bar shows how many MB/GB of Drive are used by this band's recordings. After a clip is frozen and the band is happy with it, tap 'Clean up source audio' on the clip detail page to delete the raw recording from Drive — the final rendered file is kept and the clip remains fully playable. Tap 'Delete clip' (Recorder only) to permanently remove a clip and all its files from Drive.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    }
   ]
 }

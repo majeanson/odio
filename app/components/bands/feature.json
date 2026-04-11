@@ -1,12 +1,20 @@
 {
-  "featureKey": "odio-feat-band-space",
+  "featureKey": "odio-2026-005",
   "title": "Band Space — Band Creation, Invites, Drive Folder, Members",
   "status": "active",
-  "priority": "critical",
+  "priority": 1,
   "buildOrder": 4,
   "schemaVersion": 1,
   "domain": "band",
-  "tags": ["band", "invite", "members", "google-drive", "postgres", "qr-code", "role-management"],
+  "tags": [
+    "band",
+    "invite",
+    "members",
+    "google-drive",
+    "postgres",
+    "qr-code",
+    "role-management"
+  ],
   "problem": "Band members need a shared space where all sessions are visible and access is controlled. Joining must be frictionless. The recorder's Google Drive folder is the audio source of truth — the app needs to bridge from 'here is an invite link' to 'you now have access to the band's recordings'.",
   "analysis": "Band metadata (name, members, Drive folder ID, invite code) stored in Postgres. Sessions and clips are stored in Postgres (not in Drive JSON files), so session/clip data is readable by all band members immediately after joining. Audio files live in the recorder's Drive folder. A user can belong to multiple bands. Band Settings page: member list with role management (pill buttons, not native select), invite link copy, storage quota bar. Remove member / Leave band both require confirmation via a bottom sheet before executing — prevents accidental destructive actions.",
   "successCriteria": "- Create band: enter name → band record created in Postgres → invite link generated\n- Invite link opens a join page: shows band name, prompts Google sign-in\n- After joining, app shows member's Google email with clear instruction to recorder to share Drive folder\n- Session screen shows QR code of current session URL\n- Band member list: display name + email, role badge, join date\n- Recorder can change member roles using styled pill buttons (Editor / Member) — no native select\n- Remove member: visible button → confirmation sheet → delete from Postgres\n- Leave band: visible button → confirmation sheet → redirect to /bands\n- Multiple bands: user sees all their bands on the home screen\n- Band roles: Recorder (full access + unfreeze), Editor (create versions + freeze + record), Member (vote + comment only)\n- Default role for new members: Editor",
@@ -44,12 +52,34 @@
   "componentFile": "components/bands/BandSettingsClient.tsx",
   "userGuide": "Create a band from the home screen. Share the invite link or QR code with bandmates — they sign in with Google and join as Editors. After someone joins, their email appears in Settings → Members. Share the Drive folder with that email from Google Drive (one-time step). In Settings, use the pill buttons to switch a member between Editor and Member role. Tap Remove to remove a member (confirmation required). Non-Recorder members can Leave band from their own member row (confirmation required).",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" },
-    { "from": "frozen", "to": "active", "date": "2026-04-11", "reason": "Role change: pill buttons replace native select. Remove/Leave: confirmation sheet replaces plain text links." }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "frozen",
+      "to": "active",
+      "date": "2026-04-11",
+      "reason": "Role change: pill buttons replace native select. Remove/Leave: confirmation sheet replaces plain text links."
+    }
   ],
   "revisions": [
-    { "date": "2026-04-11", "author": "marc+claude", "fields_changed": ["implementation", "decisions", "successCriteria", "userGuide"], "reason": "BandSettingsClient: pill buttons for role change, BottomSheet confirmation for remove/leave actions" }
+    {
+      "date": "2026-04-11",
+      "author": "marc+claude",
+      "fields_changed": [
+        "implementation",
+        "decisions",
+        "successCriteria",
+        "userGuide"
+      ],
+      "reason": "BandSettingsClient: pill buttons for role change, BottomSheet confirmation for remove/leave actions"
+    }
   ]
 }

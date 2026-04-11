@@ -1,12 +1,20 @@
 {
-  "featureKey": "odio-feat-app-shell",
+  "featureKey": "odio-2026-004",
   "title": "App Shell — Navigation, Dark Theme, Onboarding, Empty States",
   "status": "active",
-  "priority": "critical",
+  "priority": 1,
   "buildOrder": 3,
   "schemaVersion": 1,
   "domain": "app-shell",
-  "tags": ["navigation", "dark-theme", "onboarding", "mobile-first", "next.js", "empty-states", "bottom-tab-bar"],
+  "tags": [
+    "navigation",
+    "dark-theme",
+    "onboarding",
+    "mobile-first",
+    "next.js",
+    "empty-states",
+    "bottom-tab-bar"
+  ],
   "problem": "The app needs a solid foundation: a responsive web app that works on any device, navigates between recording/editing/collaboration screens fluidly, enforces auth correctly, handles first-time setup (create a band, link a Drive folder) with minimal friction, and never shows a blank screen.",
   "analysis": "Next.js App Router. Dark theme only — no light mode in V1 (background #0a0a0a, accent amber #f59e0b). System fonts only. Bottom tab bar (Sessions / Record / Clips / Band) with route hierarchy. Tab bar is hidden during the timeline editor (/edit routes). The 'Clips' tab is only shown when a sessionId context is available — outside a session it would duplicate the Sessions tab destination. Record tab is hidden for MEMBER-role users. Back navigation uses Next.js <Link> (not <a href>) for client-side transitions — prevents full page reload on every back tap. Pages use pb-[calc(56px+env(safe-area-inset-bottom))] to clear the fixed tab bar on all devices including those with home indicators.",
   "successCriteria": "- Dark theme renders correctly everywhere; no light mode; high contrast readable in dim rehearsal room or car\n- System fonts only — no web font loading\n- Bottom tab bar: Sessions / Record / Clips / Band — always visible except timeline editor\n- Clips tab hidden when outside a session context (avoids duplicate tab destinations)\n- Record tab hidden for MEMBER-role users\n- All interactive elements have touch targets >= 44px\n- Unauthenticated users land on / and see sign-in only\n- First-run: new user with no bands sees 'Create band' wizard immediately after sign-in\n- /share/[token] is public — no auth required, no private data exposed\n- Back navigation is client-side (no full reload)\n- Content never hidden behind tab bar (correct safe-area + 56px clearance)\n- Empty states guide users to the next action at every dead end",
@@ -62,12 +70,35 @@
   "componentFile": "components/layout/BottomTabBar.tsx",
   "userGuide": "After signing in, users land on their bands list. The bottom tab bar (Sessions / Record / Clips / Band) is always visible. Tap Record to go directly to the recording screen from anywhere. The Clips tab appears once you're inside a session — it shows the current session's clips. On first sign-in with no bands, the app redirects to a setup wizard to create the first band.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" },
-    { "from": "frozen", "to": "active", "date": "2026-04-11", "reason": "Navigation fixes: <Link> back button, Clips tab hidden when no sessionId, safe-area padding fix" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "frozen",
+      "to": "active",
+      "date": "2026-04-11",
+      "reason": "Navigation fixes: <Link> back button, Clips tab hidden when no sessionId, safe-area padding fix"
+    }
   ],
   "revisions": [
-    { "date": "2026-04-11", "author": "marc+claude", "fields_changed": ["implementation", "decisions", "knownLimitations", "userGuide", "successCriteria"], "reason": "Back button <a>→<Link>, Clips tab hidden without sessionId, pb-safe→pb-[56px+safe-area] session page fix, removed duplicate + Record button from session page" }
+    {
+      "date": "2026-04-11",
+      "author": "marc+claude",
+      "fields_changed": [
+        "implementation",
+        "decisions",
+        "knownLimitations",
+        "userGuide",
+        "successCriteria"
+      ],
+      "reason": "Back button <a>→<Link>, Clips tab hidden without sessionId, pb-safe→pb-[56px+safe-area] session page fix, removed duplicate + Record button from session page"
+    }
   ]
 }

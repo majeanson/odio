@@ -1,12 +1,20 @@
 {
-  "featureKey": "odio-feat-recording",
+  "featureKey": "odio-2026-006",
   "title": "Recording — Browser-Based Audio Capture",
   "status": "frozen",
-  "priority": "critical",
+  "priority": 1,
   "buildOrder": 5,
   "schemaVersion": 1,
   "domain": "recording",
-  "tags": ["recording", "mediarecorder", "audio", "wake-lock", "stamps", "ios", "google-drive"],
+  "tags": [
+    "recording",
+    "mediarecorder",
+    "audio",
+    "wake-lock",
+    "stamps",
+    "ios",
+    "google-drive"
+  ],
   "problem": "The recorder needs to capture multiple songs during a live jam — from a phone browser, one hand, dim room. Between songs the transition to the next recording must be instant. Moments worth keeping must be stampable without interrupting the performance.",
   "analysis": "Browser MediaRecorder API with getUserMedia. Typical clip: 5-30 min raw. Audio buffered in memory during recording (30 min AAC ~43MB — fits easily). On stop: upload to Google Drive via resumable upload (server generates upload session URL, browser uploads directly to Drive, bypassing Vercel 4.5MB body limit). Server then transcodes to AAC via FFmpeg (cross-browser compatibility — Chrome outputs WebM, Safari outputs AAC/MP4). Transcoded file replaces the original in Drive. Clip and v1 version rows created in Postgres. Wake Lock API active during recording (screen-on). Level meter via Web Audio API AnalyserNode. Stamps (fire/keep/uncertain/idea) buffered in memory, written to Postgres with clip on stop. 'Next Song' button appears after stop: saves current clip + immediately opens new recording, upload continues in background.",
   "successCriteria": "- Record button triggers microphone permission request on first use\n- Level meter visible and responsive during recording (horizontal amber bar, 8px tall, full-width)\n- Recording screen is full-screen (tab bar hidden); minimal chrome: timer, level meter, stamps, 'Add note', record/stop button only\n- Stamp buttons (fire/keep/uncertain/idea) always visible; one tap stamps current timestamp; haptic feedback on mobile; 72x72px touch targets\n- Quick text note button: 'Add note' text link → 1-line bottom sheet, submit adds annotation\n- Recording screen usable one-handed in portrait orientation\n- Stop → upload begins immediately; 'Next Song' button available without waiting for upload\n- Post-record screen shows: clip name (editable inline), duration, stamp count, upload progress\n- 'Next Song' opens new recording screen; previous clip uploads in background\n- 'Delete recording' option on post-record screen with confirmation sheet: 'Delete this recording? This cannot be undone.'\n- During upload: persistent top banner 'Uploading Song N… 47%' with amber progress bar visible on any screen\n- Banner dismisses only after upload + transcode confirmed complete\n- Wake Lock active during recording (screen stays on)\n- iOS warning shown if Wake Lock is unavailable\n- Clip appears in session as 'Processing…' until transcode done, then becomes fully interactive\n- All clips play back correctly in Chrome and Safari (AAC source)\n- Any Editor-role band member can initiate a recording (not just band creator/recorder)",
@@ -46,8 +54,15 @@
   "componentFile": "hooks/useRecorder.ts",
   "userGuide": "Tap the Record tab from anywhere. On the recording screen, tap the large circle button to start. The timer runs; the level meter shows audio input. Tap stamp buttons (fire/keep/uncertain/idea) any time to mark notable moments. Tap 'Add note' to type a quick text annotation. Tap the square stop button to finish. After stopping, name the clip on the post-record screen, tap 'Next Song' to immediately start another recording while the previous one uploads in the background, or navigate away.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    }
   ]
 }

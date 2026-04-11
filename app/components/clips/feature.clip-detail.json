@@ -1,12 +1,21 @@
 {
-  "featureKey": "odio-feat-clip-detail",
+  "featureKey": "odio-2026-013",
   "title": "Clip Detail — Coordinator, Actions Panel, Freeze, Share, Stage, Cleanup",
   "status": "active",
-  "priority": "high",
+  "priority": 2,
   "buildOrder": 10,
   "schemaVersion": 1,
   "domain": "versioning",
-  "tags": ["clip-detail", "coordinator", "freeze", "share", "stage", "cleanup", "actions", "version-selection"],
+  "tags": [
+    "clip-detail",
+    "coordinator",
+    "freeze",
+    "share",
+    "stage",
+    "cleanup",
+    "actions",
+    "version-selection"
+  ],
   "problem": "The clip detail page must coordinate multiple independent concerns — playback, version selection, actions, and collaboration — without letting any one section own state that another needs. A band member should be able to select a version, hear exactly that version's cuts, vote on it, and trigger lifecycle actions (stage change, freeze, share, cleanup) all from one screen.",
   "analysis": "**ClipDetailClient** is the coordinator. It owns `selectedVersionId` state (auto-selects latest version on mount; no deselect — clicking the active version keeps it selected). It derives `activeCuts` from the selected version's cutMarks and passes them to WaveformPlayer. It passes `activeVersionId` to CollaborationSection so votes are cast on the correct version. The Actions section is conditionally rendered: hidden when `!canEdit && !frozen` to prevent phantom whitespace for MEMBER-role users on non-frozen clips.\n\n**ClipActionsClient** renders four action rows with bottom-sheet confirmations:\n- **Stage** — tap to open stage picker sheet (Idea / Sketch / Developing / Demo Ready). Visible when canEdit && !frozen.\n- **Freeze** — tap to open freeze picker (version selector). Editor+ role. On confirm: POST /api/clips/[clipId]/freeze with versionId. Shows error inline on failure.\n- **Frozen status + Unfreeze** — shown when clip.frozen. Recorder only can unfreeze. Other roles see a non-tappable row with a lock icon.\n- **Share link** — shown when frozen. Toggle public share: generatePublicToken / removePublicToken via PATCH /api/clips/[clipId]. Copy share link on tap once enabled. Copies /share/[token] URL to clipboard.\n- **Clean up source audio** — shown when frozen && driveFileId exists. Opens cleanup sheet: shows what will be deleted (raw .aac) and what will remain (frozen render). Executes POST /api/clips/[clipId]/cleanup.\n- **Processing** — shown when transcodeStatus === 'PENDING'. Non-tappable spinner row.\n\nAll action rows follow a consistent pattern: 56px touch targets, icon box on the left, label + subtitle, chevron or contextual right element.",
   "successCriteria": "- Selecting a version updates WaveformPlayer to skip that version's cuts\n- Clicking the active version keeps it selected (no deselect to null state)\n- Actions section hidden when member role + non-frozen (no phantom whitespace)\n- Stage picker opens as bottom sheet with 4 options; current stage highlighted\n- Freeze picker shows version list; pre-selects latest version; on confirm: renders clip, updates UI\n- Freeze error shown inline in freeze sheet; dismiss-able\n- Frozen status row shows Unfreeze option for RECORDER, lock icon for non-Recorder\n- Share toggle generates /share/[token] URL and copies to clipboard\n- Copy feedback: button label changes to 'Copied!' for 2 seconds\n- Cleanup sheet shows exactly what gets deleted and what remains before confirming\n- Processing row visible while transcodeStatus is PENDING; disappears when DONE\n- All bottom sheets have consistent Cancel button\n- Edit cuts link visible when canEdit && !frozen — navigates to /edit page",
@@ -45,7 +54,10 @@
   "componentFile": "components/clips/ClipDetailClient.tsx",
   "userGuide": "Open a clip from the session list. The waveform player at the top plays the clip with any cuts from the selected version applied. Tap any version card in the Versions section to switch — the player immediately reflects that version's cuts. Tap 'Edit cuts' to open the full-screen editor. In the Actions section: tap Stage to update the song's creative status; tap Freeze to lock the current edit and render a final file; after freezing, tap 'Enable public share' to generate a link anyone can use to listen. Tap 'Clean up source audio' to delete the raw recording from Drive once the clip is frozen and final.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-11" },
-    { "from": "draft", "to": "active", "date": "2026-04-11" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-11"
+    }
   ]
 }

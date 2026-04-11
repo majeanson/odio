@@ -1,12 +1,20 @@
 {
-  "featureKey": "odio-feat-session-mgmt",
+  "featureKey": "odio-2026-007",
   "title": "Session Management — Sessions, Clips, Naming, Stages",
   "status": "active",
-  "priority": "critical",
+  "priority": 1,
   "buildOrder": 6,
   "schemaVersion": 1,
   "domain": "sessions",
-  "tags": ["sessions", "clips", "crud", "naming", "song-stage", "postgres", "death-metal-names"],
+  "tags": [
+    "sessions",
+    "clips",
+    "crud",
+    "naming",
+    "song-stage",
+    "postgres",
+    "death-metal-names"
+  ],
   "problem": "A jam night produces 3-8 clips. Band members need to find, name, and navigate them easily. The recorder needs to delete mistakes. After many sessions, the band needs to track which songs are developed vs. still just ideas.",
   "analysis": "Sessions and clips stored in Postgres. A session auto-creates on first record of the night (date-based name). Each clip is one song — 5-30 min raw. Clips auto-named using a death metal word generator (adjective + noun pairs from curated lists, e.g. 'Putrid Descent', 'Severed Throne') — more memorable and distinguishable than 'Song 1 - 9:41pm'. Any band member can rename a clip via inline tap-to-edit on the clip name. ClipCard shows processing spinner when transcodeStatus=PENDING. Delete via '···' overflow button (replaces undiscoverable long-press). Session page bottom padding accounts for both tab bar height and device safe area inset.",
   "successCriteria": "- Session auto-created on first record of the night\n- Session name is editable inline by any member\n- Clip auto-named with a memorable death metal name (adjective + noun, e.g. 'Putrid Descent')\n- Any band member can rename a clip by tapping the clip name\n- ClipCard shows animated spinner while transcodeStatus is PENDING\n- Delete clip via '···' button → confirmation sheet → delete (RECORDER only)\n- Clip list shows: name, raw duration, version count, frozen lock, stage badge, processing spinner\n- Session has optional notes field (notes icon → bottom sheet editor)\n- Clip has song stage field: idea / sketch / developing / demo-ready (default: idea)\n- Last clip is never hidden behind the bottom tab bar\n- Storage indicator shows Drive quota used by this band's audio files",
@@ -45,12 +53,36 @@
   "componentFile": "components/clips/ClipCard.tsx",
   "userGuide": "Sessions appear in the band's session list sorted by date. Tap a session to see its clips. Tap the session name to rename it. Tap the notes icon to add session notes. Tap the QR icon to show a QR code bandmates can scan to join. Each clip card shows its auto-generated name, duration, version count, and current stage. Tap the clip name to rename it inline. Tap anywhere else on the card to open the clip detail. Tap '···' on a clip to delete it (Recorder-only — requires confirmation).",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" },
-    { "from": "frozen", "to": "active", "date": "2026-04-11", "reason": "ClipCard: death metal names, '···' delete button replacing long-press, processing spinner, session page padding fix" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "frozen",
+      "to": "active",
+      "date": "2026-04-11",
+      "reason": "ClipCard: death metal names, '···' delete button replacing long-press, processing spinner, session page padding fix"
+    }
   ],
   "revisions": [
-    { "date": "2026-04-11", "author": "marc+claude", "fields_changed": ["implementation", "decisions", "knownLimitations", "successCriteria", "userGuide", "tags"], "reason": "Death metal clip auto-names (lib/clipNames.ts), '···' overflow replaces long-press delete, processing spinner on ClipCard, session page padding fix for tab bar" }
+    {
+      "date": "2026-04-11",
+      "author": "marc+claude",
+      "fields_changed": [
+        "implementation",
+        "decisions",
+        "knownLimitations",
+        "successCriteria",
+        "userGuide",
+        "tags"
+      ],
+      "reason": "Death metal clip auto-names (lib/clipNames.ts), '···' overflow replaces long-press delete, processing spinner on ClipCard, session page padding fix for tab bar"
+    }
   ]
 }

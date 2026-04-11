@@ -1,12 +1,18 @@
 {
-  "featureKey": "odio-feat-audio-input",
+  "featureKey": "odio-2026-018",
   "title": "Audio Input Selection — External Mic, USB Interface, Headset",
   "status": "frozen",
-  "priority": "low",
+  "priority": 4,
   "buildOrder": 14,
   "schemaVersion": 1,
   "domain": "recording",
-  "tags": ["recording", "audio-input", "external-mic", "mediadevices", "nice-to-have"],
+  "tags": [
+    "recording",
+    "audio-input",
+    "external-mic",
+    "mediadevices",
+    "nice-to-have"
+  ],
   "problem": "The recording always uses the device's default microphone. Bands that record with an external condenser mic, USB audio interface, or headset mic plugged in cannot select it — the app always captures from the built-in mic. This limits recording quality for bands that bring audio gear.",
   "analysis": "MediaDevices.enumerateDevices() returns all available audio input devices. A device picker shown before recording starts (or in band settings) lets the user select their preferred input. The selected deviceId is passed to getUserMedia({ audio: { deviceId: { exact: selectedId } } }).\n\nV1 behavior (current): always uses the browser's default audio input. This is correct for most users (phone built-in mic) and has no UX overhead.\n\nThis feature adds a device picker — shown only when more than one audio input is available. If the device has only one input, nothing changes. The selected input is remembered in localStorage per device.\n\nNote: USB audio interfaces appear as separate audio input devices in most browsers. iOS Safari may not enumerate all Bluetooth audio inputs consistently — this is a known iOS limitation.",
   "successCriteria": "- Before starting a recording, app calls enumerateDevices() to list available audio inputs\n- If only one audio input is available: no picker shown, record starts immediately (current behavior)\n- If multiple inputs available: a bottom sheet shows the list with device names; user selects one\n- Selected device is passed to getUserMedia as deviceId constraint\n- Selected deviceId is saved to localStorage; pre-selected on next recording\n- If the saved device is no longer available (unplugged): fall back to default + show a brief 'Using built-in mic' toast\n- Level meter reflects the selected input device",
@@ -26,8 +32,15 @@
   "componentFile": "components/recording/DevicePicker.tsx",
   "userGuide": "If you have an external microphone, USB audio interface, or headset plugged in when you open the recording screen, a small mic icon appears to the left of the record button. Tap it to choose your audio input from the list. Your selection is remembered for next time. If the chosen device is unplugged after selection, the app automatically falls back to the built-in mic and shows a brief notification.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    }
   ]
 }

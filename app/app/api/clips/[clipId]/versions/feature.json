@@ -1,12 +1,22 @@
 {
-  "featureKey": "odio-feat-versioning",
+  "featureKey": "odio-2026-012",
   "title": "Versioning — Version Chain, Waveform Editor, Waveform Player, Freeze",
   "status": "active",
-  "priority": "high",
+  "priority": 2,
   "buildOrder": 10,
   "schemaVersion": 1,
   "domain": "versioning",
-  "tags": ["versioning", "version-history", "freeze", "wavesurfer", "waveform-editor", "waveform-player", "localstorage", "skip-cuts", "split"],
+  "tags": [
+    "versioning",
+    "version-history",
+    "freeze",
+    "wavesurfer",
+    "waveform-editor",
+    "waveform-player",
+    "localstorage",
+    "skip-cuts",
+    "split"
+  ],
   "problem": "A raw recording needs to evolve from v1 (messy, includes setup and dead air) to vFinal (clean, trimmed) through collaborative edits — with full history and a clear end state (freeze). The band needs to listen to any version, compare versions, and hear exactly what a cut sounds like before committing.",
   "analysis": "Two dedicated components with separate concerns:\n\n**WaveformPlayer** (clip detail page) — pure playback. Receives activeCuts from parent (ClipDetailClient). Visualises cuts as blue non-draggable regions (pointerEvents: none on regions so they don't block click-to-seek). Skip-cuts during playback via timeupdate handler. H:MM:SS clock + virtual duration display. Stamp chips are tappable — each seeks to that timestamp. Big 64px play button.\n\n**WaveformEditor** (edit page, always edit mode) — cut creation only. Custom pointer overlay (absolute inset-0, touch-none) handles both tap-to-seek and drag-to-create-region. Red draggable/resizable regions. Trim shortcut (pre-seeds start+end cuts). Split mode (mark a time position, confirm → creates Part B as new clip, navigates to session page). Submit → new version in Postgres, router.back().\n\n**ClipDetailClient** — owns selectedVersionId state. Feeds activeCuts to WaveformPlayer. Feeds activeVersionId to CollaborationSection for version-aware voting. Version list as large tappable cards. Clicking active version keeps it selected (no deselect/null state). Edit link to /edit page.\n\nVersions are metadata only (cutMarks JSON) pointing at the same source audio. Source audio never mutated. Linear chain. localStorage safety net for in-progress edits.",
   "successCriteria": "- Version list shows full chain: v number, description, result duration, cut count\n- Selecting a version in the detail page updates the waveform player to skip that version's cuts\n- Click-to-seek works on the waveform — clicking anywhere moves the playhead, play starts from that position\n- Stamp chips in the player are tappable and seek to that timestamp\n- Submit button is always active — description is optional\n- Any member can create a version from any existing version\n- Trim shortcut pre-seeds start+end cut marks\n- Split: marks a time position → creates Part B clip + v2 on original → navigates to session page showing both clips\n- Drag on the edit waveform creates a cut region\n- Freeze locks the version and triggers render (see feat-render)\n- In-progress edits survive browser crash via localStorage draft\n- Draft banner shown on editor reopen with Resume / Dismiss",
@@ -64,12 +74,38 @@
   "componentFile": "components/clips/WaveformEditor.tsx",
   "userGuide": "From a clip's detail page, select a version in the Versions section to hear that version's cuts applied. Tapping stamp chips (🔥 ⭐ etc.) in the player seeks to that moment. Tap 'Edit cuts' to open the full-screen editor. In the editor: drag on the waveform to create a red cut region; tap Trim to pre-seed start/end cuts; tap Clear all to reset; tap Split to divide the song into two clips at a chosen time position. Tap 'Start from' pills to load a previous version's cuts as a starting point. Tap 'Submit edit' to save as a new version — description is optional.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" },
-    { "from": "frozen", "to": "active", "date": "2026-04-11", "reason": "Major architectural redesign: WaveformPlayer + WaveformEditor split, ClipDetailClient coordinator, version deselect fix, split navigation, click-to-seek fix" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "frozen",
+      "to": "active",
+      "date": "2026-04-11",
+      "reason": "Major architectural redesign: WaveformPlayer + WaveformEditor split, ClipDetailClient coordinator, version deselect fix, split navigation, click-to-seek fix"
+    }
   ],
   "revisions": [
-    { "date": "2026-04-11", "author": "marc+claude", "fields_changed": ["title", "analysis", "implementation", "decisions", "knownLimitations", "successCriteria", "userGuide", "tags"], "reason": "Separated WaveformPlayer (pure play) from WaveformEditor (pure edit). ClipDetailClient owns selectedVersionId. Click-to-seek fixed via pointerEvents:none on regions. Split navigates to session page. Stamp chips are tappable. Version deselect removed." }
+    {
+      "date": "2026-04-11",
+      "author": "marc+claude",
+      "fields_changed": [
+        "title",
+        "analysis",
+        "implementation",
+        "decisions",
+        "knownLimitations",
+        "successCriteria",
+        "userGuide",
+        "tags"
+      ],
+      "reason": "Separated WaveformPlayer (pure play) from WaveformEditor (pure edit). ClipDetailClient owns selectedVersionId. Click-to-seek fixed via pointerEvents:none on regions. Split navigates to session page. Stamp chips are tappable. Version deselect removed."
+    }
   ]
 }

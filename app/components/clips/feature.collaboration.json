@@ -1,12 +1,20 @@
 {
-  "featureKey": "odio-feat-collaboration",
+  "featureKey": "odio-2026-016",
   "title": "Collaboration — Votes, Comments, Stamp Heat Map, Activity",
   "status": "frozen",
-  "priority": "medium",
+  "priority": 3,
   "buildOrder": 12,
   "schemaVersion": 1,
   "domain": "collaboration",
-  "tags": ["votes", "comments", "stamps", "heat-map", "activity", "polling", "postgres"],
+  "tags": [
+    "votes",
+    "comments",
+    "stamps",
+    "heat-map",
+    "activity",
+    "polling",
+    "postgres"
+  ],
   "problem": "After editing, the band needs a lightweight way to converge on which version is final — without a group chat thread full of voice notes and confusion. Voting, timestamped comments, and stamp heat maps give structure without overhead.",
   "analysis": "All collaboration data stored in Postgres (votes, comments). Polling (5-10s when clip page is open) surfaces new activity. Per clip: one vote per member per version (Keep / Revise / Pass), changeable. Vote tally visible to all. Comments: general or timestamped (shown as pins on waveform). Waveform also shows stamps (fire/keep/uncertain/idea, created during recording) and annotations (text notes, created during recording or in editor) — both as pins. Stamp heat map: multiple stamps near the same timestamp aggregate into a denser marker. Version list has an inline mini-player: play/pause directly from the version card. Activity feed per clip. In-app notification dot when all members have voted Keep on the same version. UX priority: during active versioning, version list is the primary view and comments are secondary (collapsed behind a tab). After a clip is frozen, comments/activity becomes the primary view — the collaborative discussion is most valuable once the cut is finalized. Comment authors can edit or delete their own comments.",
   "successCriteria": "- Vote (Keep/Revise/Pass) per member per version; tally visible to all; changeable\n- Votes and vote tally update within 5-10s via polling\n- Timestamped comments show as pins on waveform during playback\n- Stamp heat map overlay visible on waveform — denser where more stamps exist\n- Version list: inline mini-player on each version card\n- Activity feed: version creates + votes + comments in order\n- Notification dot on clip when all members have voted Keep on same version\n- Private annotation toggle: any annotation can be marked private (visible only to author)\n- Comment author can edit their comment (shows 'edited' label after edit)\n- Comment author can delete their comment (confirmation required; removes from feed)\n- Clip detail layout: during active versioning, version list is default open tab; after freeze, comments/activity is default open tab",
@@ -33,8 +41,15 @@
   "componentFile": "components/clips/CollaborationSection.tsx",
   "userGuide": "On a clip's detail page, the Versions tab shows all edits; the Comments tab shows the discussion. Vote on any version by tapping Keep, Revise, or Pass — the tally updates for all band members within seconds. Leave a comment in the text field (optionally tap the waveform first to attach a timestamp). When everyone has voted Keep on the same version, a banner appears prompting the Recorder or an Editor to freeze it. Comments can be edited or deleted by their author (long-press or tap the '...' menu).",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-10" },
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    }
   ]
 }

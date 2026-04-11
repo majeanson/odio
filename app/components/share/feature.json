@@ -1,12 +1,19 @@
 {
-  "featureKey": "odio-feat-public-share-player",
+  "featureKey": "odio-2026-015",
   "title": "Public Share Player — Unauthenticated Clip Playback",
   "status": "active",
-  "priority": "medium",
+  "priority": 3,
   "buildOrder": 11,
   "schemaVersion": 1,
   "domain": "render",
-  "tags": ["public-share", "wavesurfer", "unauthenticated", "frozen", "stamps", "download"],
+  "tags": [
+    "public-share",
+    "wavesurfer",
+    "unauthenticated",
+    "frozen",
+    "stamps",
+    "download"
+  ],
   "problem": "A frozen clip should be shareable outside the band — with a producer, a friend, or social media. The listener should not need a Google account or any signup. Only the frozen render is exposed; no session metadata, band data, or version history leaks through the public page.",
   "analysis": "The public share page (/share/[token]) fetches clip metadata by publicToken from Postgres. Audio is served via /api/audio/public/[token] — a separate proxy route that looks up the clip by token and streams the finalDriveFileId from Drive using the recorder's stored token. No user auth is required on either the page or the audio route.\n\nPublicPlayer.tsx uses WaveSurfer.js to render the waveform and play the frozen audio. Stamps are shown as tappable chips (currently display-only divs, not buttons — unlike the authenticated WaveformPlayer). A download button triggers the /api/audio/public/[token] route with a download intent, giving the user the .aac file.\n\nThe public page shows: clip name, band name (optional), clip duration, waveform player with stamps, play/pause, download. No version list, no vote buttons, no comments, no edit actions — nothing that reveals internal band structure.",
   "successCriteria": "- /share/[token] loads without authentication\n- Waveform renders and plays the frozen render audio\n- Stamp chips displayed with correct emoji and timestamp\n- Play/pause 64px button — large touch target\n- Download button downloads the .aac file\n- Page shows clip name and duration\n- Error state shown if token is invalid or clip has been un-shared\n- Audio not exposed if publicToken is null or clip is not frozen",
@@ -33,7 +40,10 @@
   "componentFile": "components/share/PublicPlayer.tsx",
   "userGuide": "After freezing a clip, tap 'Enable public share' on the clip detail page to generate a /share/[token] link. Share this URL with anyone — they can open it in any browser without signing in. They'll see the clip name, a waveform player, and stamp markers. They can play, seek, and download the audio. To revoke access, tap 'Enable public share' again to disable — the link immediately stops working.",
   "statusHistory": [
-    { "from": null, "to": "draft", "date": "2026-04-11" },
-    { "from": "draft", "to": "active", "date": "2026-04-11" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-11"
+    }
   ]
 }
