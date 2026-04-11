@@ -39,24 +39,24 @@ export default async function SharePage({
   return (
     <div className="flex min-h-svh flex-col bg-base text-primary">
       {/* Header */}
-      <header className="px-6 pt-safe pt-8 pb-4">
-        <p className="text-xs text-muted uppercase tracking-wider">
+      <header className="px-6 pt-safe pt-10 pb-6">
+        <p className="text-xs font-bold text-muted uppercase tracking-wider">
           {clip.session.band.name} · {clip.session.name}
         </p>
-        <h1 className="mt-1 text-2xl font-bold text-primary">{clip.name}</h1>
+        <h1 className="mt-2 text-3xl font-bold text-primary">{clip.name}</h1>
 
-        <div className="mt-2 flex items-center gap-3">
+        <div className="mt-3 flex items-center gap-3">
           {clip.sourceDurationMs != null && (
-            <span className="font-mono text-sm text-secondary">
+            <span className="font-mono text-base text-secondary">
               {formatDuration(
                 frozenVersion?.resultDurationMs ?? clip.sourceDurationMs,
               )}
             </span>
           )}
-          <span className="rounded-full bg-elevated px-2 py-0.5 text-xs text-secondary">
+          <span className="rounded-full bg-elevated px-2.5 py-1 text-xs text-secondary">
             {STAGE_LABELS[clip.stage as ClipStage]}
           </span>
-          <span className="flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
+          <span className="flex items-center gap-1 rounded-full bg-accent/20 px-2.5 py-1 text-xs text-accent">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -76,7 +76,7 @@ export default async function SharePage({
       </header>
 
       {/* Public audio player */}
-      <main className="flex-1 px-4">
+      <main className="flex-1 px-5">
         <PublicPlayer
           token={token}
           sourceDurationMs={clip.sourceDurationMs ?? 0}

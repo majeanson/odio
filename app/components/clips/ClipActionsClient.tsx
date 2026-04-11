@@ -169,7 +169,7 @@ export function ClipActionsClient({
     right?: React.ReactNode;
     highlight?: boolean;
   }) {
-    const classes = `flex items-center gap-4 rounded-2xl px-5 py-4 transition-colors w-full text-left ${
+    const classes = `flex items-center gap-4 rounded-2xl px-5 py-5 transition-colors w-full text-left ${
       highlight
         ? "bg-accent/10 border border-accent/30 hover:bg-accent/15"
         : "bg-surface hover:bg-elevated"
@@ -178,8 +178,8 @@ export function ClipActionsClient({
       <button onClick={onClick} className={classes}>
         {icon}
         <div className="flex-1 min-w-0">
-          <p className="text-base font-medium text-primary">{label}</p>
-          {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
+          <p className="text-lg font-semibold text-primary">{label}</p>
+          {sub && <p className="text-sm text-muted mt-0.5">{sub}</p>}
         </div>
         {right ?? (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4 text-muted shrink-0" aria-hidden>
@@ -191,8 +191,8 @@ export function ClipActionsClient({
       <div className={classes}>
         {icon}
         <div className="flex-1 min-w-0">
-          <p className="text-base font-medium text-primary">{label}</p>
-          {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
+          <p className="text-lg font-semibold text-primary">{label}</p>
+          {sub && <p className="text-sm text-muted mt-0.5">{sub}</p>}
         </div>
         {right}
       </div>
@@ -200,7 +200,7 @@ export function ClipActionsClient({
   }
 
   const iconBox = (color: string, node: React.ReactNode) => (
-    <div className={`flex size-10 items-center justify-center rounded-xl shrink-0 ${color}`}>
+    <div className={`flex size-12 items-center justify-center rounded-xl shrink-0 ${color}`}>
       {node}
     </div>
   );
@@ -320,12 +320,12 @@ export function ClipActionsClient({
             <button
               key={s}
               onClick={() => handleStageChange(s)}
-              className={`w-full rounded-2xl px-5 py-4 text-left transition-colors ${
+              className={`w-full rounded-2xl px-5 py-5 text-left transition-colors ${
                 s === stage ? "bg-accent/20 text-accent" : "bg-surface text-primary hover:bg-elevated"
               }`}
             >
-              <span className="text-base font-medium">{STAGE_LABELS[s]}</span>
-              <span className="block text-xs text-muted mt-0.5">{STAGE_DESCRIPTIONS[s]}</span>
+              <span className="text-lg font-semibold">{STAGE_LABELS[s]}</span>
+              <span className="block text-sm text-muted mt-1">{STAGE_DESCRIPTIONS[s]}</span>
             </button>
           ))}
           <Button onClick={() => setStageSheetOpen(false)} variant="ghost" fullWidth>Cancel</Button>

@@ -86,7 +86,7 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
   return (
     <>
       <div
-        className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3 transition-colors active:bg-elevated cursor-pointer"
+        className="flex items-center gap-4 rounded-2xl bg-surface px-5 py-4 transition-colors active:bg-elevated cursor-pointer"
         onClick={handleCardClick}
       >
         {/* Main content */}
@@ -101,12 +101,12 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
               onBlur={handleNameBlur}
               onKeyDown={handleNameKeyDown}
               maxLength={100}
-              className="w-full bg-transparent text-base font-medium text-primary focus:outline-none border-b border-accent pb-0.5"
+              className="w-full bg-transparent text-lg font-semibold text-primary focus:outline-none border-b border-accent pb-0.5"
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
             <button
-              className="text-left text-base font-medium text-primary"
+              className="text-left text-lg font-semibold text-primary"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -119,12 +119,12 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
           )}
 
           {/* Meta row: time · duration · stage · version count */}
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted">
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <span className="text-sm text-muted">
               {new Date(clip.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
             </span>
             {clip.sourceDurationMs != null && (
-              <span className="font-mono text-xs text-muted">
+              <span className="font-mono text-sm text-muted">
                 {formatDuration(clip.sourceDurationMs)}
               </span>
             )}
@@ -132,18 +132,18 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
               {STAGE_LABELS[clip.stage]}
             </Badge>
             {clip._count && clip._count.versions > 0 && (
-              <span className="text-xs text-muted">
-                {clip._count.versions} version{clip._count.versions !== 1 ? "s" : ""}
+              <span className="text-sm text-muted">
+                {clip._count.versions}v
               </span>
             )}
           </div>
         </div>
 
         {/* Right side — state indicator + "···" menu button */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           {clip.transcodeStatus === "PENDING" ? (
             <span
-              className="size-4 rounded-full border-2 border-muted border-t-transparent animate-spin"
+              className="size-5 rounded-full border-2 border-muted border-t-transparent animate-spin"
               aria-label="Processing"
             />
           ) : clip.frozen ? (
@@ -154,7 +154,7 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="size-4 text-accent"
+              className="size-5 text-accent"
               aria-label="Frozen"
             >
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -167,9 +167,9 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
             <button
               onClick={(e) => { e.stopPropagation(); setDeleteSheetOpen(true); }}
               aria-label="More actions"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:text-secondary hover:bg-elevated transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-muted hover:text-secondary hover:bg-elevated transition-colors"
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="size-4" aria-hidden>
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-5" aria-hidden>
                 <circle cx="5" cy="12" r="1.5" />
                 <circle cx="12" cy="12" r="1.5" />
                 <circle cx="19" cy="12" r="1.5" />

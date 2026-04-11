@@ -49,25 +49,25 @@ export function JoinBandClient({
   }
 
   return (
-    <div className="px-6 py-12 flex flex-col items-center text-center gap-6">
+    <div className="px-6 py-14 flex flex-col items-center text-center gap-7">
       {/* Band icon */}
-      <span className="text-5xl">🎸</span>
+      <span className="text-6xl">🎸</span>
 
       {/* Band info */}
       <div>
-        <h2 className="text-2xl font-bold text-primary">{bandName}</h2>
-        <p className="mt-2 text-sm text-secondary">
+        <h2 className="text-3xl font-bold text-primary">{bandName}</h2>
+        <p className="mt-2 text-base text-secondary">
           Invited by {creatorEmail}
         </p>
       </div>
 
       {/* Role info */}
-      <div className="rounded-xl bg-surface px-4 py-3 text-left w-full max-w-xs">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted mb-2">
+      <div className="rounded-2xl bg-surface px-5 py-4 text-left w-full max-w-xs">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
           You&apos;ll join as
         </p>
-        <p className="text-sm text-primary font-medium">Editor</p>
-        <p className="text-xs text-secondary mt-1">
+        <p className="text-base text-primary font-semibold">Editor</p>
+        <p className="text-sm text-secondary mt-1">
           Can record and submit new clip versions. Audio is stored in{" "}
           {creatorEmail}&apos;s Google Drive.
         </p>
@@ -75,13 +75,13 @@ export function JoinBandClient({
 
       {/* Error */}
       {error && (
-        <p className="text-sm text-danger rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 w-full">
+        <p className="text-base text-danger rounded-2xl border border-danger/30 bg-danger/10 px-5 py-4 w-full">
           {error}
         </p>
       )}
 
       {/* Action */}
-      <Button onClick={handleJoin} disabled={loading} fullWidth>
+      <Button onClick={handleJoin} disabled={loading} fullWidth size="lg">
         {loading ? "Joining…" : `Join ${bandName}`}
       </Button>
     </div>

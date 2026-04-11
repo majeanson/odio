@@ -1,60 +1,67 @@
 @import "tailwindcss";
 
-/* ─── Odio Design Tokens ──────────────────────────────────────────────────── */
-/* Dark-only app. No light mode. All colors defined here and used via         */
-/* Tailwind utilities (bg-base, text-primary, etc.)                            */
+/* ─── Odio Design Tokens — "Dead Wax" Studio Console ─────────────────────── */
 
 @theme {
-  /* Backgrounds */
-  --color-base:     #0a0a0a; /* page backgrounds */
-  --color-surface:  #141414; /* cards, sheets */
-  --color-elevated: #1e1e1e; /* modals, overlays, tab bar */
-  --color-border:   #262626; /* dividers, card borders */
+  /* ── Surfaces ── */
+  --color-base:     #080808; /* deepest black — OLED-native */
+  --color-surface:  #111111; /* card & sheet surfaces */
+  --color-elevated: #1a1a1a; /* modals, overlays, tab bar */
+  --color-border:   #333333; /* clearly visible dividers */
 
-  /* Text */
-  --color-primary:   #f5f5f5; /* headings, primary text */
-  --color-secondary: #a3a3a3; /* labels, timestamps, metadata */
-  --color-muted:     #525252; /* placeholders, disabled */
+  /* ── Text ── */
+  --color-primary:   #ffffff; /* pure white — maximum contrast */
+  --color-secondary: #999999; /* secondary labels */
+  --color-muted:     #555555; /* placeholders, disabled */
 
-  /* Brand */
-  --color-accent:     #f59e0b; /* recording button, active state, amber */
-  --color-accent-dim: #78350f; /* recording ring pulse */
+  /* ── Brand ── */
+  --color-accent:     #f59e0b; /* amber — the only color that matters */
+  --color-accent-dim: #78350f; /* deep amber for pulse rings */
 
-  /* Status */
-  --color-danger:  #ef4444; /* delete, destructive */
-  --color-success: #22c55e; /* freeze confirmed, upload done */
+  /* ── Semantic ── */
+  --color-danger:  #ef4444;
+  --color-success: #22c55e;
 
-  /* Stamp colors */
-  --color-stamp-fire:      #ef4444; /* 🔥 */
-  --color-stamp-keep:      #eab308; /* ⭐ */
-  --color-stamp-uncertain: #f97316; /* ❓ */
-  --color-stamp-idea:      #3b82f6; /* 💡 */
+  /* ── Stamps ── */
+  --color-stamp-fire:      #ef4444;
+  --color-stamp-keep:      #eab308;
+  --color-stamp-uncertain: #f97316;
+  --color-stamp-idea:      #3b82f6;
 
-  /* Typography — system fonts only, no web font loading */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
-    sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", "Courier New", monospace;
+  /* ── Typography ── */
+  /* CSS variables injected by next/font via className on <html> */
+  --font-display: var(--font-heading), "Arial Black", system-ui, sans-serif;
+  --font-sans:    var(--font-body), system-ui, sans-serif;
+  --font-mono:    var(--font-code), "Cascadia Code", "Courier New", monospace;
 
-  /* Spacing */
-  --tab-bar-height: 56px;
+  /* ── Layout ── */
+  --tab-bar-height: 80px; /* extra tall — thumb-pressable in the dark */
 }
 
-/* ─── Base Styles ─────────────────────────────────────────────────────────── */
+/* ─── Base ────────────────────────────────────────────────────────────────── */
 
 html {
   color-scheme: dark;
   background-color: var(--color-base);
   color: var(--color-primary);
   font-family: var(--font-sans);
-  -webkit-tap-highlight-color: transparent; /* remove tap flash on mobile */
+  font-size: 18px;
+  -webkit-tap-highlight-color: transparent;
   height: 100%;
 }
 
 body {
   min-height: 100%;
   background-color: var(--color-base);
-  /* Safe area insets for notched phones */
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ─── Display font utility ────────────────────────────────────────────────── */
+/* Apply to big headings: session names, wordmark, section headers */
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
 }
 
 /* ─── Scrollbar ───────────────────────────────────────────────────────────── */
@@ -64,28 +71,65 @@ body {
   scrollbar-color: var(--color-border) transparent;
 }
 
-/* ─── Focus Visible ───────────────────────────────────────────────────────── */
+/* ─── Focus ───────────────────────────────────────────────────────────────── */
 
 :focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 
-/* ─── Tap target minimum ──────────────────────────────────────────────────── */
-/* All interactive elements enforce 44px minimum touch target */
+/* ─── Touch targets — 64px minimum (WCAG 2.5.8 extended) ─────────────────── */
+
 button,
 a,
 [role="button"] {
+  min-height: 64px;
+  min-width: 44px;
+}
+
+/* Inline/icon-only exceptions (explicitly sized by class) */
+button.icon-sm,
+a.icon-sm {
   min-height: 44px;
   min-width: 44px;
 }
 
-/* ─── Safe Area Utilities ─────────────────────────────────────────────────── */
-/* Shorthand for safe area inset padding — used on full-screen pages          */
-.pt-safe {
-  padding-top: env(safe-area-inset-top);
+/* ─── Physical press effect ───────────────────────────────────────────────── */
+/* Buttons have depth — they feel like they can be pushed */
+
+.btn-physical {
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.btn-physical:active {
+  transform: translateY(3px);
+  box-shadow: none !important;
 }
 
-.pb-safe {
-  padding-bottom: env(safe-area-inset-bottom);
+/* ─── Safe Area Utilities ─────────────────────────────────────────────────── */
+
+.pt-safe { padding-top: env(safe-area-inset-top); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+
+/* ─── Input fields ────────────────────────────────────────────────────────── */
+
+input, textarea {
+  font-family: var(--font-sans);
+  font-size: inherit;
+}
+
+/* ─── Desktop centering ───────────────────────────────────────────────────── */
+
+@media (min-width: 640px) {
+  body {
+    display: flex;
+    justify-content: center;
+    background: #040404;
+  }
+
+  body > * {
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 1px 0 0 0 var(--color-border), -1px 0 0 0 var(--color-border);
+  }
 }

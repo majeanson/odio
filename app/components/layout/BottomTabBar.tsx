@@ -35,7 +35,7 @@ function MicIcon({ active }: { active: boolean }) {
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="size-6"
+      className="size-8"
       aria-hidden
     >
       <rect x="9" y="2" width="6" height="11" rx="3" />
@@ -48,7 +48,7 @@ function MicIcon({ active }: { active: boolean }) {
 
 function CalendarIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-6" aria-hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-8" aria-hidden>
       <rect x="3" y="4" width="18" height="18" rx="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -59,7 +59,7 @@ function CalendarIcon() {
 
 function MusicNoteIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-6" aria-hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-8" aria-hidden>
       <path d="M9 18V5l12-2v13" />
       <circle cx="6" cy="18" r="3" />
       <circle cx="18" cy="16" r="3" />
@@ -69,7 +69,7 @@ function MusicNoteIcon() {
 
 function UsersIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-6" aria-hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-8" aria-hidden>
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -135,7 +135,7 @@ export function BottomTabBar({
       className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-elevated"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="flex h-14 items-stretch">
+      <div className="flex h-[80px] items-stretch">
         {tabs.map((tab) => {
           const isActive = tab.match ? tab.match(pathname) : pathname.startsWith(tab.href);
           const isRec = tab.isRecord;
@@ -147,16 +147,20 @@ export function BottomTabBar({
               aria-label={tab.label}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "relative flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors",
-                isActive ? "text-accent" : "text-muted",
+                "relative flex flex-1 flex-col items-center justify-center gap-1.5 transition-colors",
+                isActive ? "text-accent" : "text-muted hover:text-secondary",
               )}
             >
+              {/* Active background pill behind icon+label group */}
+              {isActive && (
+                <span className="absolute inset-x-2 inset-y-2 rounded-2xl bg-accent/10 border border-accent/20" />
+              )}
               {/* Pulsing ring on Record tab when recording */}
               {isRec && isRecording && (
                 <span className="absolute inset-0 animate-ping rounded-full bg-accent/20 pointer-events-none" />
               )}
-              {tab.icon}
-              <span className="text-[10px] font-medium leading-none">
+              <span className="relative">{tab.icon}</span>
+              <span className="relative text-xs font-bold leading-none tracking-wide uppercase">
                 {tab.label}
               </span>
             </Link>

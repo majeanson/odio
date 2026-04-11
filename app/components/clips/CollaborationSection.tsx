@@ -144,8 +144,8 @@ export function CollaborationSection({
       {/* ── VOTE ─────────────────────────────────────────────────────────── */}
       {voteVersion && (
         <section aria-label="Vote">
-          <div className="flex items-baseline gap-2 mb-3 px-1">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted">
+          <div className="flex items-baseline gap-2 mb-4 px-1">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted">
               Vote
             </p>
             <span className="text-xs text-muted">
@@ -163,7 +163,7 @@ export function CollaborationSection({
           )}
 
           {/* Big vote buttons */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-3">
             {VOTE_OPTIONS.map(({ value, label, sub, color }) => {
               const isMyVote = myVote?.value === value;
               const count = voteCountsForVersion?.[value] ?? 0;
@@ -172,19 +172,19 @@ export function CollaborationSection({
                   key={value}
                   onClick={() => voteVersion && voteMutation.mutate({ versionId: voteVersion.id, value })}
                   disabled={voteMutation.isPending}
-                  className={`flex flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-4 transition-colors ${
+                  className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl border px-2 py-6 transition-colors ${
                     isMyVote
                       ? color
                       : "bg-surface border-border text-muted hover:bg-elevated"
                   }`}
                 >
-                  <span className={`text-base font-semibold ${isMyVote ? "" : "text-secondary"}`}>
+                  <span className={`text-lg font-bold ${isMyVote ? "" : "text-secondary"}`}>
                     {label}
                   </span>
-                  <span className="text-xs text-muted">{sub}</span>
+                  <span className="text-xs text-muted leading-snug text-center">{sub}</span>
                   {count > 0 && (
-                    <span className="mt-1 text-xs font-medium tabular-nums">
-                      {count} {count === 1 ? "vote" : "votes"}
+                    <span className="mt-1 text-sm font-semibold tabular-nums">
+                      {count}
                     </span>
                   )}
                 </button>
@@ -196,7 +196,7 @@ export function CollaborationSection({
 
       {/* ── COMMENTS ─────────────────────────────────────────────────────── */}
       <section aria-label="Comments">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted px-1">
+        <p className="mb-4 text-xs font-bold uppercase tracking-widest text-muted px-1">
           Comments {comments.length > 0 && `(${comments.length})`}
         </p>
 
@@ -209,7 +209,7 @@ export function CollaborationSection({
             onKeyDown={(e) => e.key === "Enter" && submitComment()}
             placeholder="Add a comment…"
             maxLength={1000}
-            className="flex-1 rounded-2xl border border-border bg-surface px-4 py-3 text-base text-primary placeholder:text-muted focus:border-accent focus:outline-none"
+            className="flex-1 rounded-2xl border border-border bg-surface px-5 py-4 text-base text-primary placeholder:text-muted focus:border-accent focus:outline-none"
           />
           <Button
             onClick={submitComment}

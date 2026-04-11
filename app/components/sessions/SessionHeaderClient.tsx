@@ -74,27 +74,27 @@ export function SessionHeaderClient({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-2 px-6 pt-6 pb-2">
+      <div className="flex items-center justify-between gap-3 px-5 pt-6 pb-3">
         <div className="min-w-0 flex-1">
           {canEdit ? (
             <InlineEdit
               value={name}
               onSave={handleRename}
-              className="text-xl font-bold text-primary leading-tight"
-              inputClassName="text-xl font-bold"
+              className="font-display text-3xl font-bold text-primary leading-tight"
+              inputClassName="font-display text-3xl font-bold"
               placeholder="Session name"
             />
           ) : (
-            <h1 className="text-xl font-bold text-primary truncate">{name}</h1>
+            <h1 className="font-display text-3xl font-bold text-primary truncate">{name}</h1>
           )}
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Notes button */}
           <button
             onClick={openNotesSheet}
             aria-label="Session notes"
-            className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
+            className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors ${
               notes
                 ? "bg-accent/20 text-accent"
                 : "bg-surface text-secondary hover:text-primary"
@@ -107,7 +107,7 @@ export function SessionHeaderClient({
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="size-4"
+              className="size-6"
               aria-hidden
             >
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -122,7 +122,7 @@ export function SessionHeaderClient({
           <button
             onClick={() => setQrOpen(true)}
             aria-label="Show QR code"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-surface text-secondary hover:text-primary transition-colors"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-secondary hover:text-primary transition-colors"
           >
             <svg
               viewBox="0 0 24 24"
@@ -131,7 +131,7 @@ export function SessionHeaderClient({
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="size-4"
+              className="size-6"
               aria-hidden
             >
               <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -148,10 +148,10 @@ export function SessionHeaderClient({
       {notes && (
         <button
           onClick={openNotesSheet}
-          className="mx-6 mb-2 rounded-xl bg-surface px-4 py-2.5 text-left w-[calc(100%-3rem)]"
+          className="mx-5 mb-3 rounded-2xl bg-surface px-5 py-3 text-left w-[calc(100%-2.5rem)]"
         >
-          <p className="text-xs text-muted mb-0.5">Session notes</p>
-          <p className="text-sm text-secondary line-clamp-2">{notes}</p>
+          <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-1">Session notes</p>
+          <p className="text-base text-secondary line-clamp-2">{notes}</p>
         </button>
       )}
 

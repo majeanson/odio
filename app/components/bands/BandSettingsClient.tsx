@@ -136,28 +136,28 @@ export function BandSettingsClient({
   const removingself = removeTarget?.userEmail === currentUserEmail;
 
   return (
-    <div className="px-4 py-4 space-y-8">
+    <div className="px-5 py-5 space-y-8">
       {/* Band name */}
       <section>
-        <p className="text-xs font-medium uppercase tracking-wider text-muted mb-3">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3">
           Band
         </p>
-        <p className="text-lg font-semibold text-primary">{bandName}</p>
+        <p className="font-display text-3xl font-bold text-primary">{bandName}</p>
       </section>
 
       {/* Invite link */}
       <section>
-        <p className="text-xs font-medium uppercase tracking-wider text-muted mb-3">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3">
           Invite link
         </p>
-        <div className="rounded-2xl bg-surface p-4 space-y-3">
-          <p className="break-all font-mono text-xs text-secondary select-all">
+        <div className="rounded-2xl bg-surface p-5 space-y-4">
+          <p className="break-all font-mono text-sm text-secondary select-all">
             {inviteUrl}
           </p>
-          <Button onClick={handleCopyInvite} variant="secondary" fullWidth>
+          <Button onClick={handleCopyInvite} variant="secondary" fullWidth size="lg">
             {copied ? "Copied!" : "Copy invite link"}
           </Button>
-          <p className="text-xs text-muted">
+          <p className="text-sm text-muted">
             Share this link with bandmates. They&apos;ll join as Editors by
             default and can record to your Drive folder.
           </p>
@@ -166,25 +166,25 @@ export function BandSettingsClient({
 
       {/* Members */}
       <section>
-        <p className="text-xs font-medium uppercase tracking-wider text-muted mb-3">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3">
           Members ({members.length})
         </p>
-        <ul className="space-y-2" role="list">
+        <ul className="space-y-3" role="list">
           {members.map((m) => {
             const isSelf = m.userEmail === currentUserEmail;
             const isChanging = roleChanging === m.userEmail;
 
             return (
-              <li key={m.userEmail} className="rounded-2xl bg-surface px-4 py-3">
+              <li key={m.userEmail} className="rounded-2xl bg-surface px-5 py-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-primary">
+                    <p className="truncate text-base font-semibold text-primary">
                       {m.displayName ?? m.userEmail}
                       {isSelf && (
-                        <span className="ml-2 text-xs text-muted">(you)</span>
+                        <span className="ml-2 text-sm text-muted">(you)</span>
                       )}
                     </p>
-                    <p className="text-xs text-muted truncate">{m.userEmail}</p>
+                    <p className="text-sm text-muted truncate">{m.userEmail}</p>
                   </div>
                   <Badge variant={ROLE_VARIANTS[m.role]}>
                     {ROLE_LABELS[m.role]}
@@ -245,11 +245,11 @@ export function BandSettingsClient({
 
       {/* Drive folder + Storage quota */}
       <section>
-        <p className="text-xs font-medium uppercase tracking-wider text-muted mb-3">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3">
           Storage
         </p>
-        <div className="rounded-2xl bg-surface p-4 space-y-3">
-          <p className="text-sm text-secondary">
+        <div className="rounded-2xl bg-surface p-5 space-y-4">
+          <p className="text-base text-secondary">
             Audio is stored in the band creator&apos;s Google Drive.
           </p>
           <a

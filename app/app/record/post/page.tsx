@@ -245,30 +245,30 @@ function PostRecordScreen() {
   return (
     <div className="flex min-h-svh flex-col bg-base text-primary px-6 pt-safe">
       {/* Header */}
-      <div className="flex h-14 items-center">
+      <div className="flex h-[72px] items-center">
         <button
           onClick={handleDone}
-          className="text-secondary hover:text-primary transition-colors"
+          className="flex items-center justify-center text-secondary hover:text-primary transition-colors"
           aria-label="Close"
         >
           <svg
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth={2}
+            strokeWidth={2.5}
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="size-6"
+            className="size-8"
             aria-hidden
           >
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
-        <h1 className="ml-3 text-base font-semibold">Clip saved</h1>
+        <h1 className="ml-4 font-display text-2xl font-bold">Clip saved</h1>
       </div>
 
       {/* Clip name */}
-      <div className="mt-8">
+      <div className="mt-10">
         {editingName ? (
           <div className="flex gap-2">
             <input
@@ -285,7 +285,7 @@ function PostRecordScreen() {
                 }
               }}
               maxLength={100}
-              className="flex-1 rounded-xl border border-accent bg-surface px-4 py-3 text-xl font-semibold text-primary focus:outline-none"
+              className="flex-1 rounded-2xl border border-accent bg-surface px-5 py-4 font-display text-3xl font-bold text-primary focus:outline-none"
             />
           </div>
         ) : (
@@ -294,10 +294,10 @@ function PostRecordScreen() {
               setNameInput(clipName);
               setEditingName(true);
             }}
-            className="flex items-center gap-2"
+            className="flex items-start gap-3"
             aria-label="Rename clip"
           >
-            <span className="text-2xl font-semibold text-primary">{clipName}</span>
+            <span className="font-display text-4xl font-bold text-primary leading-tight">{clipName}</span>
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -305,7 +305,7 @@ function PostRecordScreen() {
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="size-4 text-muted"
+              className="size-6 text-muted mt-2 shrink-0"
               aria-hidden
             >
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -316,7 +316,7 @@ function PostRecordScreen() {
 
         {/* Duration */}
         {upload && (
-          <p className="mt-1 font-mono text-lg text-secondary">
+          <p className="mt-3 font-mono text-2xl text-secondary">
             {formatDuration(upload.durationMs)}
           </p>
         )}
@@ -324,11 +324,11 @@ function PostRecordScreen() {
 
       {/* Stamp summary */}
       {summary.length > 0 && (
-        <div className="mt-6 flex gap-4">
+        <div className="mt-8 flex gap-5">
           {summary.map(([type, count]) => (
-            <div key={type} className="flex items-center gap-1.5">
-              <span className="text-xl">{STAMP_EMOJI[type]}</span>
-              <span className="text-sm font-medium text-secondary">{count}</span>
+            <div key={type} className="flex items-center gap-2">
+              <span className="text-2xl">{STAMP_EMOJI[type]}</span>
+              <span className="text-base font-semibold text-secondary">{count}</span>
             </div>
           ))}
         </div>
@@ -374,19 +374,19 @@ function PostRecordScreen() {
       <div className="flex-1" />
 
       {/* Actions */}
-      <div className="space-y-3 pb-12">
-        <Button onClick={handleDone} fullWidth>
+      <div className="space-y-4 pb-14">
+        <Button onClick={handleDone} fullWidth size="lg">
           Done
         </Button>
         {status === "uploading" && (
-          <p className="text-center text-xs text-muted">Upload continues in the background</p>
+          <p className="text-center text-sm text-muted">Upload continues in the background</p>
         )}
-        <Button onClick={handleNextSong} variant="secondary" fullWidth>
+        <Button onClick={handleNextSong} variant="secondary" fullWidth size="lg">
           Record another song
         </Button>
         <button
           onClick={() => setDeleteConfirmOpen(true)}
-          className="w-full py-3 text-sm text-danger underline underline-offset-4"
+          className="w-full py-4 text-base text-danger underline underline-offset-4"
         >
           Delete this recording
         </button>

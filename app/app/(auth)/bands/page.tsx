@@ -40,18 +40,18 @@ export default async function BandsPage() {
   // Multi-band: show picker
   return (
     <PageLayout title="My Bands">
-      <div className="px-4 py-4 space-y-4">
+      <div className="px-5 py-5 space-y-4">
         {/* Band list */}
-        <ul className="space-y-2" role="list">
+        <ul className="space-y-3" role="list">
           {memberships.map(({ band, role }) => (
             <li key={band.id}>
               <Link
                 href={`/bands/${band.id}`}
-                className="flex items-center justify-between rounded-2xl bg-surface px-4 py-4 transition-colors active:bg-elevated"
+                className="flex items-center justify-between rounded-2xl bg-surface px-5 py-5 transition-colors active:bg-elevated"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-semibold text-primary">{band.name}</p>
-                  <p className="mt-0.5 text-xs text-muted">
+                  <p className="truncate text-lg font-semibold text-primary">{band.name}</p>
+                  <p className="mt-1 text-sm text-muted">
                     {band._count.sessions} session{band._count.sessions !== 1 ? "s" : ""} ·{" "}
                     {band._count.members} member{band._count.members !== 1 ? "s" : ""} ·{" "}
                     {role === "RECORDER" ? "You created this" : role.toLowerCase()}
@@ -64,7 +64,7 @@ export default async function BandsPage() {
                   strokeWidth={2}
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="size-4 shrink-0 text-muted ml-3"
+                  className="size-5 shrink-0 text-muted ml-4"
                   aria-hidden
                 >
                   <path d="M9 18l6-6-6-6" />
@@ -76,14 +76,14 @@ export default async function BandsPage() {
 
         {/* Create new band */}
         <div className="pt-2">
-          <ButtonLink href="/setup" variant="secondary" fullWidth>
+          <ButtonLink href="/setup" variant="secondary" fullWidth size="lg">
             + Create another band
           </ButtonLink>
         </div>
 
         {/* Sign out */}
-        <div className="pt-4 border-t border-border">
-          <p className="mb-2 text-xs text-muted">
+        <div className="pt-5 border-t border-border">
+          <p className="mb-3 text-sm text-muted">
             Signed in as {session!.user!.email}
           </p>
           <form
@@ -94,7 +94,7 @@ export default async function BandsPage() {
           >
             <button
               type="submit"
-              className="w-full py-3 text-sm text-muted underline underline-offset-4 hover:text-secondary"
+              className="w-full py-4 text-base text-muted underline underline-offset-4 hover:text-secondary"
             >
               Sign out
             </button>

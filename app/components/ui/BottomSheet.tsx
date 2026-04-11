@@ -60,16 +60,16 @@ export function BottomSheet({
         aria-modal
         aria-label={title}
         className={cn(
-          "relative z-10 rounded-t-3xl border-t border-border bg-elevated p-6",
-          "pb-[max(1.5rem,env(safe-area-inset-bottom))]",
+          "relative z-10 rounded-t-3xl border-t border-border bg-elevated p-7",
+          "pb-[max(1.75rem,env(safe-area-inset-bottom))]",
           className,
         )}
       >
         {/* Drag handle */}
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+        <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-border" />
 
         {title && (
-          <h2 className="mb-4 text-base font-semibold text-primary">{title}</h2>
+          <h2 className="mb-5 font-display text-2xl font-bold text-primary">{title}</h2>
         )}
 
         {children}

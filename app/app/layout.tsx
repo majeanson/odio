@@ -1,18 +1,43 @@
 import type { Metadata, Viewport } from "next";
+import { Big_Shoulders_Display, DM_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+
+// ─── Fonts ────────────────────────────────────────────────────────────────────
+// Big Shoulders Display: high-visibility display type (transit/signage DNA)
+// DM Sans: clean body font with personality — reads great large and small
+// DM Mono: studio-readout feel for timers and technical values
+
+const bigShoulders = Big_Shoulders_Display({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  weight: ["700", "800", "900"],
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  variable: "--font-code",
+  weight: ["400", "500"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Odio",
   description: "Jam. Cut. Keep.",
-  // No PWA manifest in V1
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1, // prevent iOS auto-zoom on input focus
-  themeColor: "#0a0a0a",
+  themeColor: "#080808",
 };
 
 export default function RootLayout({
@@ -21,8 +46,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    // dark class ensures our CSS color-scheme: dark is applied
-    <html lang="en" className="h-full" style={{ colorScheme: "dark" }}>
+    <html
+      lang="en"
+      className={`h-full ${bigShoulders.variable} ${dmSans.variable} ${dmMono.variable}`}
+      style={{ colorScheme: "dark" }}
+    >
       <body className="min-h-full flex flex-col">
         <QueryProvider>{children}</QueryProvider>
       </body>

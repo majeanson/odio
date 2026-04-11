@@ -135,10 +135,10 @@ function RecordingScreen() {
   return (
     <div className="flex min-h-svh flex-col bg-base text-primary px-6 pt-safe">
       {/* Status bar area */}
-      <div className="flex flex-col gap-1 pt-8">
+      <div className="flex flex-col gap-2 pt-10">
         {/* Elapsed timer */}
         <div
-          className="font-mono text-5xl font-semibold tabular-nums text-primary"
+          className="font-mono text-[clamp(4.5rem,18vw,7rem)] font-bold tabular-nums text-primary leading-none"
           aria-live="polite"
           aria-atomic
         >
@@ -148,7 +148,7 @@ function RecordingScreen() {
         </div>
 
         {/* Recording state label */}
-        <p className="text-sm text-secondary">
+        <p className="text-xl font-semibold tracking-wide text-secondary">
           {isRecording && "Recording…"}
           {isStopping && "Stopping…"}
           {state === "idle" && "Ready to record"}
@@ -186,18 +186,19 @@ function RecordingScreen() {
 
       {/* Stamps row */}
       {isRecording && (
-        <div className="flex justify-around mb-6">
+        <div className="flex justify-around mb-6 gap-2">
           {STAMPS.map(({ type, label }) => (
             <button
               key={type}
               onClick={() => addStamp(type)}
               aria-label={`Stamp: ${label}`}
-              className="flex h-[72px] w-[72px] items-center justify-center rounded-2xl bg-surface text-3xl transition-transform active:scale-90"
+              className="flex flex-1 flex-col items-center justify-center gap-1 h-24 rounded-2xl bg-surface text-4xl transition-transform active:scale-90"
               style={{
-                boxShadow: `0 0 0 2px ${STAMP_COLORS[type]}40`,
+                boxShadow: `0 0 0 2px ${STAMP_COLORS[type]}50, 0 4px 0 0 ${STAMP_COLORS[type]}30`,
               }}
             >
-              {STAMP_EMOJI[type]}
+              <span>{STAMP_EMOJI[type]}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted">{label}</span>
             </button>
           ))}
         </div>
@@ -205,7 +206,7 @@ function RecordingScreen() {
 
       {/* Stamp count display */}
       {isRecording && stamps.length > 0 && (
-        <p className="mb-4 text-center text-xs text-muted">
+        <p className="mb-4 text-center text-base text-muted">
           {stamps.length} stamp{stamps.length !== 1 ? "s" : ""} recorded
         </p>
       )}
@@ -214,20 +215,20 @@ function RecordingScreen() {
       {isRecording && (
         <button
           onClick={() => setNoteSheetOpen(true)}
-          className="mb-6 self-center text-sm text-secondary underline underline-offset-4 hover:text-primary"
+          className="mb-8 self-center text-base text-secondary underline underline-offset-4 hover:text-primary"
         >
           Add note
         </button>
       )}
 
       {/* Record / Stop button + mic picker */}
-      <div className="flex items-center justify-center gap-6 pb-12">
+      <div className="flex items-center justify-center gap-8 pb-14">
         {/* Mic input picker — only shown when multiple inputs detected and not recording */}
         {hasMultipleDevices && !isRecording && (
           <button
             onClick={() => setDevicePickerOpen(true)}
             aria-label="Choose microphone"
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-secondary hover:text-primary transition-colors"
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-surface text-secondary hover:text-primary transition-colors border border-border"
           >
             <svg
               viewBox="0 0 24 24"
@@ -236,7 +237,7 @@ function RecordingScreen() {
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="size-5"
+              className="size-7"
               aria-hidden
             >
               <rect x="9" y="2" width="6" height="11" rx="3" />
@@ -252,11 +253,11 @@ function RecordingScreen() {
           disabled={isStopping || state === "stopped"}
           aria-label={isRecording ? "Stop recording" : "Start recording"}
           className={[
-            "relative flex h-20 w-20 items-center justify-center rounded-full transition-all",
+            "relative flex h-32 w-32 items-center justify-center rounded-full transition-all duration-75",
             "focus-visible:outline-4 focus-visible:outline-accent focus-visible:outline-offset-4",
             isRecording
-              ? "bg-danger shadow-lg shadow-danger/30"
-              : "bg-accent shadow-lg shadow-accent/30",
+              ? "bg-danger shadow-[0_6px_0_0_rgba(239,68,68,0.4)] active:translate-y-[6px] active:shadow-none"
+              : "bg-accent shadow-[0_6px_0_0_#78350f] active:translate-y-[6px] active:shadow-none",
             (isStopping || state === "stopped") && "opacity-50",
           ].filter(Boolean).join(" ")}
         >
@@ -267,9 +268,9 @@ function RecordingScreen() {
 
           {/* Icon: square = stop, circle = record */}
           {isRecording ? (
-            <span className="h-6 w-6 rounded-sm bg-white" aria-hidden />
+            <span className="h-10 w-10 rounded-md bg-white" aria-hidden />
           ) : (
-            <span className="h-6 w-6 rounded-full bg-white" aria-hidden />
+            <span className="h-10 w-10 rounded-full bg-[#080808]" aria-hidden />
           )}
         </button>
       </div>
@@ -289,7 +290,7 @@ function RecordingScreen() {
             onKeyDown={(e) => e.key === "Enter" && handleNoteSubmit()}
             placeholder="What's happening right now?"
             maxLength={200}
-            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-primary placeholder:text-muted focus:border-accent focus:outline-none"
+            className="w-full rounded-2xl border border-border bg-surface px-5 py-4 text-base text-primary placeholder:text-muted focus:border-accent focus:outline-none"
           />
           <Button
             onClick={handleNoteSubmit}

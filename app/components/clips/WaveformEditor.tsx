@@ -458,12 +458,12 @@ export function WaveformEditor({
             onClick={() => wsRef.current?.playPause()}
             disabled={wsState !== "ready"}
             aria-label={isPlaying ? "Pause" : "Play"}
-            className="flex h-16 w-16 items-center justify-center rounded-full bg-accent shadow-lg shadow-accent/25 transition-transform active:scale-90 disabled:opacity-40"
+            className="flex h-20 w-20 items-center justify-center rounded-full bg-accent shadow-[0_4px_0_0_#78350f] transition-[transform,box-shadow] duration-75 active:translate-y-[4px] active:shadow-none disabled:opacity-40 disabled:shadow-none"
           >
             {isPlaying ? (
-              <svg viewBox="0 0 24 24" fill="currentColor" className="size-7" aria-hidden><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-8" aria-hidden><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
             ) : (
-              <svg viewBox="0 0 24 24" fill="currentColor" className="size-7" aria-hidden><polygon points="5,3 19,12 5,21" /></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-8" aria-hidden><polygon points="5,3 19,12 5,21" /></svg>
             )}
           </button>
           {splitMode && (

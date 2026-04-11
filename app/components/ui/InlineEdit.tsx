@@ -65,7 +65,7 @@ export function InlineEdit({
           if (e.key === "Escape") { e.preventDefault(); discard(); }
         }}
         className={cn(
-          "rounded-lg border border-accent bg-surface px-2 py-0.5",
+          "rounded-xl border border-accent bg-surface px-3 py-1",
           "text-primary outline-none focus:ring-1 focus:ring-accent",
           inputClassName ?? className,
         )}

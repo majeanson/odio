@@ -28,13 +28,13 @@ export function PageLayout({
     <div
       className={cn(
         "flex min-h-svh flex-col bg-base text-primary",
-        !fullScreen && "pb-[calc(56px+env(safe-area-inset-bottom))]",
+        !fullScreen && "pb-[calc(80px+env(safe-area-inset-bottom))]",
         className,
       )}
     >
       {/* Header */}
       {(title || headerRight || backHref) && (
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-base px-4">
+        <header className="sticky top-0 z-30 flex h-[72px] items-center gap-3 border-b border-border bg-base px-5">
           {backHref && (
             <Link
               href={backHref}
@@ -45,10 +45,10 @@ export function PageLayout({
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth={2}
+                strokeWidth={2.5}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="size-5"
+                className="size-7"
                 aria-hidden
               >
                 <path d="M15 18l-6-6 6-6" />
@@ -56,7 +56,7 @@ export function PageLayout({
             </Link>
           )}
           {title && (
-            <h1 className="flex-1 truncate text-base font-semibold text-primary">
+            <h1 className="flex-1 truncate font-display text-2xl font-bold text-primary tracking-tight">
               {title}
             </h1>
           )}

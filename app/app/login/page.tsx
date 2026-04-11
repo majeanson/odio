@@ -6,17 +6,19 @@ import { Button } from "@/components/ui/Button";
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-8 px-6 bg-base">
+    <div className="flex min-h-svh flex-col items-center justify-center gap-10 px-8 bg-base">
       {/* Wordmark */}
       <div className="text-center">
-        <h1 className="text-5xl font-bold tracking-tight text-primary">
-          Odio
+        <h1 className="font-display text-[clamp(5rem,22vw,9rem)] font-black tracking-tight text-primary leading-none">
+          ODIO
         </h1>
-        <p className="mt-2 text-sm text-secondary">Jam. Cut. Keep.</p>
+        <p className="mt-4 text-xl font-semibold tracking-[0.2em] text-muted uppercase">
+          Jam. Cut. Keep.
+        </p>
       </div>
 
       {/* Sign in */}
-      <div className="w-full max-w-xs space-y-4">
+      <div className="w-full max-w-sm space-y-5">
         <form
           action={async () => {
             "use server";
@@ -29,7 +31,7 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="text-center text-xs text-muted">
+        <p className="text-center text-sm text-muted">
           Odio only accesses files it creates in your Drive.
         </p>
       </div>

@@ -100,15 +100,15 @@ export function PublicPlayer({ token, sourceDurationMs, stamps }: PublicPlayerPr
           <button
             onClick={() => wsRef.current?.playPause()}
             aria-label={isPlaying ? "Pause" : "Play"}
-            className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-base shadow-lg shadow-accent/20 transition-transform active:scale-90"
+            className="flex h-20 w-20 items-center justify-center rounded-full bg-accent text-base shadow-[0_4px_0_0_#78350f] transition-[transform,box-shadow] duration-75 active:translate-y-[4px] active:shadow-none"
           >
             {isPlaying ? (
-              <svg viewBox="0 0 24 24" fill="currentColor" className="size-7" aria-hidden>
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-8" aria-hidden>
                 <rect x="6" y="4" width="4" height="16" rx="1" />
                 <rect x="14" y="4" width="4" height="16" rx="1" />
               </svg>
             ) : (
-              <svg viewBox="0 0 24 24" fill="currentColor" className="size-7" aria-hidden>
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-8" aria-hidden>
                 <polygon points="5,3 19,12 5,21" />
               </svg>
             )}

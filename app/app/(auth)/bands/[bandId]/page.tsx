@@ -44,7 +44,7 @@ export default async function BandHomePage({
         <Link
           href={`/bands/${bandId}/settings`}
           aria-label="Band settings"
-          className="text-secondary hover:text-primary transition-colors"
+          className="flex items-center justify-center text-secondary hover:text-primary transition-colors"
         >
           <svg
             viewBox="0 0 24 24"
@@ -53,7 +53,7 @@ export default async function BandHomePage({
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="size-5"
+            className="size-6"
             aria-hidden
           >
             <circle cx="12" cy="12" r="3" />
@@ -62,7 +62,7 @@ export default async function BandHomePage({
         </Link>
       }
     >
-      <div className="px-4 py-4">
+      <div className="px-5 py-5">
         {sessions.length === 0 ? (
           <EmptyState
             icon="🎸"
@@ -74,23 +74,23 @@ export default async function BandHomePage({
             }
             action={
               canRecord ? (
-                <ButtonLink href={`/record?bandId=${bandId}`}>
+                <ButtonLink href={`/record?bandId=${bandId}`} size="lg">
                   Start recording
                 </ButtonLink>
               ) : undefined
             }
           />
         ) : (
-          <ul className="space-y-2" role="list">
+          <ul className="space-y-3" role="list">
             {sessions.map((s) => (
               <li key={s.id}>
                 <Link
                   href={`/bands/${bandId}/sessions/${s.id}`}
-                  className="flex items-center justify-between rounded-2xl bg-surface px-4 py-4 transition-colors active:bg-elevated"
+                  className="flex items-center justify-between rounded-2xl bg-surface px-5 py-5 transition-colors active:bg-elevated"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-primary">{s.name}</p>
-                    <p className="mt-0.5 text-xs text-muted">
+                    <p className="truncate text-lg font-semibold text-primary">{s.name}</p>
+                    <p className="mt-1 text-sm text-muted">
                       {formatSessionDate(s.createdAt)} ·{" "}
                       {s._count.clips} clip{s._count.clips !== 1 ? "s" : ""} ·{" "}
                       {formatRelativeTime(s.createdAt)}
@@ -103,7 +103,7 @@ export default async function BandHomePage({
                     strokeWidth={2}
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="size-4 shrink-0 text-muted ml-3"
+                    className="size-5 shrink-0 text-muted ml-4"
                     aria-hidden
                   >
                     <path d="M9 18l6-6-6-6" />

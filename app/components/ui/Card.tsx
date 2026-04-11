@@ -14,7 +14,7 @@ export function Card({ className, pressable, children, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border bg-surface p-4",
+        "rounded-2xl border border-border bg-surface p-5",
         pressable && "cursor-pointer transition-colors hover:bg-elevated active:bg-elevated/80",
         className,
       )}
@@ -32,7 +32,7 @@ export function CardTitle({
 }: HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn("text-base font-medium text-primary", className)}
+      className={cn("text-lg font-semibold text-primary", className)}
       {...props}
     >
       {children}
@@ -46,7 +46,7 @@ export function CardMeta({
   ...props
 }: HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn("text-sm text-secondary", className)} {...props}>
+    <p className={cn("text-base text-secondary", className)} {...props}>
       {children}
     </p>
   );

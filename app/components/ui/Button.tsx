@@ -2,29 +2,47 @@
 
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import type { ButtonHTMLAttributes, AnchorHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes } from "react";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-accent text-base font-medium hover:opacity-90 active:opacity-80 disabled:opacity-40",
+    // Amber with physical depth shadow — feels like a physical button
+    "bg-accent text-[#080808] font-bold tracking-wide " +
+    "shadow-[0_4px_0_0_#78350f] " +
+    "hover:bg-amber-400 " +
+    "active:translate-y-[4px] active:shadow-none " +
+    "disabled:opacity-40 disabled:shadow-none disabled:translate-y-0",
+
   secondary:
-    "bg-elevated text-primary border border-border font-medium hover:bg-surface active:opacity-80 disabled:opacity-40",
+    "bg-elevated text-primary border border-border font-semibold " +
+    "shadow-[0_3px_0_0_rgba(0,0,0,0.5)] " +
+    "hover:bg-surface hover:border-secondary/50 " +
+    "active:translate-y-[3px] active:shadow-none " +
+    "disabled:opacity-40 disabled:shadow-none disabled:translate-y-0",
+
   ghost:
-    "text-secondary font-medium hover:text-primary active:opacity-70 disabled:opacity-40",
+    "text-secondary font-semibold " +
+    "hover:text-primary hover:bg-elevated/50 " +
+    "active:opacity-70 " +
+    "disabled:opacity-40",
+
   danger:
-    "bg-danger/10 text-danger font-medium hover:bg-danger/20 active:opacity-80 disabled:opacity-40",
+    "bg-danger/15 text-danger font-bold border border-danger/30 " +
+    "shadow-[0_3px_0_0_rgba(239,68,68,0.2)] " +
+    "hover:bg-danger/25 " +
+    "active:translate-y-[3px] active:shadow-none " +
+    "disabled:opacity-40 disabled:shadow-none disabled:translate-y-0",
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: "h-9 px-3 text-sm rounded-lg",
-  md: "h-11 px-4 text-base rounded-xl",
-  lg: "h-14 px-6 text-base rounded-2xl",
+  sm: "h-12 px-5 text-sm rounded-xl",
+  md: "h-[60px] px-6 text-base rounded-2xl",
+  lg: "h-[68px] px-8 text-lg rounded-2xl",
 };
 
-/** Shared visual classes for all button variants */
 export function buttonClasses(
   variant: Variant = "primary",
   size: Size = "md",
@@ -32,8 +50,9 @@ export function buttonClasses(
   extra?: string,
 ) {
   return cn(
-    "inline-flex items-center justify-center gap-2 transition-all",
-    "focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2",
+    "inline-flex items-center justify-center gap-2",
+    "transition-[transform,box-shadow,background,color] duration-75",
+    "focus-visible:outline-[3px] focus-visible:outline-accent focus-visible:outline-offset-3",
     variantClasses[variant],
     sizeClasses[size],
     fullWidth && "w-full",
@@ -41,7 +60,7 @@ export function buttonClasses(
   );
 }
 
-// ─── Button (renders <button>) ─────────────────────────────────────────────
+// ─── Button ────────────────────────────────────────────────────────────────
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
@@ -50,10 +69,6 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
 }
 
-/**
- * Primary interactive button. Use for click actions.
- * For navigation, use ButtonLink.
- */
 export function Button({
   variant = "primary",
   size = "md",
@@ -71,7 +86,7 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <span className="size-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+        <span className="size-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
       ) : (
         children
       )}
@@ -79,7 +94,7 @@ export function Button({
   );
 }
 
-// ─── ButtonLink (renders Next.js <Link>) ───────────────────────────────────
+// ─── ButtonLink ────────────────────────────────────────────────────────────
 
 interface ButtonLinkProps {
   href: string;
@@ -92,9 +107,6 @@ interface ButtonLinkProps {
   prefetch?: boolean;
 }
 
-/**
- * Button-styled Next.js Link. Use for navigation.
- */
 export function ButtonLink({
   href,
   variant = "primary",
