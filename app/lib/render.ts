@@ -67,26 +67,37 @@ export async function renderAudioWithCuts(
     throw new Error("No audio remains after applying all cuts");
   }
 
-  // Build fluent-ffmpeg filter_complex for N segments
-  // Each segment: [0:a]atrim=start=X:end=Y,asetpts=PTS-STARTPTS[segN]
-  // Final: [seg0][seg1]...[segN-1]concat=n=N:v=0:a=1[out]
-  const filterParts: string[] = [];
-  const labels: string[] = [];
+  // Build fluent-ffmpeg filter_complex.
+  // Single segment: [0:a]atrim=...,asetpts=PTS-STARTPTS[out]
+  //   (concat=n=1 is invalid in FFmpeg — must be skipped for one segment)
+  // Multiple segments: [0:a]atrim=...[seg0]; [0:a]atrim=...[seg1]; [seg0][seg1]concat=n=2:v=0:a=1[out]
+  let filterComplex: string;
 
-  segments.forEach(({ startSec, endSec }, i) => {
-    const label = `seg${i}`;
+  if (segments.length === 1) {
+    const { startSec, endSec } = segments[0];
     const trim = endSec !== null
       ? `atrim=start=${startSec.toFixed(6)}:end=${endSec.toFixed(6)}`
       : `atrim=start=${startSec.toFixed(6)}`;
-    filterParts.push(`[0:a]${trim},asetpts=PTS-STARTPTS[${label}]`);
-    labels.push(`[${label}]`);
-  });
+    filterComplex = `[0:a]${trim},asetpts=PTS-STARTPTS[out]`;
+  } else {
+    const filterParts: string[] = [];
+    const labels: string[] = [];
 
-  filterParts.push(
-    `${labels.join("")}concat=n=${segments.length}:v=0:a=1[out]`,
-  );
+    segments.forEach(({ startSec, endSec }, i) => {
+      const label = `seg${i}`;
+      const trim = endSec !== null
+        ? `atrim=start=${startSec.toFixed(6)}:end=${endSec.toFixed(6)}`
+        : `atrim=start=${startSec.toFixed(6)}`;
+      filterParts.push(`[0:a]${trim},asetpts=PTS-STARTPTS[${label}]`);
+      labels.push(`[${label}]`);
+    });
 
-  const filterComplex = filterParts.join("; ");
+    filterParts.push(
+      `${labels.join("")}concat=n=${segments.length}:v=0:a=1[out]`,
+    );
+
+    filterComplex = filterParts.join("; ");
+  }
 
   await new Promise<void>((resolve, reject) => {
     ffmpeg(inputPath)
