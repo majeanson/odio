@@ -18,7 +18,7 @@
   "problem": "Band members need a shared space where all sessions are visible and access is controlled. Joining must be frictionless. The recorder's Google Drive folder is the audio source of truth — the app needs to bridge from 'here is an invite link' to 'you now have access to the band's recordings'.",
   "analysis": "Band metadata (name, members, Drive folder ID, invite code) stored in Postgres. Sessions and clips are stored in Postgres (not in Drive JSON files), so session/clip data is readable by all band members immediately after joining. Audio files live in the recorder's Drive folder. A user can belong to multiple bands. Band Settings page: member list with role management (pill buttons, not native select), invite link copy, storage quota bar. Remove member / Leave band both require confirmation via a bottom sheet before executing — prevents accidental destructive actions.",
   "successCriteria": "- Create band: enter name → band record created in Postgres → invite link generated\n- Invite link opens a join page: shows band name, prompts Google sign-in\n- After joining, app shows member's Google email with clear instruction to recorder to share Drive folder\n- Session screen shows QR code of current session URL\n- Band member list: display name + email, role badge, join date\n- Recorder can change member roles using styled pill buttons (Editor / Member) — no native select\n- Remove member: visible button → confirmation sheet → delete from Postgres\n- Leave band: visible button → confirmation sheet → redirect to /bands\n- Multiple bands: user sees all their bands on the home screen\n- Band roles: Recorder (full access + unfreeze), Editor (create versions + freeze + record), Member (vote + comment only)\n- Default role for new members: Editor",
-  "implementation": "1. app/(auth)/bands/page.tsx: lists all bands for current user.\n2. app/(auth)/bands/[bandId]/page.tsx: session list for a band.\n3. app/api/bands/route.ts: POST creates a new band.\n4. app/api/bands/[bandId]/members/route.ts: PATCH updates member role; DELETE removes member.\n5. components/bands/BandSettingsClient.tsx: member list with inline pill buttons for role change (Editor/Member — active pill highlighted, tap other pill to switch), Remove and Leave band buttons both open a BottomSheet confirmation before executing, storage quota bar, invite link copy.\n6. app/(auth)/bands/[bandId]/settings/page.tsx: server component — loads band + membership, renders BandSettingsClient.\n7. QR code for session URL rendered via react-qr-code in SessionHeaderClient.",
+  "implementation": "1. app/(auth)/bands/page.tsx: lists all bands for current user.\n2. app/(auth)/bands/[bandId]/page.tsx: session list for a band.\n3. app/api/bands/route.ts: POST creates a new band.\n4. app/api/bands/[bandId]/members/route.ts: PATCH updates member role; DELETE removes member.\n5. components/bands/BandSettingsClient.tsx: member list with inline pill buttons for role change (Editor/Member — active pill highlighted, tap other pill to switch), Remove and Leave band buttons both open a BottomSheet confirmation before executing, storage quota bar, invite link copy, \"Manage files / sync\" link to /bands/[bandId]/drive (Editor+ only).\n6. app/(auth)/bands/[bandId]/settings/page.tsx: server component — loads band + membership, renders BandSettingsClient.\n7. QR code for session URL rendered via react-qr-code in SessionHeaderClient.\n8. app/(auth)/bands/[bandId]/drive/page.tsx: Drive file management server component — loads all clips with Drive file IDs across all sessions, redirects MEMBER role, renders DriveFilesClient.\n9. components/bands/DriveFilesClient.tsx: Drive management UI — clips grouped by session with source/final status dots (grey=unchecked, green=ok, red=missing). Sync button checks all file IDs via /api/drive/check-file in batches of 5. Per-clip actions: Delete source (removes Drive file + clears driveFileId), Delete clip (removes entire clip record + both Drive files). Both actions require confirmation via BottomSheet with distinct destructive copy.\n10. app/api/drive/check-file/route.ts: GET — checks if a Drive file exists (id,trashed fields). Verifies caller is a band member first.\n11. app/api/clips/[clipId]/delete-source/route.ts: DELETE — removes source Drive file (best-effort), nulls driveFileId in DB. Editor+ only.",
   "decisions": [
     {
       "decision": "Pill buttons for role change instead of native <select>",
@@ -47,10 +47,12 @@
   ],
   "knownLimitations": [
     "New members cannot hear audio until the recorder manually shares the Drive folder with their Google email",
-    "If the recorder loses access to their Google account, band audio becomes inaccessible — no recovery path without exporting files first"
+    "If the recorder loses access to their Google account, band audio becomes inaccessible — no recovery path without exporting files first",
+    "Drive sync checks file existence but does not verify file integrity or playback quality",
+    "Deleting a clip from the Drive page removes it globally — all band members lose access immediately"
   ],
-  "componentFile": "components/bands/BandSettingsClient.tsx",
-  "userGuide": "Create a band from the home screen. Share the invite link or QR code with bandmates — they sign in with Google and join as Editors. After someone joins, their email appears in Settings → Members. Share the Drive folder with that email from Google Drive (one-time step). In Settings, use the pill buttons to switch a member between Editor and Member role. Tap Remove to remove a member (confirmation required). Non-Recorder members can Leave band from their own member row (confirmation required).",
+  "componentFile": "components/bands/DriveFilesClient.tsx",
+  "userGuide": "Create a band from the home screen. Share the invite link or QR code with bandmates — they sign in with Google and join as Editors. After someone joins, their email appears in Settings → Members. Share the Drive folder with that email from Google Drive (one-time step). In Settings, use the pill buttons to switch a member between Editor and Member role. Tap Remove to remove a member (confirmation required). Non-Recorder members can Leave band from their own member row (confirmation required). Editors and Recorders can open 'Manage files / sync' from the Storage section to see all Drive files grouped by session. Hit 'Sync' to check which files still exist in Drive (green dot = ok, red dot = missing). Delete a source file to free Drive space while keeping the clip and its versions. Delete a clip to remove it entirely from Odio and Drive.",
   "statusHistory": [
     {
       "from": "draft",
@@ -80,6 +82,17 @@
         "userGuide"
       ],
       "reason": "BandSettingsClient: pill buttons for role change, BottomSheet confirmation for remove/leave actions"
+    },
+    {
+      "date": "2026-04-11",
+      "author": "marc+claude",
+      "fields_changed": [
+        "implementation",
+        "knownLimitations",
+        "componentFile",
+        "userGuide"
+      ],
+      "reason": "Drive management page: DriveFilesClient with sync, delete-source, and delete-clip actions. check-file and delete-source API routes added."
     }
   ]
 }
