@@ -63,7 +63,12 @@ export async function GET(
 
   // Forward Range header for seeking support
   const rangeHeader = req.headers.get("Range") ?? undefined;
-  const driveRes = await getDriveFileStream(accessToken, fileId, rangeHeader);
+  let driveRes: Response;
+  try {
+    driveRes = await getDriveFileStream(accessToken, fileId, rangeHeader);
+  } catch {
+    return apiError("Drive file unavailable", 502);
+  }
 
   // Pass through content-type, content-length, content-range from Drive
   const headers = new Headers();

@@ -92,6 +92,7 @@ export function WaveformEditor({
 
   // State
   const [wsState, setWsState] = useState<"loading" | "ready" | "error">("loading");
+  const [audioErrorStatus, setAudioErrorStatus] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [retryKey, setRetryKey] = useState(0);
@@ -168,7 +169,12 @@ export function WaveformEditor({
 
     wsRef.current = ws;
     ws.on("ready", () => setWsState("ready"));
-    ws.on("error", () => setWsState("error"));
+    ws.on("error", () => {
+      fetch(`/api/audio/${clipId}`, { method: "HEAD" })
+        .then((r) => setAudioErrorStatus(r.status))
+        .catch(() => setAudioErrorStatus(null))
+        .finally(() => setWsState("error"));
+    });
     ws.on("play", () => setIsPlaying(true));
     ws.on("pause", () => setIsPlaying(false));
     ws.on("finish", () => setIsPlaying(false));
@@ -393,17 +399,23 @@ export function WaveformEditor({
           {wsState === "error" && (
             <div className="h-[88px] flex flex-col items-center justify-center gap-3">
               <p className="text-sm text-muted text-center leading-snug">
-                Drive connection needs renewal
+                {audioErrorStatus === 404
+                  ? "Audio not yet available — upload may still be processing"
+                  : audioErrorStatus === 401 || audioErrorStatus === 503
+                    ? "Drive connection needs renewal"
+                    : "Audio unavailable"}
               </p>
               <div className="flex items-center gap-3">
-                <a
-                  href="/login"
-                  className="rounded-xl bg-accent px-3.5 py-1.5 text-xs font-medium text-white"
-                >
-                  Reconnect Drive
-                </a>
+                {(audioErrorStatus === 401 || audioErrorStatus === 503) && (
+                  <a
+                    href="/login"
+                    className="rounded-xl bg-accent px-3.5 py-1.5 text-xs font-medium text-white"
+                  >
+                    Reconnect Drive
+                  </a>
+                )}
                 <button
-                  onClick={() => setRetryKey((k) => k + 1)}
+                  onClick={() => { setAudioErrorStatus(null); setRetryKey((k) => k + 1); }}
                   className="text-xs text-muted underline underline-offset-2"
                 >
                   Try again
