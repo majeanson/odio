@@ -122,7 +122,11 @@ export async function createBandDriveFolder(
  * The client browser uploads the audio blob directly to this URL —
  * the file never passes through our Vercel function.
  *
- * Returns the upload session URL.
+ * Pre-allocates a Drive file ID server-side so the client never needs to
+ * read the Drive upload response body (which fails due to CORS — the session
+ * URL is created without the browser's Origin header).
+ *
+ * Returns both the upload session URL and the pre-allocated Drive file ID.
  */
 export async function generateResumableUploadUrl(params: {
   accessToken: string;
@@ -130,8 +134,15 @@ export async function generateResumableUploadUrl(params: {
   fileName: string; // e.g. "{clipId}-source"
   mimeType: string; // "audio/aac" or "audio/webm"
   fileSize: number; // bytes
-}): Promise<string> {
+}): Promise<{ uploadSessionUrl: string; driveFileId: string }> {
   const { accessToken, folderId, fileName, mimeType, fileSize } = params;
+
+  // Pre-allocate a Drive file ID so the client doesn't need to parse the
+  // upload response body (which is cross-origin and unreadable from the browser).
+  const drive = getDriveClient(accessToken);
+  const idsRes = await drive.files.generateIds({ count: 1, space: "drive" });
+  const driveFileId = idsRes.data.ids?.[0];
+  if (!driveFileId) throw new Error("Drive did not return a pre-allocated file ID");
 
   // We call the Drive API upload endpoint directly to get the session URI.
   // The googleapis client doesn't expose the raw resumable URI easily,
@@ -147,6 +158,7 @@ export async function generateResumableUploadUrl(params: {
         "X-Upload-Content-Length": String(fileSize),
       },
       body: JSON.stringify({
+        id: driveFileId,
         name: fileName,
         parents: [folderId],
       }),
@@ -161,7 +173,7 @@ export async function generateResumableUploadUrl(params: {
   const location = res.headers.get("Location");
   if (!location) throw new Error("Drive did not return a Location header");
 
-  return location;
+  return { uploadSessionUrl: location, driveFileId };
 }
 
 // ─── File Access ──────────────────────────────────────────────────────────────

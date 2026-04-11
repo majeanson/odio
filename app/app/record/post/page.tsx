@@ -138,13 +138,16 @@ function PostRecordScreen() {
           return;
         }
 
-        const { uploadSessionUrl } = await initRes.json();
+        const { uploadSessionUrl, driveFileId } = await initRes.json();
         await updatePendingUpload(u.tempId, {
           uploadSessionUrl,
+          driveFileId,
           byteOffset: 0,
         });
 
-        // Step 2: Upload blob directly to Drive
+        // Step 2: Upload blob directly to Drive.
+        // driveFileId is pre-allocated server-side — we never read the Drive
+        // response body, which is blocked by CORS (no Origin on the session URL).
         const uploadRes = await fetch(uploadSessionUrl, {
           method: "PUT",
           headers: {
@@ -160,19 +163,6 @@ function PostRecordScreen() {
           uploadStartedRef.current = false;
           return;
         }
-
-        // Parse Drive file ID from upload response
-        const uploadBody = await uploadRes.json().catch(() => ({}));
-        const driveFileId: string | undefined = uploadBody?.id;
-
-        if (!driveFileId) {
-          setStatus("paused");
-          await updatePendingUpload(u.tempId, { status: "paused" });
-          uploadStartedRef.current = false;
-          return;
-        }
-
-        await updatePendingUpload(u.tempId, { driveFileId });
 
         // Step 3: Finalize — create Clip + ClipVersion rows in Postgres
         const finalRes = await fetch("/api/upload/finalize", {

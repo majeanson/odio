@@ -53,6 +53,8 @@ export const usePendingUploadsStore = create<PendingUploadsState>((set, get) => 
         let sessionUrl = upload.uploadSessionUrl;
         let byteOffset = upload.byteOffset ?? 0;
 
+        let driveFileId = upload.driveFileId;
+
         if (!sessionUrl) {
           const initRes = await fetch("/api/upload/init", {
             method: "POST",
@@ -83,11 +85,14 @@ export const usePendingUploadsStore = create<PendingUploadsState>((set, get) => 
 
           const data = await initRes.json();
           sessionUrl = data.uploadSessionUrl;
+          driveFileId = data.driveFileId;
           byteOffset = 0;
-          await updatePendingUpload(tempId, { uploadSessionUrl: sessionUrl, byteOffset: 0 });
-          patchUpload(tempId, { uploadSessionUrl: sessionUrl, byteOffset: 0 });
+          await updatePendingUpload(tempId, { uploadSessionUrl: sessionUrl, driveFileId, byteOffset: 0 });
+          patchUpload(tempId, { uploadSessionUrl: sessionUrl, driveFileId, byteOffset: 0 });
         }
 
+        // driveFileId is pre-allocated server-side — never read the Drive response
+        // body, which is blocked by CORS (session URL created without browser Origin).
         const slice = upload.blob.slice(byteOffset);
         const uploadRes = await fetch(sessionUrl!, {
           method: "PUT",
@@ -104,17 +109,11 @@ export const usePendingUploadsStore = create<PendingUploadsState>((set, get) => 
           return;
         }
 
-        const uploadBody = await uploadRes.json().catch(() => ({}));
-        const driveFileId = uploadBody?.id as string | undefined;
-
         if (!driveFileId) {
           await updatePendingUpload(tempId, { status: "paused" });
           patchUpload(tempId, { status: "paused" });
           return;
         }
-
-        await updatePendingUpload(tempId, { driveFileId });
-        patchUpload(tempId, { driveFileId });
 
         const finalRes = await fetch("/api/upload/finalize", {
           method: "POST",

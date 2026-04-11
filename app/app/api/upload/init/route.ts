@@ -53,7 +53,7 @@ export async function POST(req: Request) {
   // Generate a unique filename in Drive
   const fileName = `${tempId ?? crypto.randomUUID()}-source`;
 
-  const uploadSessionUrl = await generateResumableUploadUrl({
+  const { uploadSessionUrl, driveFileId } = await generateResumableUploadUrl({
     accessToken,
     folderId: driveFolderId,
     fileName,
@@ -61,5 +61,5 @@ export async function POST(req: Request) {
     fileSize,
   });
 
-  return apiOk({ uploadSessionUrl, fileName });
+  return apiOk({ uploadSessionUrl, driveFileId });
 }
