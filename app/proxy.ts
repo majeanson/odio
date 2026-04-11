@@ -1,9 +1,9 @@
-// Route protection middleware.
+// Route protection proxy (renamed from middleware in Next.js 16).
 // All routes are protected except /login and /share/[token].
 // NextAuth v5 handles session validation automatically when `auth` is used
-// as middleware.
+// as proxy.
 
-export { auth as middleware } from "@/lib/auth";
+export { auth as proxy } from "@/lib/auth";
 
 export const config = {
   matcher: [
