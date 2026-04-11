@@ -67,10 +67,6 @@ export async function POST(
     return apiError("Split point must be before the end of the clip", 400);
   }
 
-  // Format split point as mm:ss for version descriptions
-  const splitSec = Math.floor(splitMs / 1000);
-  const splitLabel = `${Math.floor(splitSec / 60)}:${String(splitSec % 60).padStart(2, "0")}`;
-
   // Name the new clips after the original with an A / B suffix
   const nameA = `${clip.name} - A`;
   const nameB = `${clip.name} - B`;
@@ -94,7 +90,6 @@ export async function POST(
             createdBy: session.user.email,
             cutMarks: [{ startMs: splitMs, endMs: clip.sourceDurationMs }],
             resultDurationMs: splitMs,
-            description: `0:00–${splitLabel}`,
           },
         },
       },
@@ -117,7 +112,6 @@ export async function POST(
             createdBy: session.user.email,
             cutMarks: [{ startMs: 0, endMs: splitMs }],
             resultDurationMs: clip.sourceDurationMs - splitMs,
-            description: `${splitLabel}–end`,
           },
         },
       },
