@@ -644,7 +644,10 @@ export function WaveformEditor({
               <span className="font-mono text-sm text-muted ml-auto">{formatDuration(sourceDurationMs - splitMs)}</span>
             </div>
           </div>
-          <p className="text-sm text-muted">Part B becomes a new clip. Both share the same source audio until frozen.</p>
+          <p className="text-sm text-muted">
+            Two new clips are created — Part A and Part B — each starting at v1 with just their slice.
+            The original recording is preserved unchanged.
+          </p>
           {splitError && <p className="text-sm text-danger">{splitError}</p>}
           <Button onClick={handleSplit} disabled={splitting} fullWidth size="lg">
             {splitting ? "Splitting…" : "Confirm split"}

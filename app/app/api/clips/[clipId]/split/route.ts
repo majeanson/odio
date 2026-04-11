@@ -1,17 +1,25 @@
 // POST /api/clips/[clipId]/split
 //
-// Splits a clip at a given time position into two virtual clips.
-// The original clip gets a new version with the end cut off (keeps start → splitMs).
-// A new clip is created with a version that cuts the beginning (keeps splitMs → end).
-// Both clips reference the same Drive source file — no audio is copied.
-// The cut marks are applied on-the-fly during playback (skip-cuts) and only rendered on freeze.
+// Splits a clip at a given time position into two NEW virtual clips.
+// The original clip is left completely unchanged — its v1 raw recording
+// remains intact as a reference.
+//
+// Part A (new clip) — covers 0 → splitMs
+//   v1 cutMarks: [{ startMs: splitMs, endMs: sourceDurationMs }]
+//   (removes the tail, plays the head)
+//
+// Part B (new clip) — covers splitMs → end
+//   v1 cutMarks: [{ startMs: 0, endMs: splitMs }]
+//   (removes the head, plays the tail)
+//
+// Both clips point at the same Drive source file — no audio is copied.
+// The cut marks are applied on-the-fly during playback and only rendered on freeze.
 //
 // Body: { splitMs: number }
-// Response: { newClipId: string, newClipName: string }
+// Response: { clipA: { id, name }, clipB: { id, name } }
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { generateDeathMetalName } from "@/lib/clipNames";
 import { apiError, apiOk } from "@/lib/utils";
 
 export async function POST(
@@ -47,7 +55,6 @@ export async function POST(
           },
         },
       },
-      versions: { orderBy: { versionNumber: "desc" }, take: 1 },
     },
   });
 
@@ -60,25 +67,45 @@ export async function POST(
     return apiError("Split point must be before the end of the clip", 400);
   }
 
-  const latestVersion = clip.versions[0];
-  const nextVersionNumberOnOriginal = (latestVersion?.versionNumber ?? 0) + 1;
-
-  // Format split point for the auto-generated description
+  // Format split point as mm:ss for version descriptions
   const splitSec = Math.floor(splitMs / 1000);
   const splitLabel = `${Math.floor(splitSec / 60)}:${String(splitSec % 60).padStart(2, "0")}`;
 
-  const newClipName = generateDeathMetalName();
+  // Name the new clips after the original with an A / B suffix
+  const nameA = `${clip.name} - A`;
+  const nameB = `${clip.name} - B`;
 
-  const [newClip] = await prisma.$transaction([
-    // New clip = Part B (keeps everything after splitMs)
+  const [clipA, clipB] = await prisma.$transaction([
+    // Part A — plays 0 → splitMs (tail is cut off)
     prisma.clip.create({
       data: {
         sessionId: clip.sessionId,
-        name: newClipName,
+        name: nameA,
         stage: "IDEA",
         driveFileId: clip.driveFileId,
         sourceDurationMs: clip.sourceDurationMs,
-        // Audio is already in Drive — mark ready so the proxy can serve it immediately
+        transcodeStatus: "DONE",
+        createdBy: clip.createdBy,
+        recordedByEmail: clip.recordedByEmail,
+        versions: {
+          create: {
+            versionNumber: 1,
+            createdBy: session.user.email,
+            cutMarks: [{ startMs: splitMs, endMs: clip.sourceDurationMs }],
+            resultDurationMs: splitMs,
+            description: `0:00–${splitLabel}`,
+          },
+        },
+      },
+    }),
+    // Part B — plays splitMs → end (head is cut off)
+    prisma.clip.create({
+      data: {
+        sessionId: clip.sessionId,
+        name: nameB,
+        stage: "IDEA",
+        driveFileId: clip.driveFileId,
+        sourceDurationMs: clip.sourceDurationMs,
         transcodeStatus: "DONE",
         createdBy: clip.createdBy,
         recordedByEmail: clip.recordedByEmail,
@@ -88,24 +115,15 @@ export async function POST(
             createdBy: session.user.email,
             cutMarks: [{ startMs: 0, endMs: splitMs }],
             resultDurationMs: clip.sourceDurationMs - splitMs,
-            description: `Split from ${clip.name} at ${splitLabel}`,
+            description: `${splitLabel}–end`,
           },
         },
       },
     }),
-    // Add a version to the original clip (Part A — keeps start up to splitMs)
-    prisma.clipVersion.create({
-      data: {
-        clipId,
-        versionNumber: nextVersionNumberOnOriginal,
-        createdBy: session.user.email,
-        fromVersionId: latestVersion?.id ?? undefined,
-        cutMarks: [{ startMs: splitMs, endMs: clip.sourceDurationMs }],
-        resultDurationMs: splitMs,
-        description: `Split — Part A (0:00–${splitLabel})`,
-      },
-    }),
   ]);
 
-  return apiOk({ newClipId: newClip.id, newClipName });
+  return apiOk({
+    clipA: { id: clipA.id, name: nameA },
+    clipB: { id: clipB.id, name: nameB },
+  });
 }
