@@ -183,7 +183,15 @@ export function WaveformEditor({
       setCurrentTimeMs(ms);
       // Skip-cuts preview
       const hit = cutMarksRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
-      if (hit && wsRef.current) wsRef.current.setTime(hit.endMs / 1000);
+      if (hit && wsRef.current) {
+        const targetSec = hit.endMs / 1000;
+        if (targetSec >= ws.getDuration() - 0.3) {
+          ws.pause();
+          ws.setTime(hit.startMs / 1000);
+        } else {
+          ws.setTime(targetSec);
+        }
+      }
     });
 
     regions.on("region-updated", (region) => {

@@ -97,7 +97,17 @@ export function WaveformPlayer({
       const ms = time * 1000;
       setCurrentTimeMs(ms);
       const hit = activeCutsRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
-      if (hit && wsRef.current) wsRef.current.setTime(hit.endMs / 1000);
+      if (hit && wsRef.current) {
+        const targetSec = hit.endMs / 1000;
+        // Seeking to the very end of a streamed file can silently fail if the
+        // final bytes aren't buffered yet. Detect end-cuts and stop cleanly.
+        if (targetSec >= ws.getDuration() - 0.3) {
+          ws.pause();
+          ws.setTime(hit.startMs / 1000);
+        } else {
+          ws.setTime(targetSec);
+        }
+      }
     });
 
     return () => {
