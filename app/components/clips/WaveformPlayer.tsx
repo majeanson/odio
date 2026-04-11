@@ -219,6 +219,11 @@ export function WaveformPlayer({
             if (ws.isPlaying()) {
               ws.pause();
             } else {
+              // Re-seek to the tracked cursor position before playing.
+              // WaveSurfer's click-while-paused updates the visual cursor via
+              // timeupdate but the audio element's currentTime can lag behind —
+              // this guarantees play always starts where the cursor is.
+              ws.setTime(currentTimeMsRef.current / 1000);
               ws.play();
             }
           }}
