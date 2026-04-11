@@ -31,7 +31,14 @@ export async function POST(req: Request) {
   }
 
   // Create the Drive folder
-  const driveFolderId = await createBandDriveFolder(accessToken, name);
+  let driveFolderId: string;
+  try {
+    driveFolderId = await createBandDriveFolder(accessToken, name);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[POST /api/bands] Drive folder creation failed:", msg);
+    return apiError(`Google Drive error: ${msg}`, 502);
+  }
 
   // Create band + add creator as RECORDER in a single transaction
   const band = await prisma.$transaction(async (tx) => {
