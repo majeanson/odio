@@ -9,6 +9,7 @@ import Link from "next/link";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/Button";
+import { BandShareButton } from "@/components/bands/BandShareButton";
 import { formatSessionDate, formatRelativeTime } from "@/lib/utils";
 
 export default async function BandHomePage({
@@ -24,7 +25,7 @@ export default async function BandHomePage({
     where: {
       bandId_userEmail: { bandId, userEmail: session!.user!.email! },
     },
-    include: { band: { select: { name: true } } },
+    include: { band: { select: { name: true, inviteCode: true } } },
   });
 
   if (!membership) notFound();
@@ -40,27 +41,7 @@ export default async function BandHomePage({
   return (
     <PageLayout
       title={membership.band.name}
-      headerRight={
-        <Link
-          href={`/bands/${bandId}/settings`}
-          aria-label="Band settings"
-          className="flex items-center justify-center text-secondary hover:text-primary transition-colors"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-6"
-            aria-hidden
-          >
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-        </Link>
-      }
+      headerRight={<BandShareButton inviteCode={membership.band.inviteCode} />}
     >
       <div className="px-5 py-5 md:px-8 md:py-8">
         {sessions.length === 0 ? (
