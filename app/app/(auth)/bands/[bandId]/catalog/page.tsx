@@ -74,11 +74,11 @@ export default async function CatalogPage({
   const rawCount = clips.filter((c) => !c.frozen).length;
 
   return (
-    <div className="flex min-h-svh flex-col bg-base text-primary pb-[calc(80px+env(safe-area-inset-bottom))]">
+    <div className="flex min-h-svh flex-col bg-base text-primary pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-30 flex h-[72px] items-center justify-between border-b border-border bg-base/80 backdrop-blur px-5">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold text-primary">Catalog</h1>
+          <h1 className="font-display text-xl font-bold text-primary">Catalog</h1>
           <p className="text-xs text-muted">
             {finalCount} final · {rawCount} raw
           </p>
