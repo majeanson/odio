@@ -9,7 +9,6 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { WaveformEditor } from "@/components/clips/WaveformEditor";
 import { ClipActionsClient } from "@/components/clips/ClipActionsClient";
 import { CollaborationSection } from "@/components/clips/CollaborationSection";
-import { formatDuration } from "@/lib/utils";
 import { mapClipVersion, mapStamp, mapVote, mapComment } from "@/lib/mappers";
 import type { ClipStage } from "@/types";
 
@@ -63,14 +62,8 @@ export default async function ClipDetailPage({
       backHref={`/bands/${bandId}/sessions/${sessionId}`}
     >
       <div className="px-4 py-4 space-y-4">
-        {/* Duration display */}
-        {clip.sourceDurationMs != null && (
-          <p className="font-mono text-xs text-muted">
-            {formatDuration(clip.sourceDurationMs)}
-          </p>
-        )}
-
-        {/* Waveform — read-only preview. Full editor opens in /edit (full-screen, tab bar hidden). */}
+        {/* Waveform — shows H:MM:SS position, version pills, read-only.
+            Full editor opens in /edit (full-screen, tab bar hidden). */}
         <WaveformEditor
           clipId={clip.id}
           bandId={bandId}

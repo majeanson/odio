@@ -1,6 +1,8 @@
 // Shared utility functions — used across all features.
 // Import from "@/lib/utils" throughout the app.
 
+import { generateDeathMetalName } from "@/lib/clipNames";
+
 // ─── Class Name Helper ────────────────────────────────────────────────────────
 
 /**
@@ -24,6 +26,18 @@ export function formatDuration(ms: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+/**
+ * Format milliseconds as H:MM:SS (e.g. 125000 → "0:02:05").
+ * Used for the main waveform position counter where H:MM:SS precision is needed.
+ */
+export function formatPosition(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
 /**
@@ -104,11 +118,11 @@ export function formatDurationDiff(
 // ─── Clip Auto-naming ─────────────────────────────────────────────────────────
 
 /**
- * Generate a clip name like "Song 3 · 10:03pm".
+ * Generate a death-metal clip name like "Putrid Descent" or "Severed Throne".
+ * The sequenceNumber parameter is kept for call-site compatibility but unused.
  */
-export function generateClipName(sequenceNumber: number, date?: Date): string {
-  const d = date ?? new Date();
-  return `Song ${sequenceNumber} · ${formatTimeOfDay(d)}`;
+export function generateClipName(_sequenceNumber?: number): string {
+  return generateDeathMetalName();
 }
 
 // ─── Session Auto-naming ──────────────────────────────────────────────────────
