@@ -36,6 +36,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
     error: "/auth-error",
   },
+  events: {
+    async signIn({ user, account, isNewUser }) {
+      console.log("[AUTH] signIn", { userId: user.id, provider: account?.provider, isNewUser });
+    },
+    async createSession({ session }) {
+      console.log("[AUTH] createSession", { token: session.sessionToken.slice(0, 8) });
+    },
+    async session({ session }) {
+      console.log("[AUTH] session", { userId: (session as { userId?: string }).userId });
+    },
+  },
   callbacks: {
     // Expose the user's email and id on the session object
     async session({ session, user }) {

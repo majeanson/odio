@@ -33,6 +33,6 @@ export const config = {
     // - /_next/* (Next.js internals)
     // - /api/auth/* (NextAuth routes)
     // - Static files (favicon, icons, etc.)
-    "/((?!login|auth-error|share|_next/static|_next/image|api/auth|favicon.ico).*)",
+    "/((?!login|auth-error|share|_next/static|_next/image|api/auth|api/debug|favicon.ico).*)",
   ],
 };
