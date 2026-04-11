@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odio · Product Story</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#12100e;--bg-card:#1a1714;--bg-hover:#201d1a;--bg-sidebar:#0e0c0a;
+  --border:#2a2420;--border-soft:#221e1b;
+  --text:#e8ddd4;--text-mid:#b0a49c;--text-soft:#7a6a5a;
+  --accent:#c4a255;
+  --mono:'Cascadia Code','Fira Code','JetBrains Mono','Consolas',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --status-active:#4aad72;--status-draft:#c4a255;--status-frozen:#5b82cc;--status-deprecated:#cc5b5b;
+}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:Georgia,'Times New Roman',serif;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.75;font-size:1rem;
+}
+
+/* ── Topbar ── */
+#topbar{
+  position:fixed;top:0;left:0;right:0;height:48px;
+  background:var(--bg-sidebar);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:0;
+  padding:0 20px;z-index:200;
+}
+#topbar-brand{
+  font-family:var(--mono);font-size:0.82rem;color:var(--accent);
+  white-space:nowrap;margin-right:20px;
+}
+#topbar-project{
+  font-family:var(--sans);font-size:0.82rem;color:var(--text-mid);
+  white-space:nowrap;flex:1;overflow:hidden;text-overflow:ellipsis;
+}
+#topbar-right{
+  display:flex;align-items:center;gap:16px;flex-shrink:0;
+}
+#reading-time{
+  font-family:var(--mono);font-size:0.72rem;color:var(--text-soft);
+  white-space:nowrap;
+}
+#print-btn{
+  padding:4px 14px;border-radius:6px;
+  border:1px solid var(--border);
+  background:transparent;color:var(--text-soft);
+  font-family:var(--mono);font-size:0.72rem;
+  cursor:pointer;transition:all 0.15s;
+  white-space:nowrap;
+}
+#print-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── Reading column ── */
+#content{
+  margin-top:48px;
+  padding:60px 20px 120px;
+}
+.reading-col{
+  max-width:720px;
+  margin:0 auto;
+}
+
+/* ── Opening section ── */
+.opening-section{
+  margin-bottom:64px;
+}
+.opening-eyebrow{
+  font-family:var(--mono);font-size:0.7rem;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--text-soft);
+  margin-bottom:20px;
+}
+.opening-title{
+  font-family:var(--sans);font-size:2.6rem;font-weight:800;
+  color:var(--text);letter-spacing:-0.02em;line-height:1.1;
+  margin-bottom:24px;
+}
+.opening-summary{
+  font-size:1.1rem;color:var(--text-mid);line-height:1.8;
+  margin-bottom:32px;
+}
+.stats-row{
+  display:flex;flex-wrap:wrap;gap:12px;
+  padding:20px;border-radius:10px;
+  background:var(--bg-card);border:1px solid var(--border);
+}
+.stat-item{
+  display:flex;flex-direction:column;
+  padding:0 16px;border-right:1px solid var(--border-soft);
+}
+.stat-item:last-child{border-right:none;}
+.stat-num{
+  font-family:var(--mono);font-size:1.4rem;font-weight:700;
+  color:var(--accent);line-height:1;
+}
+.stat-label{
+  font-family:var(--sans);font-size:0.72rem;color:var(--text-soft);
+  margin-top:4px;
+}
+
+/* ── Domain chapters ── */
+.domain-chapter{
+  margin-bottom:80px;
+  padding-top:48px;
+  border-top:1px solid var(--border);
+}
+.domain-chapter:first-of-type{border-top:none;}
+.chapter-number{
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--text-soft);
+  margin-bottom:8px;
+}
+.chapter-title{
+  font-family:var(--sans);font-size:2rem;font-weight:700;
+  color:var(--accent);letter-spacing:-0.01em;line-height:1.15;
+  margin-bottom:6px;
+}
+.chapter-meta{
+  font-family:var(--mono);font-size:0.72rem;color:var(--text-soft);
+  margin-bottom:40px;
+}
+
+/* ── Feature articles ── */
+.feature-article{
+  margin-bottom:52px;
+  padding-bottom:52px;
+  border-bottom:1px solid var(--border-soft);
+}
+.feature-article:last-child{border-bottom:none;}
+.feature-headline{
+  display:flex;align-items:flex-start;gap:12px;
+  margin-bottom:6px;
+  flex-wrap:wrap;
+}
+.feature-title{
+  font-family:var(--sans);font-size:1.35rem;font-weight:700;
+  color:var(--text);letter-spacing:-0.01em;line-height:1.3;
+}
+.status-badge{
+  display:inline-block;
+  padding:2px 10px;border-radius:999px;
+  font-family:var(--mono);font-size:0.68rem;
+  border:1px solid;
+  white-space:nowrap;margin-top:4px;
+  flex-shrink:0;
+}
+.feature-key-label{
+  font-family:var(--mono);font-size:0.72rem;color:var(--text-soft);
+  margin-bottom:20px;
+  letter-spacing:0.04em;
+}
+.feature-section-label{
+  font-family:var(--sans);font-size:0.72rem;font-weight:600;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--text-soft);margin-bottom:10px;margin-top:24px;
+}
+.feature-problem{
+  font-size:1rem;color:var(--text-mid);line-height:1.75;
+}
+
+/* ── Markdown rendered content ── */
+.md-p{margin:0 0 0.75em;line-height:1.75;}
+.md-p:last-child{margin-bottom:0;}
+.md-h{font-family:var(--mono);font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--accent);margin:1.2em 0 0.4em;}
+.md-ul{margin:0.4em 0 0.75em 1.2em;padding:0;}
+.md-ul li{margin-bottom:0.3em;line-height:1.65;}
+.md-ul li code,.md-p code,.impl-text code{
+  font-family:var(--mono);font-size:0.82em;
+  background:rgba(196,162,85,0.1);border:1px solid rgba(196,162,85,0.2);
+  padding:1px 5px;border-radius:3px;color:var(--accent);
+}
+
+/* ── Implementation expand ── */
+.impl-wrap{margin-top:0;}
+.impl-text{
+  font-size:0.92rem;color:var(--text-soft);line-height:1.7;
+}
+.read-more-btn{
+  display:inline-block;margin-top:8px;
+  background:none;border:none;
+  color:var(--accent);font-family:var(--mono);font-size:0.75rem;
+  cursor:pointer;padding:0;
+  transition:opacity 0.15s;
+}
+.read-more-btn:hover{opacity:0.7;}
+
+/* ── Pull quotes ── */
+.decisions-block{margin-top:28px;}
+.pull-quote{
+  margin:16px 0;
+  padding:18px 22px;
+  border-left:3px solid var(--accent);
+  background:var(--bg-card);
+  border-radius:0 8px 8px 0;
+  position:relative;
+}
+.pull-quote-text{
+  font-size:1rem;color:var(--text);
+  font-style:italic;line-height:1.65;
+  margin-bottom:8px;
+}
+.pull-quote-rationale{
+  font-family:var(--sans);font-size:0.82rem;color:var(--text-soft);
+  font-style:normal;
+}
+.pull-quote-mark{
+  position:absolute;bottom:12px;right:18px;
+  font-size:1.5rem;color:var(--accent);opacity:0.25;
+  line-height:1;
+}
+
+/* ── Caveats box ── */
+.caveats-box{
+  margin-top:24px;
+  padding:14px 18px;
+  border-left:3px solid rgba(196,162,85,0.5);
+  background:rgba(196,162,85,0.06);
+  border-radius:0 8px 8px 0;
+}
+.caveats-label{
+  font-family:var(--sans);font-size:0.68rem;font-weight:700;
+  letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:8px;opacity:0.8;
+}
+.caveats-list{
+  list-style:disc;padding-left:18px;
+  font-size:0.88rem;color:var(--text-soft);line-height:1.65;
+}
+.caveats-list li{margin-bottom:4px;}
+
+/* ── Roadmap / closing ── */
+.closing-chapter .chapter-title{color:var(--text-mid);}
+.roadmap-list{display:flex;flex-direction:column;gap:12px;}
+.roadmap-item{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  grid-template-rows:auto auto;
+  column-gap:14px;row-gap:2px;
+  padding:14px 16px;
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:8px;
+}
+.roadmap-key{
+  font-family:var(--mono);font-size:0.72rem;color:var(--text-soft);
+  grid-column:1;grid-row:1;
+  white-space:nowrap;
+}
+.roadmap-title{
+  font-family:var(--sans);font-size:0.92rem;font-weight:600;color:var(--text-mid);
+  grid-column:2;grid-row:1;
+}
+.roadmap-problem{
+  font-size:0.8rem;color:var(--text-soft);
+  grid-column:2;grid-row:2;
+  font-style:italic;
+}
+
+/* ── Print styles ── */
+@media print{
+  #topbar{display:none!important;}
+  #content{margin-top:0;padding:32px;}
+  body{background:#fff;color:#111;font-size:11pt;}
+  .domain-chapter{page-break-before:always;}
+  .domain-chapter:first-of-type{page-break-before:avoid;}
+  .opening-section{page-break-before:avoid;}
+  .pull-quote{border-left:2px solid #333;background:#f9f9f9;}
+  .pull-quote-text{color:#222;}
+  .pull-quote-rationale{color:#555;}
+  .caveats-box{border-left:2px solid #c4a255;background:#fffbf2;}
+  .caveats-label{color:#8a6e2a;}
+  .caveats-list{color:#444;}
+  .chapter-title{color:#7a5a20;}
+  .feature-title{color:#111;}
+  .opening-title{color:#111;}
+  .opening-summary{color:#333;}
+  .stat-num{color:#7a5a20;}
+  .stats-row{background:#f5f3ee;border:1px solid #ddd;}
+  .roadmap-item{background:#f9f9f9;border:1px solid #ddd;}
+  .read-more-btn{display:none!important;}
+  .impl-full{display:inline!important;}
+  .impl-short{display:none!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div id="topbar">
+  <div id="topbar-brand">◈ lac · story</div>
+  <div id="topbar-project">Odio</div>
+  <div id="topbar-right">
+    <div id="reading-time">32 min read · 6,341 words</div>
+    <button id="print-btn" onclick="window.print()">⎙ Print</button>
+  </div>
+</div>
+
+<!-- Content -->
+<div id="content">
+  <div class="reading-col">
+
+    <!-- Opening / Executive Summary -->
+    <section class="opening-section">
+      <div class="opening-eyebrow">Life as Code · Product Story</div>
+      <h1 class="opening-title">Odio</h1>
+      <p class="opening-summary">Odio is a system built around 15 features spanning 9 domains: recording, render, storage, versioning, auth, band, app-shell, sessions and audio/collaboration. It addresses challenges including: Audio files in Google Drive grow over time (~43MB per raw clip, ~10MB per frozen…; When a version is frozen, a real audio file must be produced — so the band can d…; A raw recording needs to evolve from v1 (messy, includes setup and dead air) to ….</p>
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-num">15</div>
+          <div class="stat-label">Total features</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">8</div>
+          <div class="stat-label">Frozen (shipped)</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">6</div>
+          <div class="stat-label">Active (in progress)</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">1</div>
+          <div class="stat-label">Draft (planned)</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">9</div>
+          <div class="stat-label">Domains</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Domain chapters -->
+    <section class="domain-chapter" id="chapter-1">
+        <div class="chapter-number">Chapter 1</div>
+        <h2 class="chapter-title">recording</h2>
+        <div class="chapter-meta">5 features</div>
+        <article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Upload Banner — Persistent Upload Progress Across All Pages</h3>
+        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
+      </div>
+      <div class="feature-key-label">odio-2026-010</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">After stopping a recording, the band member needs to navigate away (to another song, to the session list, to collaborate) without losing visibility into whether the upload succeeded. The upload progress must persist across all pages — not just the record screen — as a fixed top banner.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-7">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. components/common/UploadBanner.tsx: client component. Props: uploads[], onRetry, onDiscard, onSaveToDevice. statusMessage() maps PendingUpload.status to {text, variant}. Priority: first token-error → session-error → paused → uploads[0]. Renders fixed div with variantStyles by variant. Progress bar: {variant === 'uploading' &amp;&amp; byteOffset &amp;&amp; blob.size &gt; 0 &amp;&amp; &lt;div style={{width: percent%}} /&gt;}. Re</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. components/common/UploadBanner.tsx: client component. Props: uploads[], onRetry, onDiscard, onSaveToDevice. statusMessage() maps PendingUpload.status to {text, variant}. Priority: first token-error → session-error → paused → uploads[0]. Renders fixed div with variantStyles by variant. Progress bar: {variant === 'uploading' &amp;&amp; byteOffset &amp;&amp; blob.size &gt; 0 &amp;&amp; &lt;div style={{width: percent%}} /&gt;}. Returns null when uploads.length === 0. 2. components/layout/AuthShell.tsx: mounts UploadBanner + BottomTabBar at auth layout level. Passes upload state from usePendingUploads hook. 3. hooks/usePendingUploads.ts: reads IndexedDB on mount, drives retry state machine, exposes uploads[], retry/discard/saveToDevice handlers to AuthShell.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-7')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Most actionable upload shown first — errors before paused before active</div>
+                    <div class="pull-quote-rationale">— A token error requires a human action (band creator re-authorizes). A session error requires sign-in. These block recovery and are more urgent than an active upload silently progressing. Showing errors first ensures the user notices and acts on the blocker rather than assuming uploads are fine.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; No manual close button on the banner for active uploads</div>
+                    <div class="pull-quote-rationale">— A close button on an active upload banner would give the user false confidence that dismissing it is safe. If they close it and the upload later fails, they have no recovery path visible. The banner auto-dismisses only when uploads complete. Error states include actionable buttons (Retry, Save file) rather than a generic close.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>Banner occupies top space on every authenticated page — pages with their own fixed headers need top padding adjustment</li><li>Progress bar accuracy depends on IndexedDB byteOffset being updated frequently during upload; if updates are sparse, the bar may jump</li><li>&#39;Save file&#39; downloads the raw browser-recorded blob (WebM on Chrome, AAC/MP4 on Safari) — not the transcoded AAC that would normally be stored in Drive</li>
+            </ul>
+          </aside>
+    </article>
+<article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Multi-Recorder — Any Editor Can Record Into the Band&#39;s Drive</h3>
+        <span class="status-badge" style="color:var(--status-frozen);border-color:var(--status-frozen)44;background:var(--status-frozen)18;">frozen</span>
+      </div>
+      <div class="feature-key-label">odio-2026-008</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">On jam night, the person who created the band may not always be the one with a phone free to record. Any Editor-role band member should be able to hit Record and have the audio land in the band's shared Drive — without requiring each member to set up their own Drive folder or the band creator to be physically present.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-4">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. app/api/upload/init/route.ts: POST — role check <code>['RECORDER', 'EDITOR'].includes(membership.role)</code>. Fetches band creator's email from bands table. Queries NextAuth accounts table for creator's access<em>token + refresh</em>token. Attempts token refresh via Google OAuth token endpoint if expires_at &lt; now. Generates Drive resumable upload session URL using creator's token. Returns { uploadUrl, clipId, s</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/api/upload/init/route.ts: POST — role check <code>['RECORDER', 'EDITOR'].includes(membership.role)</code>. Fetches band creator's email from bands table. Queries NextAuth accounts table for creator's access<em>token + refresh</em>token. Attempts token refresh via Google OAuth token endpoint if expires_at &lt; now. Generates Drive resumable upload session URL using creator's token. Returns { uploadUrl, clipId, sessionId }. 2. app/api/upload/finalize/route.ts: POST — same role check. Runs FFmpeg transcode on uploaded file. Creates Clip row with recordedByEmail = currentUser.email. Creates v1 ClipVersion row. Updates clip transcodeStatus to DONE. 3. Error handling: if creator token refresh fails, returns 503 with { error: 'CREATOR<em>TOKEN</em>INVALID', creatorEmail }. Client shows 'Drive connection needs renewal — ask [creator name] to re-authorize'. 4. components/layout/BottomTabBar.tsx: Record tab hidden when <code>membership.role === 'MEMBER'</code>. 5. Prisma schema Clip: recordedByEmail TEXT nullable. clips table stores both fields. 6. components/clips/ClipCard.tsx: shows 'Recorded by X' when recordedByEmail differs from band creator.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-4')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Reuse creator&#39;s stored token — no per-member Drive setup</div>
+                    <div class="pull-quote-rationale">— drive.file OAuth scope only grants access to files the app created under that specific user&#39;s account. A member&#39;s token cannot write to the creator&#39;s Drive folder. The creator&#39;s refresh_token (already stored by NextAuth DB adapter for the audio proxy feature) solves this: the server uses the creator&#39;s token to generate the Drive upload session URL, and the member&#39;s browser uploads directly to Drive using that URL. No additional OAuth consent or per-member Drive setup needed.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Editor role can record — Member role cannot</div>
+                    <div class="pull-quote-rationale">— Member-only users are passive collaborators (vote, comment). Giving them recording rights would require explaining Drive ownership semantics to every casual invitee. Editors are already trusted with version creation and freeze — recording is a natural extension. The default role for new band invites is Editor, so most band members get recording rights automatically without any explicit configuration.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Track recordedByEmail separately from driveOwnerEmail</div>
+                    <div class="pull-quote-rationale">— The clip always lives in the creator&#39;s Drive (driveOwnerEmail is always the band creator). The person who pressed Record may be someone else entirely. These are distinct facts: one describes file ownership for Drive API operations, the other describes recording attribution for the activity feed and session history. Conflating them would make it impossible to correctly display &#39;Recorded by X&#39; or debug Drive issues per-clip.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>If the band creator revokes Google Drive access, ALL recording attempts by any Editor fail until the creator re-authorizes — one token serves the whole band; there is no per-member fallback</li><li>Two Editors recording simultaneously produce two separate clip rows with overlapping timestamps — no merging or conflict detection; both appear in the session normally</li><li>The creator&#39;s refresh_token is stored server-side in the NextAuth accounts table — this security surface already exists for the audio proxy feature; multi-recorder adds no new exposure</li>
+            </ul>
+          </aside>
+    </article>
+<article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Audio Input Selection — External Mic, USB Interface, Headset</h3>
+        <span class="status-badge" style="color:var(--status-frozen);border-color:var(--status-frozen)44;background:var(--status-frozen)18;">frozen</span>
+      </div>
+      <div class="feature-key-label">odio-2026-018</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">The recording always uses the device's default microphone. Bands that record with an external condenser mic, USB audio interface, or headset mic plugged in cannot select it — the app always captures from the built-in mic. This limits recording quality for bands that bring audio gear.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-9">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. hooks/useRecorder.ts: on mount, calls navigator.mediaDevices.enumerateDevices(), filters for audioinput, maps to AudioDevice[]. Re-enumerates on devicechange event. Initializes selectedDeviceId from localStorage (key: odio:selectedDeviceId). Passes deviceId: { exact: selectedDeviceId } to getUserMedia constraints when selectedDeviceId is set. Falls back to default getUserMedia on Overconstraine</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. hooks/useRecorder.ts: on mount, calls navigator.mediaDevices.enumerateDevices(), filters for audioinput, maps to AudioDevice[]. Re-enumerates on devicechange event. Initializes selectedDeviceId from localStorage (key: odio:selectedDeviceId). Passes deviceId: { exact: selectedDeviceId } to getUserMedia constraints when selectedDeviceId is set. Falls back to default getUserMedia on OverconstrainedError — sets deviceFallbackWarning=true for 4s. 2. components/recording/DevicePicker.tsx: BottomSheet with list of AudioDevice items. Highlights current selection. Calls onSelect(deviceId) on tap. 3. app/record/page.tsx: renders mic button (left of record button) when devices.length &gt; 1 and !isRecording. Tapping opens DevicePicker. Renders deviceFallbackWarning toast when active.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-9')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Picker only shown when multiple inputs exist</div>
+                    <div class="pull-quote-rationale">— For the majority of users (phone, built-in mic only), showing a device picker is unnecessary friction. Detecting whether to show the picker at all keeps the zero-overhead path intact for the common case.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>iOS Safari does not consistently enumerate Bluetooth audio inputs — users on iOS may not see all available inputs</li><li>enumerateDevices() requires microphone permission to return device labels; before permission is granted, labels are empty strings (can only show device index, not name)</li>
+            </ul>
+          </aside>
+    </article>
+<article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Recording — Browser-Based Audio Capture</h3>
+        <span class="status-badge" style="color:var(--status-frozen);border-color:var(--status-frozen)44;background:var(--status-frozen)18;">frozen</span>
+      </div>
+      <div class="feature-key-label">odio-2026-006</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">The recorder needs to capture multiple songs during a live jam — from a phone browser, one hand, dim room. Between songs the transition to the next recording must be instant. Moments worth keeping must be stampable without interrupting the performance.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-12">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. app/record/page.tsx: full-screen recording screen — timer, level meter, stamp row, Add note link, record/stop button. Tab bar hidden via usePathname(). 2. hooks/useRecorder.ts: core hook managing MediaRecorder lifecycle, Web Audio AnalyserNode for level meter, Wake Lock API, stamps buffer, annotations buffer, device enumeration and selection, IndexedDB write on stop (via savePendingUpload), upl</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/record/page.tsx: full-screen recording screen — timer, level meter, stamp row, Add note link, record/stop button. Tab bar hidden via usePathname(). 2. hooks/useRecorder.ts: core hook managing MediaRecorder lifecycle, Web Audio AnalyserNode for level meter, Wake Lock API, stamps buffer, annotations buffer, device enumeration and selection, IndexedDB write on stop (via savePendingUpload), upload start. 3. components/recording/DevicePicker.tsx: bottom sheet listing available audio input devices. 4. app/record/post/page.tsx: post-record screen — clip name (inline edit), duration, stamp count, upload progress bar, Next Song button, Delete recording button. 5. hooks/useUploadProgress.ts: polls /api/clips/[clipId] every 3s until transcodeStatus is DONE or FAILED. 6. lib/pendingUploads.ts: IndexedDB helpers for pending upload persistence. 7. app/api/upload/init/route.ts: generates Drive resumable upload session URL using creator's stored token. 8. app/api/upload/finalize/route.ts: transcodes uploaded audio with FFmpeg, creates Clip + ClipVersion rows in Postgres. 9. STAMP<em>EMOJI and STAMP</em>COLORS constants in types/index.ts.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-12')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Resumable Drive upload from browser (bypasses Vercel body limit)</div>
+                    <div class="pull-quote-rationale">— Vercel serverless functions have a 4.5MB request body limit. A 30-min recording at 192kbps ~43MB. Sending audio through Vercel would fail. Resumable uploads: server generates a Drive upload session URL, browser POSTs audio blob directly to Drive. Audio never passes through Vercel.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Transcode to AAC immediately on upload</div>
+                    <div class="pull-quote-rationale">— MediaRecorder outputs WebM/Opus on Chrome and AAC/MP4 on Safari. WebM does not play in Safari. Transcoding immediately on upload ensures one consistent format (AAC) for all playback, editing, and final render — regardless of which browser the recorder used.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Any Editor-role member can record — not just the band creator</div>
+                    <div class="pull-quote-rationale">— The upload flow already uses the creator&#39;s stored refresh_token on the server to generate the Drive resumable upload session URL. The member&#39;s browser uploads directly to the creator&#39;s Drive. This means multi-recorder support is not an architectural change — it&#39;s a role-permission change. Any Editor can initiate a recording and audio lands in the same Drive folder. Reduces the single-point-of-failure where only one person can capture audio on jam night.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Two notation types: stamps (typed, no text) and annotations (text notes) — both timestamped</div>
+                    <div class="pull-quote-rationale">— Stamps are one-tap typed markers — fire/keep/uncertain/idea — zero friction during playing. Annotations are short text notes for when you want to say something specific. Both appear as pins on the waveform. Keeping them separate preserves the zero-friction stamp UX while allowing richer notes when needed. They serve similar purposes at different levels of effort.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>iOS Safari stops MediaRecorder if the screen locks or the user switches tabs — Wake Lock API (iOS 16.4+) mitigates accidental sleep; tab switching is user responsibility</li><li>If the browser tab is closed before the blob is written to IndexedDB (i.e., during the first few seconds after stop), the audio may be lost — mitigated by writing to IndexedDB immediately on stop before any upload attempt (see feat-recording-resilience)</li><li>Resumable upload requires two API round-trips before recording is saved — adds ~2-4s to the stop flow</li><li>Any Editor-role member can initiate a recording, but all audio lands in the band creator&#39;s Drive — members upload directly to the creator&#39;s Drive using the server-generated resumable upload session URL (which uses the creator&#39;s stored token)</li>
+            </ul>
+          </aside>
+    </article>
+<article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Recording Resilience — IndexedDB Safety Net, Upload Retry, Save-to-Device Fallback</h3>
+        <span class="status-badge" style="color:var(--status-frozen);border-color:var(--status-frozen)44;background:var(--status-frozen)18;">frozen</span>
+      </div>
+      <div class="feature-key-label">odio-2026-009</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">A recording is a one-time, irreplaceable event. Currently, if the internet drops during upload or the band creator's Drive token is invalid, the audio blob — which only exists in memory — is permanently lost when the user navigates away or the tab closes. A live jam session cannot be re-played. The recording must survive any upload failure and remain recoverable until it reaches Drive.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-13">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. lib/pendingUploads.ts: IndexedDB helpers using idb library. Database 'odio-recordings', object store 'pending-uploads'. Functions: savePendingUpload(upload), getPendingUploads(), deletePendingUpload(tempId), updatePendingUpload(tempId, patch). 2. hooks/useRecorder.ts: calls savePendingUpload immediately on MediaRecorder onstop before any network request. 3. hooks/usePendingUploads.ts: checks In</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. lib/pendingUploads.ts: IndexedDB helpers using idb library. Database 'odio-recordings', object store 'pending-uploads'. Functions: savePendingUpload(upload), getPendingUploads(), deletePendingUpload(tempId), updatePendingUpload(tempId, patch). 2. hooks/useRecorder.ts: calls savePendingUpload immediately on MediaRecorder onstop before any network request. 3. hooks/usePendingUploads.ts: checks IndexedDB on mount, drives retry logic, manages upload state machine (idle/uploading/paused/error), listens to window 'online' event for auto-retry. 4. components/recording/PendingUploadsBanner.tsx: recovery banner shown when usePendingUploads reports pending items. Shows count, retry button, save-to-device button, discard button with confirmation. 5. app/(auth)/layout.tsx: renders PendingUploadsBanner at top of all authenticated pages. 6. lib/uploadAudio.ts: manages the Drive resumable upload from browser — tracks byte offset, handles chunking, updates IndexedDB with uploadSessionUrl on each successful chunk. 7. 'Save to device': URL.createObjectURL(blob) + programmatic anchor download. Extension .aac or .webm based on mimeType.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-13')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; IndexedDB as the primary persistence layer for unuploaded audio blobs</div>
+                    <div class="pull-quote-rationale">— localStorage cannot store binary blobs. The File System Access API requires explicit user permission. IndexedDB is the only browser-native store that (a) handles large binary data, (b) persists across sessions without user action, and (c) is available in all browsers including iOS Safari 10.3+. A 43MB blob fits easily — IndexedDB storage limits are typically 50-80% of available disk space.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Resumable upload — save session URL to IndexedDB for byte-accurate retry</div>
+                    <div class="pull-quote-rationale">— A naive retry re-uploads the entire blob from byte 0. For a 43MB file on a slow mobile connection, this could fail again at the same spot. Google Drive resumable uploads let you query the committed offset and resume from there. Storing the uploadSessionUrl in IndexedDB alongside the blob enables true resume, not restart.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; &#39;Save to device&#39; as the last-resort fallback — never lose the audio</div>
+                    <div class="pull-quote-rationale">— If Drive is permanently unavailable (creator deleted their account, Drive quota exceeded, token irrecoverable), the band should still get their recording. A browser download gives them the raw file. They lose the Odio versioning workflow but not the audio. The guarantee is: if you recorded it, you can get the file.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Check IndexedDB for pending recordings on every app mount</div>
+                    <div class="pull-quote-rationale">— Background Sync is not reliable on iOS Safari. The safest recovery path is: when the app is opened, check for stranded blobs and surface them immediately. This catches the crash-during-upload, tab-closed-early, and came-back-later scenarios without relying on service worker scheduling.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>IndexedDB is cleared when the user clears browser storage (&#39;Clear site data&#39;) — the blob would be lost; this is unavoidable without server-side buffering and is an edge case the user controls</li><li>Background Sync (automatic retry when tab is closed and connection restored) is not available on iOS Safari — recovery on iOS requires opening the app manually</li><li>Drive resumable upload session URLs expire after 7 days — a blob stranded for &gt; 7 days will need a fresh upload session, not a resume; the implementation must detect this (404 on session URL) and fall back to a new session</li><li>Storage pressure on low-end devices: a 43MB blob may trigger the browser&#39;s storage eviction policy on devices with &lt; 1GB free — &#39;Save to device&#39; should be surfaced proactively for large recordings</li>
+            </ul>
+          </aside>
+    </article>
+      </section>
+<section class="domain-chapter" id="chapter-2">
+        <div class="chapter-number">Chapter 2</div>
+        <h2 class="chapter-title">render</h2>
+        <div class="chapter-meta">3 features</div>
+        <article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Public Share Player — Unauthenticated Clip Playback</h3>
+        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
+      </div>
+      <div class="feature-key-label">odio-2026-015</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">A frozen clip should be shareable outside the band — with a producer, a friend, or social media. The listener should not need a Google account or any signup. Only the frozen render is exposed; no session metadata, band data, or version history leaks through the public page.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-11">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. components/share/PublicPlayer.tsx: client component. Props: token, sourceDurationMs, stamps[]. WaveSurfer.create({ url: /api/audio/public/{token}, interact: true }). Renders loading spinner, error state, waveform, stamp chips, play/pause button, download anchor. Stamp chips currently rendered as &lt;div&gt; (not tappable buttons — future improvement: convert to &lt;button&gt; with seek on click, same patte</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. components/share/PublicPlayer.tsx: client component. Props: token, sourceDurationMs, stamps[]. WaveSurfer.create({ url: /api/audio/public/{token}, interact: true }). Renders loading spinner, error state, waveform, stamp chips, play/pause button, download anchor. Stamp chips currently rendered as &lt;div&gt; (not tappable buttons — future improvement: convert to &lt;button&gt; with seek on click, same pattern as WaveformPlayer). 2. app/share/[token]/page.tsx: server component. Fetches clip by publicToken from Postgres (clips table). If not found or clip.frozen=false: returns 404 page. Renders clip name, duration, PublicPlayer with stamps. 3. app/api/audio/public/[token]/route.ts: streams audio from Drive. Looks up clip by publicToken, gets finalDriveFileId, fetches recorder's token from NextAuth accounts table, proxies Drive stream with Range header support. No auth middleware — open to public traffic.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-11')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Audio served via server-side proxy even on public pages</div>
+                    <div class="pull-quote-rationale">— Even with Drive public permission enabled on the final file, the Drive URL format includes the file ID which reveals internal structure. Proxying via /api/audio/public/[token] keeps the only public identifier as the opaque token, allows revocation (clear token → proxy returns 404), and avoids exposing file IDs in the page source.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; No version history, no collaboration data on the public page</div>
+                    <div class="pull-quote-rationale">— The public page is for external listeners — producers, fans, collaborators outside the band. Exposing version numbers, vote tallies, or comments reveals internal band workflow details. The public page is intentionally minimal: name, waveform, stamps, download.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>Stamp chips in PublicPlayer are currently display-only (not tappable to seek) — WaveformPlayer fixed this with &lt;button&gt; elements; PublicPlayer needs the same update</li><li>Public audio proxy uses the recorder&#39;s Drive token — if the recorder revokes access, public links break even for frozen clips</li><li>No view analytics — there&#39;s no way to know how many people have listened to a shared clip</li>
+            </ul>
+          </aside>
+    </article>
+<article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Render — Server-Side FFmpeg on Freeze + Public Share</h3>
+        <span class="status-badge" style="color:var(--status-frozen);border-color:var(--status-frozen)44;background:var(--status-frozen)18;">frozen</span>
+      </div>
+      <div class="feature-key-label">odio-2026-014</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">When a version is frozen, a real audio file must be produced — so the band can download it, share it outside the band, or export it. This cannot happen client-side. The frozen clip should also be shareable publicly without requiring sign-in.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-1">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. app/api/clips/[clipId]/freeze/route.ts: POST — Editor+ role. Validates versionId. Fetches creator's Drive token from NextAuth accounts table. Downloads source .aac to /tmp. Runs fluent-ffmpeg atrim+aconcat with cutMarks from the version. Uploads output as {clipId}-final.aac to band's Drive folder. Sets clip.frozen=true, clip.frozenVersionId, clip.finalDriveFileId. Returns updated clip. 2. app/a</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/api/clips/[clipId]/freeze/route.ts: POST — Editor+ role. Validates versionId. Fetches creator's Drive token from NextAuth accounts table. Downloads source .aac to /tmp. Runs fluent-ffmpeg atrim+aconcat with cutMarks from the version. Uploads output as {clipId}-final.aac to band's Drive folder. Sets clip.frozen=true, clip.frozenVersionId, clip.finalDriveFileId. Returns updated clip. 2. app/api/clips/[clipId]/unfreeze/route.ts: POST — RECORDER only. Sets clip.frozen=false, clip.frozenVersionId=null. Keeps finalDriveFileId. 3. app/api/clips/[clipId]/route.ts: PATCH handles generatePublicToken (requires frozen=true — sets publicToken=crypto.randomUUID(), sets Drive public permission) and removePublicToken (clears publicToken, removes Drive public permission). 4. app/share/[token]/page.tsx: public page — no auth. Fetches clip by publicToken from Postgres. Renders waveform player with Drive public audio URL + clip name + stamps. 5. FFmpeg atrim+aconcat filter chain: for each non-cut segment, atrim=start=X:end=Y, asetpts=PTS-STARTPTS, then aconcat=n=N. Output: -b:a 192k -f adts (AAC). 6. lib/drive.ts: downloadToTemp(fileId, token) → /tmp/{fileId}.aac. uploadFromTemp(path, folderId, token) → new driveFileId. setPublicPermission(fileId, token). removePublicPermission(fileId, permissionId, token).</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-1')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Server-side FFmpeg only — no client-side WASM</div>
+                    <div class="pull-quote-rationale">— WASM FFmpeg is slow on mobile (~3x slower than native), memory-constrained, and adds bundle size. Server-side runs once per clip lifetime in &lt; 10s on Vercel. Acceptable trade-off.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Public share via Drive public permission + Postgres token</div>
+                    <div class="pull-quote-rationale">— A frozen clip can be shared outside the band (with a producer, a friend). Setting Drive file permission to &#39;anyone with link&#39; gives a direct audio URL. Odio stores a short token in Postgres mapping to the clip, so the public URL is /share/[token] (not a raw Drive ID), giving control over revocation.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>Vercel /tmp is ephemeral (512MB limit) — source download (~43MB) + FFmpeg output (~10MB) is within limits for typical clips</li><li>Render requires recorder&#39;s valid Drive token from Postgres — if token refresh fails (e.g., recorder revoked access), render fails with a clear error and re-auth prompt</li><li>@ffmpeg-installer/ffmpeg bundles ~38MB compressed — close to Vercel&#39;s function size limit; this is the highest-risk technical component and needs a spike before building</li><li>Any band Editor role can trigger freeze, but the render always uses the recorder&#39;s Drive token — recorder does not need to be signed in at the moment of freeze</li>
+            </ul>
+          </aside>
+    </article>
+<article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">FFmpeg POC — Validate Bundle Size and Render Pipeline on Vercel</h3>
+        <span class="status-badge" style="color:var(--status-frozen);border-color:var(--status-frozen)44;background:var(--status-frozen)18;">frozen</span>
+      </div>
+      <div class="feature-key-label">odio-2026-002</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">@ffmpeg-installer/ffmpeg bundles the FFmpeg binary at ~38MB compressed. Vercel's serverless function size limit is ~50MB (250MB uncompressed). This is the single highest-risk technical constraint in the project. If the bundle is too large or the render takes too long (Vercel function timeout: 10s on Hobby), the entire render architecture needs to change before feat-render can be built. This POC must validate or invalidate the approach before any production code is written.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-3">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. Created GET /api/render/poc route that accepts ?url= param pointing to a source audio file. 2. Installed @ffmpeg-installer/ffmpeg + fluent-ffmpeg as production dependencies. 3. Route downloads source audio to /tmp, runs fluent-ffmpeg atrim+aconcat filter with a hard-coded test cut (0-10s removed), outputs trimmed .aac. 4. Returns rendered file as application/octet-stream response. 5. Result: bu</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. Created GET /api/render/poc route that accepts ?url= param pointing to a source audio file. 2. Installed @ffmpeg-installer/ffmpeg + fluent-ffmpeg as production dependencies. 3. Route downloads source audio to /tmp, runs fluent-ffmpeg atrim+aconcat filter with a hard-coded test cut (0-10s removed), outputs trimmed .aac. 4. Returns rendered file as application/octet-stream response. 5. Result: bundle deploys on Vercel Hobby within size limit. Cold start ~8s, warm render ~3s for a 5-min clip. Architecture validated. ComponentFile: app/api/render/poc/route.ts</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-3')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; POC before any production render code</div>
+                    <div class="pull-quote-rationale">— @ffmpeg-installer/ffmpeg is the highest-risk dependency in the entire project. If it fails on Vercel Hobby, the render feature needs a completely different architecture. Building feat-render on top of an unvalidated assumption would waste significant implementation work. The POC is a 2-4 hour investment that prevents a potential full architectural rethink later.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>Vercel Hobby function timeout is 10s — this may be too tight for long clips; Pro plan raises to 300s</li><li>If bundle size fails on Hobby, Vercel Pro ($20/month) is the simplest fix — breaks the $0/month cost target</li>
+            </ul>
+          </aside>
+    </article>
+      </section>
+<section class="domain-chapter" id="chapter-3">
+        <div class="chapter-number">Chapter 3</div>
+        <h2 class="chapter-title">storage</h2>
+        <div class="chapter-meta">1 feature</div>
+        <article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Storage Management — Drive Quota, Cleanup, Archive</h3>
+        <span class="status-badge" style="color:var(--status-frozen);border-color:var(--status-frozen)44;background:var(--status-frozen)18;">frozen</span>
+      </div>
+      <div class="feature-key-label">odio-2026-017</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">Audio files in Google Drive grow over time (~43MB per raw clip, ~10MB per frozen render). The recorder's free Drive tier (15GB) supports roughly 350 raw clips before action is needed. The app must surface this, and provide a clean way to free space after songs are finalized.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-0">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. app/api/bands/[bandId]/storage/route.ts: GET — fetches Drive API about endpoint using creator's token (returns storageQuota.usage). Also queries Postgres for all driveFileId + finalDriveFileId for this band's clips. Returns { usedBytes, limitBytes, fileCount }. Cached in memory for 5 minutes. 2. app/api/clips/[clipId]/cleanup/route.ts: POST — deletes clip.driveFileId from Drive (source .aac). S</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/api/bands/[bandId]/storage/route.ts: GET — fetches Drive API about endpoint using creator's token (returns storageQuota.usage). Also queries Postgres for all driveFileId + finalDriveFileId for this band's clips. Returns { usedBytes, limitBytes, fileCount }. Cached in memory for 5 minutes. 2. app/api/clips/[clipId]/cleanup/route.ts: POST — deletes clip.driveFileId from Drive (source .aac). Sets clip.driveFileId=null. Requires clip.frozen=true. 3. app/api/clips/[clipId]/route.ts DELETE: RECORDER only. Deletes clip from Postgres (cascades to versions, votes, comments). Deletes both driveFileId and finalDriveFileId from Drive via lib/drive.ts deleteFile. 4. components/bands/BandSettingsClient.tsx: fetches /api/bands/[bandId]/storage on mount. Renders storage bar (used / total). Lists members with role management. formatBytes helper: converts bytes to human-readable MB/GB string. 5. components/clips/ClipActionsClient.tsx: shows 'Clean up source audio' button when clip.frozen=true and clip.driveFileId is not null. Shows 'Delete clip' button (RECORDER only). Confirmation bottom sheets for both.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-0')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Cleanup is explicit and manual — no automatic deletion</div>
+                    <div class="pull-quote-rationale">— Automatic deletion after freeze could destroy recordings the band wanted to keep. Storage cleanup is a deliberate action. The app nudges (shows quota, shows how much can be freed) but never deletes automatically.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>Drive API quota query may not reflect real-time usage — cache with 5-minute TTL</li><li>After cleanup, v1 source audio is gone — if the frozen render was also deleted and the band wants to re-edit, they would need to re-record</li><li>Drive storage is the recorder&#39;s personal quota — shared with all their other Drive content</li>
+            </ul>
+          </aside>
+    </article>
+      </section>
+<section class="domain-chapter" id="chapter-4">
+        <div class="chapter-number">Chapter 4</div>
+        <h2 class="chapter-title">versioning</h2>
+        <div class="chapter-meta">1 feature</div>
+        <article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Versioning — Version Chain, Waveform Editor, Waveform Player, Freeze</h3>
+        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
+      </div>
+      <div class="feature-key-label">odio-2026-012</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">A raw recording needs to evolve from v1 (messy, includes setup and dead air) to vFinal (clean, trimmed) through collaborative edits — with full history and a clear end state (freeze). The band needs to listen to any version, compare versions, and hear exactly what a cut sounds like before committing.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-2">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. components/clips/WaveformPlayer.tsx: pure player component. Props: clipId, sourceDurationMs, activeCuts[], stamps[]. Regions rendered with pointerEvents:none (display only, don't intercept seek clicks). timeupdate handler skips cuts. Stamp chips are &lt;button&gt; elements that call ws.setTime(). No enableDragSelection. 2. components/clips/WaveformEditor.tsx: edit-only component. Props: clipId, sourc</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. components/clips/WaveformPlayer.tsx: pure player component. Props: clipId, sourceDurationMs, activeCuts[], stamps[]. Regions rendered with pointerEvents:none (display only, don't intercept seek clicks). timeupdate handler skips cuts. Stamp chips are &lt;button&gt; elements that call ws.setTime(). No enableDragSelection. 2. components/clips/WaveformEditor.tsx: edit-only component. Props: clipId, sourceDurationMs, frozenVersionId, initialVersions, stamps, sessionHref. Custom pointer overlay (onPointerDown/Move/Up + setPointerCapture, touch-action:none) handles tap-to-seek + drag-to-create. Trim/Clear all/Split tool buttons. Split navigates to sessionHref after success. Auto-saves draft on every cut change. router.back() after version submit. 3. components/clips/ClipDetailClient.tsx: coordinator. Owns selectedVersionId state (auto-selects latest, no deselect). Passes activeCuts to WaveformPlayer. Passes activeVersionId to CollaborationSection. Actions section hidden when !canEdit &amp;&amp; !frozen. 4. app/(auth)/.../clips/[clipId]/page.tsx: server component — loads clip, versions, stamps, votes, comments, membership. Renders ClipDetailClient. 5. app/(auth)/.../clips/[clipId]/edit/page.tsx: server component — loads clip, versions, stamps. Auth guard (MEMBER redirect + frozen redirect). Renders WaveformEditor with sessionHref. 6. app/api/clips/[clipId]/versions/route.ts: POST creates a new version. 7. app/api/clips/[clipId]/split/route.ts: POST { splitMs } — creates Part B clip (cutMarks: [{startMs:0, endMs:splitMs}]) + new version on original (cutMarks: [{startMs:splitMs, endMs:duration}]). Returns { newClipId, newClipName }. 8. lib/utils.ts: formatPosition(ms) → H:MM:SS always. formatDuration(ms) → M:SS. calcResultDuration(sourceDurationMs, cuts) → virtual duration after removing cut segments.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-2')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; WaveformPlayer and WaveformEditor are separate components</div>
+                    <div class="pull-quote-rationale">— A single component that handles both playback and editing requires mode-switching logic, conditional overlays, and competing event handlers. Separate components have clear single responsibilities: Player = listen, Editor = cut. The edit page is always in edit mode; no toggle needed. The detail page never needs editing. Each component can be reasoned about and tested independently.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Custom pointer overlay for drag-to-create in editor (no enableDragSelection)</div>
+                    <div class="pull-quote-rationale">— WaveSurfer&#39;s enableDragSelection registers a permanent pointer overlay that consumes all pointer events — including click-to-seek. Once called, seeking by clicking is broken. A custom absolute-positioned overlay with onPointerDown/Move/Up + setPointerCapture handles both tap-to-seek (&lt; 8px movement) and drag-to-create (&gt;= 8px) without blocking WaveSurfer&#39;s own event handling on other elements.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; pointerEvents:none on display-only regions in WaveformPlayer</div>
+                    <div class="pull-quote-rationale">— WaveSurfer RegionsPlugin renders region overlays as absolutely positioned divs above the waveform canvas in z-index. Without pointerEvents:none, clicking on a cut region (the blue overlay) is swallowed by the div before reaching WaveSurfer&#39;s click-to-seek handler. The cursor moves but the playhead doesn&#39;t update.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Split navigates to session page, not back to clip detail</div>
+                    <div class="pull-quote-rationale">— After a split, two clips exist. router.back() would go back to the original clip&#39;s detail page — the user would not see Part B at all without manually navigating. router.push(sessionHref) lands on the session clip list where both Part A and Part B are visible and accessible.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; No version deselect — clicking active version keeps it selected</div>
+                    <div class="pull-quote-rationale">— Deselecting a version set selectedVersionId to null, which caused the player to show &#39;no cuts&#39; (raw audio). This &#39;null = raw audio&#39; state had no UI label and was visually identical to a version with no cuts. Confusing. Clicking the active version now keeps it selected — the player always reflects a known version.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Versions are metadata only — not audio files</div>
+                    <div class="pull-quote-rationale">— Audio duplication per version is prohibitively expensive (43MB+ per clip). Versions are cut instructions (cutMarks JSON). Source audio stored once in Drive. Real audio file produced only on freeze.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; localStorage for in-progress edit safety</div>
+                    <div class="pull-quote-rationale">— Full offline sync adds complexity. The real risk is a browser crash mid-edit. localStorage persists cut marks across crashes. Key: odio:draft:{clipId}. Cleared on successful submit.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>Split shares source audio between Part A and Part B until both are frozen — both clips point to the same Drive file and apply different cuts virtually</li><li>Editor overlay blocks region resize handles on existing cuts — to adjust a cut, remove it and redraw</li><li>If two members edit the same version simultaneously they both produce the next version number — band sees two versions at the same level and must choose</li><li>Submit requires internet connection — cuts safe in localStorage but cannot be written to Postgres offline</li>
+            </ul>
+          </aside>
+    </article>
+      </section>
+<section class="domain-chapter" id="chapter-5">
+        <div class="chapter-number">Chapter 5</div>
+        <h2 class="chapter-title">auth</h2>
+        <div class="chapter-meta">1 feature</div>
+        <article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Auth — Google OAuth via NextAuth.js</h3>
+        <span class="status-badge" style="color:var(--status-frozen);border-color:var(--status-frozen)44;background:var(--status-frozen)18;">frozen</span>
+      </div>
+      <div class="feature-key-label">odio-2026-003</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">Band members need a shared identity layer — without creating yet another account. Google sign-in is universal in the target audience and doubles as the credential for Google Drive access.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-5">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. lib/auth.ts: NextAuth.js config with GoogleProvider (scopes: openid + email + profile + drive.file). PrismaAdapter with Neon Postgres. Session strategy: database. 2. app/api/auth/[...nextauth]/route.ts: standard NextAuth route handler. 3. middleware.ts: protects all routes except /, /login, /share/[token]. Redirects unauthenticated requests to /login. 4. lib/prisma.ts: singleton Prisma client.</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. lib/auth.ts: NextAuth.js config with GoogleProvider (scopes: openid + email + profile + drive.file). PrismaAdapter with Neon Postgres. Session strategy: database. 2. app/api/auth/[...nextauth]/route.ts: standard NextAuth route handler. 3. middleware.ts: protects all routes except /, /login, /share/[token]. Redirects unauthenticated requests to /login. 4. lib/prisma.ts: singleton Prisma client. 5. Prisma schema: User, Account (NextAuth tables), Band, BandMember, JamSession, Clip, ClipVersion, Vote, Comment tables. 6. app/(auth) route group: all authenticated pages wrapped in a layout that verifies session. 7. app/login/page.tsx: sign-in page with Google OAuth button. 8. The accounts table managed by PrismaAdapter stores access<em>token + refresh</em>token per user — required for server-side Drive API calls.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-5')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; drive.file scope at sign-in, not deferred</div>
+                    <div class="pull-quote-rationale">— drive.file is needed for all core features (upload recording, read session/clip data, write meta). Deferring it to a later step would require a second OAuth flow and would break the first recording attempt. Request it upfront with a clear explanation in the sign-in screen: &#39;Odio only accesses files it creates in your Drive.&#39;</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; NextAuth.js with Prisma DB adapter — required from day one, not deferred</div>
+                    <div class="pull-quote-rationale">— Supabase Auth adds a paid service. NextAuth.js is open-source and integrates directly with Next.js. The DB adapter (Prisma + Neon) is not optional: it is required to persist the recorder&#39;s refresh_token in the accounts table, which is the only way the audio proxy route can stream Drive audio to all band members. JWT-only session strategy is explicitly rejected — it cannot store the refresh_token server-side.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>drive.file scope only covers files the app created under that specific user&#39;s account — bandmates stream audio through the server-side proxy (which uses the recorder&#39;s stored token), so bandmates do not need Drive scope just to listen</li><li>Google OAuth tokens expire after 1 hour — NextAuth DB adapter stores refresh_token in Postgres and rotates on expiry; JWT-only strategy is insufficient and must not be used</li><li>If the recorder revokes Odio&#39;s Drive access (in Google account settings), all audio becomes inaccessible to the entire band until re-authorized</li>
+            </ul>
+          </aside>
+    </article>
+      </section>
+<section class="domain-chapter" id="chapter-6">
+        <div class="chapter-number">Chapter 6</div>
+        <h2 class="chapter-title">band</h2>
+        <div class="chapter-meta">1 feature</div>
+        <article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Band Space — Band Creation, Invites, Drive Folder, Members</h3>
+        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
+      </div>
+      <div class="feature-key-label">odio-2026-005</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">Band members need a shared space where all sessions are visible and access is controlled. Joining must be frictionless. The recorder's Google Drive folder is the audio source of truth — the app needs to bridge from 'here is an invite link' to 'you now have access to the band's recordings'.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-6">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. app/(auth)/bands/page.tsx: lists all bands for current user. 2. app/(auth)/bands/[bandId]/page.tsx: session list for a band. 3. app/api/bands/route.ts: POST creates a new band. 4. app/api/bands/[bandId]/members/route.ts: PATCH updates member role; DELETE removes member. 5. components/bands/BandSettingsClient.tsx: member list with inline pill buttons for role change (Editor/Member — active pill</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/(auth)/bands/page.tsx: lists all bands for current user. 2. app/(auth)/bands/[bandId]/page.tsx: session list for a band. 3. app/api/bands/route.ts: POST creates a new band. 4. app/api/bands/[bandId]/members/route.ts: PATCH updates member role; DELETE removes member. 5. components/bands/BandSettingsClient.tsx: member list with inline pill buttons for role change (Editor/Member — active pill highlighted, tap other pill to switch), Remove and Leave band buttons both open a BottomSheet confirmation before executing, storage quota bar, invite link copy. 6. app/(auth)/bands/[bandId]/settings/page.tsx: server component — loads band + membership, renders BandSettingsClient. 7. QR code for session URL rendered via react-qr-code in SessionHeaderClient.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-6')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Pill buttons for role change instead of native &lt;select&gt;</div>
+                    <div class="pull-quote-rationale">— Native &lt;select&gt; is styled by the OS and looks visually inconsistent with the dark app design. Pill buttons (Editor | Member) are always visible, immediately tappable, and make the current role and the available roles obvious at a glance without opening a dropdown.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Remove/Leave actions require confirmation sheet before executing</div>
+                    <div class="pull-quote-rationale">— Text underline links (&#39;Remove&#39;, &#39;Leave band&#39;) have no visual weight — they look like navigation links, not destructive actions. A tap mis-aimed at the email text could accidentally trigger removal. A confirmation bottom sheet with a red danger button adds the right friction for an irreversible action.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Postgres for band membership, Drive for audio access</div>
+                    <div class="pull-quote-rationale">— Drive&#39;s drive.file scope prevents one user from reading files created by another. Band membership and session/clip metadata live in Postgres. Audio files live in the recorder&#39;s Drive, shared at the folder level via standard Drive sharing.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Manual Drive folder sharing — no programmatic share</div>
+                    <div class="pull-quote-rationale">— Programmatic sharing requires storing and using the recorder&#39;s refresh token for Drive Permissions API calls — sensitive security surface. Manual sharing (recorder shares via Drive UI, one time per member) avoids this.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>New members cannot hear audio until the recorder manually shares the Drive folder with their Google email</li><li>If the recorder loses access to their Google account, band audio becomes inaccessible — no recovery path without exporting files first</li>
+            </ul>
+          </aside>
+    </article>
+      </section>
+<section class="domain-chapter" id="chapter-7">
+        <div class="chapter-number">Chapter 7</div>
+        <h2 class="chapter-title">app-shell</h2>
+        <div class="chapter-meta">1 feature</div>
+        <article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">App Shell — Navigation, Dark Theme, Onboarding, Empty States</h3>
+        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
+      </div>
+      <div class="feature-key-label">odio-2026-004</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">The app needs a solid foundation: a responsive web app that works on any device, navigates between recording/editing/collaboration screens fluidly, enforces auth correctly, handles first-time setup (create a band, link a Drive folder) with minimal friction, and never shows a blank screen.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-8">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. app/layout.tsx: root layout with dark theme CSS variables, system font stack. 2. components/layout/BottomTabBar.tsx: client component — 4 tabs. Hidden on /edit routes via usePathname(). Clips tab hidden when !sessionId (avoids same-URL duplicate). Record tab hidden for MEMBER role via bandMe API query. 3. components/layout/PageLayout.tsx: standard page wrapper. Back button uses Next.js &lt;Link&gt; n</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/layout.tsx: root layout with dark theme CSS variables, system font stack. 2. components/layout/BottomTabBar.tsx: client component — 4 tabs. Hidden on /edit routes via usePathname(). Clips tab hidden when !sessionId (avoids same-URL duplicate). Record tab hidden for MEMBER role via bandMe API query. 3. components/layout/PageLayout.tsx: standard page wrapper. Back button uses Next.js &lt;Link&gt; not &lt;a href&gt; for client-side navigation. Bottom padding: pb-[calc(56px+env(safe-area-inset-bottom))]. 4. components/layout/AuthShell.tsx: client shell — mounts BottomTabBar + UploadBanner. Extracts bandId/sessionId from pathname. 5. app/(auth)/layout.tsx: server layout — auth guard, renders AuthShell. 6. components/ui/EmptyState.tsx: reusable empty state with icon, title, description, action. 7. components/ui/Button.tsx, ButtonLink.tsx: shared button components. 8. components/ui/BottomSheet.tsx: slide-up modal for confirmations and input sheets. 9. components/ui/InlineEdit.tsx: in-place editable text field. 10. tailwind.config.ts: dark theme color tokens.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-8')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; No PWA in V1 — standard responsive web app only</div>
+                    <div class="pull-quote-rationale">— PWA manifest + service worker caching adds complexity without a compelling V1 benefit. The app is used on a browser in the car or at home — bookmarking is sufficient.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Dark-only, no light/dark toggle</div>
+                    <div class="pull-quote-rationale">— Primary use context is dim rehearsal rooms and cars at night. Background #0a0a0a, accent amber #f59e0b.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Bottom tab bar navigation (not hierarchical-only)</div>
+                    <div class="pull-quote-rationale">— Record needs to be reachable from anywhere in one tap during a live jam. Tab bar hidden only on /edit (full-screen waveform editor).</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; PageLayout back button uses Next.js &lt;Link&gt;, not &lt;a href&gt;</div>
+                    <div class="pull-quote-rationale">— Using &lt;a href&gt; for in-app navigation triggers a full page reload on every back tap — visible flash, loses scroll position, re-runs server components. &lt;Link&gt; performs a client-side transition via the Next.js router.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Session page uses pb-[calc(56px+env(safe-area-inset-bottom))] not pb-safe</div>
+                    <div class="pull-quote-rationale">— pb-safe only accounts for the device&#39;s safe area inset (home indicator bar). The fixed 56px tab bar sits on top of that. Without adding 56px, the last clip card could be hidden behind the tab bar on short viewports.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Hide &#39;Clips&#39; tab when no sessionId context</div>
+                    <div class="pull-quote-rationale">— When the user is on the band home page or any page without a session context, the Clips tab linked to /bands/[bandId] — identical to the Sessions tab. Having two tabs going to the same URL is confusing and clutters the navigation.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; System fonts only — no custom font loading</div>
+                    <div class="pull-quote-rationale">— App is used in dark, low-bandwidth settings. Custom fonts add bundle size, FOUT risk, and load time for zero perceptible benefit.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>No add-to-home-screen in V1 — users must bookmark the app in their browser</li><li>Tab bar not animated — no transition effects between tabs</li>
+            </ul>
+          </aside>
+    </article>
+      </section>
+<section class="domain-chapter" id="chapter-8">
+        <div class="chapter-number">Chapter 8</div>
+        <h2 class="chapter-title">sessions</h2>
+        <div class="chapter-meta">1 feature</div>
+        <article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Session Management — Sessions, Clips, Naming, Stages</h3>
+        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
+      </div>
+      <div class="feature-key-label">odio-2026-007</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">A jam night produces 3-8 clips. Band members need to find, name, and navigate them easily. The recorder needs to delete mistakes. After many sessions, the band needs to track which songs are developed vs. still just ideas.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-10">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. app/(auth)/bands/[bandId]/sessions/[sessionId]/page.tsx: server component — loads session + clips via Prisma, renders SessionHeaderClient + ClipCard list. Uses pb-[calc(56px+env(safe-area-inset-bottom))] for correct clearance. 2. components/sessions/SessionHeaderClient.tsx: client component — inline name edit, notes bottom sheet, QR code bottom sheet. 3. components/clips/ClipCard.tsx: clip list</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/(auth)/bands/[bandId]/sessions/[sessionId]/page.tsx: server component — loads session + clips via Prisma, renders SessionHeaderClient + ClipCard list. Uses pb-[calc(56px+env(safe-area-inset-bottom))] for correct clearance. 2. components/sessions/SessionHeaderClient.tsx: client component — inline name edit, notes bottom sheet, QR code bottom sheet. 3. components/clips/ClipCard.tsx: clip list row — name (tap to edit inline), duration, version count, frozen lock, stage badge, processing spinner. '···' button opens delete confirmation sheet. Long-press removed (undiscoverable pattern replaced by explicit button). 4. app/api/clips/[clipId]/route.ts: GET clip, PATCH (name, stage, generatePublicToken, removePublicToken), DELETE (RECORDER only). 5. lib/clipNames.ts: custom death metal adjective + noun word lists + generateDeathMetalName() using unique-names-generator. 6. lib/utils.ts: generateClipName() delegates to generateDeathMetalName(). formatDuration() for M:SS display. formatPosition() for H:MM:SS clock display. calcResultDuration() for virtual cut preview.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-10')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Death metal auto-names instead of &#39;Song N - time&#39;</div>
+                    <div class="pull-quote-rationale">— Sequential names (&#39;Song 1&#39;, &#39;Song 2&#39;) are useless for identifying a specific take days later. Time-based names are hard to remember. Short evocative word pairs from a curated death metal vocabulary (adjectives: Putrid, Severed, Ancient; nouns: Descent, Throne, Ritual) are memorable, distinguishable, and set the right tone for a band app.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; &#39;···&#39; overflow button replaces long-press for clip delete</div>
+                    <div class="pull-quote-rationale">— Long-press is a non-discoverable interaction pattern — users have no visual affordance to find it. Accidental long-press on a clip name (when trying to rename) could trigger a delete sheet unexpectedly. A visible &#39;···&#39; button is a universal mobile pattern and makes the delete action findable without instruction.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Sessions and clips in Postgres, audio files in Drive</div>
+                    <div class="pull-quote-rationale">— Postgres is readable by all band members without Drive folder sharing. Session/clip browsing works immediately for new members.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Song stage is separate from frozen status</div>
+                    <div class="pull-quote-rationale">— &#39;Frozen&#39; means this recording is done. Stage tracks the song&#39;s creative progress, not the file state.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>Death metal names are random — two clips in a session could get the same name (rare, detectable, user can rename)</li><li>Drive storage is under the recorder&#39;s account — ~43MB per 30-min clip, 15GB Drive free tier supports ~350 raw clips before cleanup needed</li><li>Clip delete requires two steps: Postgres record deletion + Drive file deletion — if one fails, manual reconciliation may be needed</li>
+            </ul>
+          </aside>
+    </article>
+      </section>
+<section class="domain-chapter" id="chapter-9">
+        <div class="chapter-number">Chapter 9</div>
+        <h2 class="chapter-title">audio/collaboration</h2>
+        <div class="chapter-meta">1 feature</div>
+        <article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Odio — Collaborative Jam Session Recorder</h3>
+        <span class="status-badge" style="color:var(--status-draft);border-color:var(--status-draft)44;background:var(--status-draft)18;">draft</span>
+      </div>
+      <div class="feature-key-label">odio-2026-001</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">Musicians lose the best moments from their jam sessions. When they do record, the raw file is long, unedited, buried — nobody goes back and cleans it up. No tool lets a small band record on any device, pass the recording around in the car on the way home, each person trimming a song into its final form, and arrive with a clean versioned archive — all from a browser, no install, no DAW.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-14">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p"><strong>Stack:</strong> Next.js (App Router) + TypeScript + Tailwind CSS, deployed on Vercel <strong>Recording:</strong> Browser MediaRecorder API + Web Audio API (level meter) + Wake Lock API (screen-on) <strong>Waveform editing:</strong> wavesurfer.js 7.x + Regions plugin <strong>Storage — audio:</strong> Google Drive (resumable upload bypassing Vercel 4.5MB body limit; transcoded to AAC on finalize) <strong>Storage — metadata:</strong> Neon Postgres free tie</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p"><strong>Stack:</strong> Next.js (App Router) + TypeScript + Tailwind CSS, deployed on Vercel <strong>Recording:</strong> Browser MediaRecorder API + Web Audio API (level meter) + Wake Lock API (screen-on) <strong>Waveform editing:</strong> wavesurfer.js 7.x + Regions plugin <strong>Storage — audio:</strong> Google Drive (resumable upload bypassing Vercel 4.5MB body limit; transcoded to AAC on finalize) <strong>Storage — metadata:</strong> Neon Postgres free tier (sessions, clips, versions, votes, comments, stamps, bands, members) <strong>Auth:</strong> NextAuth.js + Google OAuth (drive.file scope) + NextAuth DB adapter (Prisma + Neon, required to store recorder's refresh token for audio proxy) <strong>Audio proxy:</strong> Next.js API route fetches audio from recorder's Drive using stored token, streams to client with Range support <strong>Real-time:</strong> Client-side polling every 5-10s when session active <strong>Render:</strong> fluent-ffmpeg + @ffmpeg-installer/ffmpeg in Next.js API route (triggered on freeze only) <strong>Edit safety:</strong> localStorage (cut marks saved on every change, restored on editor reopen, cleared on submit) <strong>External services: 2</strong> — Google (OAuth + Drive) + Neon (Postgres). Cost: $0/month.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-14')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Web-only PWA — no native app</div>
+                    <div class="pull-quote-rationale">— Browser MediaRecorder API works on iOS Safari 14.5+, Android Chrome, and desktop. No install removes friction for bandmates who only need to edit/review. The &#39;in the car editing&#39; use case requires web access — native would require app install on every bandmate&#39;s phone.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Google Drive for audio, Neon Postgres for metadata — no Supabase</div>
+                    <div class="pull-quote-rationale">— Supabase Storage costs accumulate at ~100MB/session. Google Drive is free (15GB) for audio. Structured metadata (sessions, clips, versions, votes, comments) belongs in a relational DB for querying, not in JSON sidecars with ETag concurrency management. Neon Postgres free tier (512MB) handles years of band metadata. Both services are $0.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; NextAuth DB adapter required — not JWT-only</div>
+                    <div class="pull-quote-rationale">— The audio proxy route serves the recorder&#39;s Drive files to all band members. To do this, the server needs the recorder&#39;s valid refresh token when any member makes a request — not just when the recorder is logged in. NextAuth&#39;s DB adapter stores access_token and refresh_token in Postgres per user, enabling server-side token lookup by user email. JWT-only strategy cannot support this cross-user token access.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Versioning as core primitive — versions are metadata, not audio files</div>
+                    <div class="pull-quote-rationale">— Storing a full audio file per version would be prohibitively expensive. Versions (cutMarks + annotations JSON) are bytes vs megabytes. Source audio stored once; versions are lightweight edit instructions applied at render time or virtually during preview.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Linear versioning only — no simultaneous co-editing</div>
+                    <div class="pull-quote-rationale">— Real-time simultaneous editing (CRDT/Y.js) adds significant complexity. The real use case is 3 people each editing a different song. Linear versioning covers all realistic scenarios without conflict resolution logic.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; localStorage for in-progress edit safety — no offline sync</div>
+                    <div class="pull-quote-rationale">— Full offline support adds complexity. The real need is simpler: if the browser crashes mid-edit, cut marks shouldn&#39;t be lost. localStorage solves this with minimal code. Submit still requires a connection — that&#39;s acceptable.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Resumable Drive upload from browser — bypass Vercel body limit</div>
+                    <div class="pull-quote-rationale">— Vercel&#39;s 4.5MB request body limit cannot accommodate a 30-min audio recording (~43MB). Resumable uploads: server generates a Drive upload session URL, client uploads directly to Drive. Audio never passes through Vercel.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>iOS Safari stops MediaRecorder if screen locks or user switches tabs — Wake Lock API (iOS 16.4+) mitigates; warning shown before recording</li><li>Polling (not WebSocket) — new versions/votes appear within 5-10s, not instantly</li><li>MediaRecorder output format varies by browser (WebM/Opus on Chrome, AAC/MP4 on iOS) — transcoded to AAC on upload</li><li>Recorder&#39;s Google Drive storage used for band audio — 15GB free, ~350 raw clips before cleanup needed</li><li>Any Editor-role member can initiate a recording, but all audio lands in the band creator&#39;s Drive — one token serves the whole band</li>
+            </ul>
+          </aside>
+    </article>
+      </section>
+    
+
+    <!-- Closing / Roadmap -->
+    <section class="domain-chapter closing-chapter" id="chapter-roadmap">
+          <div class="chapter-number">What's next</div>
+          <h2 class="chapter-title" style="color:var(--text-mid);">In progress</h2>
+          <div class="chapter-meta">1 feature in draft</div>
+          <div class="roadmap-list">
+            <div class="roadmap-item">
+                    <span class="roadmap-key">odio-2026-001</span>
+                    <span class="roadmap-title">Odio — Collaborative Jam Session Recorder</span>
+                    <span class="roadmap-problem">Musicians lose the best moments from their jam sessions. When they do record, th…</span>
+                  </div>
+          </div>
+        </section>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  window.toggleImpl = function(id){
+    var wrap = document.getElementById(id);
+    if(!wrap) return;
+    var shortEl = wrap.querySelector('.impl-short');
+    var fullEl = wrap.querySelector('.impl-full');
+    var btn = wrap.querySelector('.read-more-btn');
+    if(!fullEl || !btn) return;
+
+    if(fullEl.style.display === 'none'){
+      // Expand
+      fullEl.style.display = 'inline';
+      if(shortEl) shortEl.style.display = 'none';
+      btn.textContent = 'Read less ▴';
+    } else {
+      // Collapse
+      fullEl.style.display = 'none';
+      if(shortEl) shortEl.style.display = 'inline';
+      btn.textContent = 'Read more ▾';
+    }
+  };
+})();
+</script>
+</body>
+</html>
