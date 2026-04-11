@@ -1,56 +1,73 @@
 {
   "featureKey": "odio-feat-app-shell",
   "title": "App Shell — Navigation, Dark Theme, Onboarding, Empty States",
-  "status": "frozen",
+  "status": "active",
   "priority": "critical",
   "buildOrder": 3,
   "schemaVersion": 1,
   "domain": "app-shell",
-  "tags": ["navigation", "dark-theme", "onboarding", "mobile-first", "next.js", "empty-states"],
+  "tags": ["navigation", "dark-theme", "onboarding", "mobile-first", "next.js", "empty-states", "bottom-tab-bar"],
   "problem": "The app needs a solid foundation: a responsive web app that works on any device, navigates between recording/editing/collaboration screens fluidly, enforces auth correctly, handles first-time setup (create a band, link a Drive folder) with minimal friction, and never shows a blank screen.",
-  "analysis": "Next.js App Router. No PWA manifest in V1 — standard responsive web app only. Dark theme only — no light mode in V1 (background #0a0a0a, accent amber #f59e0b). System fonts only (-apple-system/BlinkMacSystemFont/Segoe UI — no custom font loading). Bottom tab bar (4 tabs: Sessions, Record, Clips, Band) with the following route hierarchy: / (landing) → /login → /bands (home) → /bands/[bandId] (session list) → /bands/[bandId]/sessions/[sessionId] (clip list) → /bands/[bandId]/sessions/[sessionId]/clips/[clipId] (clip detail: version list + activity) → /bands/[bandId]/sessions/[sessionId]/clips/[clipId]/edit (timeline editor, full-screen, tab bar hidden) → /record (recording screen, full-screen takeover, tab bar hidden) → /share/[token] (public frozen clip, no auth, no tabs). Tab bar is hidden during active recording and in the timeline editor. First-run flow: sign in → if no bands, show 'Create your band' wizard (name → creates Drive folder → creates Postgres band record → invite QR shown). Empty states for all zero-content views — no blank screens.",
-  "successCriteria": "- Dark theme renders correctly everywhere; no light mode; high contrast readable in dim rehearsal room or car\n- System fonts only — no web font loading\n- Bottom tab bar: Sessions / Record / Clips / Band — always visible except recording screen and timeline editor\n- All interactive elements have touch targets >= 44px\n- Unauthenticated users land on / and see sign-in only\n- First-run: new user with no bands sees 'Create band' wizard immediately after sign-in\n- /share/[token] is public — no auth required, no private data exposed\n- Back navigation works correctly on mobile (browser back button)\n- Recording screen accessible from tab bar in 1 tap from any screen\n- Empty state — no sessions in band: 'No sessions yet. Hit Record to capture your first jam.'\n- Empty state — no clips in session: 'Nothing recorded yet for this session.'\n- Empty state — no versions on clip (just v1): 'v1 is the original. Open the editor to make your first cut.'\n- Empty state — no bands: triggers first-run wizard (never a dead end)\n- Loading skeletons shown while data is fetching (session list, clip list, version list, waveform)",
-  "implementation": "1. app/layout.tsx: root layout with dark theme CSS variables, system font stack, <html className='dark'>.\n2. components/layout/BottomTabBar.tsx: client component — 4 tabs (Sessions, Record, Clips, Band). Hidden on /record and /edit routes via usePathname(). Record tab shows pulsing ring when recording in progress.\n3. app/(auth)/layout.tsx: authenticated route group layout wrapping all protected pages.\n4. app/(auth)/bands/page.tsx: home screen — lists user's bands. Redirects to /setup if no bands found.\n5. app/setup/page.tsx: first-run wizard — create band name, link Drive folder, show invite QR.\n6. components/ui/EmptyState.tsx: reusable empty state card with icon, title, description, optional action button.\n7. components/ui/Button.tsx, ButtonLink.tsx: shared button components.\n8. components/ui/BottomSheet.tsx: reusable bottom drawer for sheets.\n9. components/ui/InlineEdit.tsx: in-place editable text field.\n10. tailwind.config.ts: dark theme color tokens (base, surface, elevated, accent, danger, primary, secondary, muted, border).\n11. app/globals.css: CSS custom properties for all color tokens.",
+  "analysis": "Next.js App Router. Dark theme only — no light mode in V1 (background #0a0a0a, accent amber #f59e0b). System fonts only. Bottom tab bar (Sessions / Record / Clips / Band) with route hierarchy. Tab bar is hidden during the timeline editor (/edit routes). The 'Clips' tab is only shown when a sessionId context is available — outside a session it would duplicate the Sessions tab destination. Record tab is hidden for MEMBER-role users. Back navigation uses Next.js <Link> (not <a href>) for client-side transitions — prevents full page reload on every back tap. Pages use pb-[calc(56px+env(safe-area-inset-bottom))] to clear the fixed tab bar on all devices including those with home indicators.",
+  "successCriteria": "- Dark theme renders correctly everywhere; no light mode; high contrast readable in dim rehearsal room or car\n- System fonts only — no web font loading\n- Bottom tab bar: Sessions / Record / Clips / Band — always visible except timeline editor\n- Clips tab hidden when outside a session context (avoids duplicate tab destinations)\n- Record tab hidden for MEMBER-role users\n- All interactive elements have touch targets >= 44px\n- Unauthenticated users land on / and see sign-in only\n- First-run: new user with no bands sees 'Create band' wizard immediately after sign-in\n- /share/[token] is public — no auth required, no private data exposed\n- Back navigation is client-side (no full reload)\n- Content never hidden behind tab bar (correct safe-area + 56px clearance)\n- Empty states guide users to the next action at every dead end",
+  "implementation": "1. app/layout.tsx: root layout with dark theme CSS variables, system font stack.\n2. components/layout/BottomTabBar.tsx: client component — 4 tabs. Hidden on /edit routes via usePathname(). Clips tab hidden when !sessionId (avoids same-URL duplicate). Record tab hidden for MEMBER role via bandMe API query.\n3. components/layout/PageLayout.tsx: standard page wrapper. Back button uses Next.js <Link> not <a href> for client-side navigation. Bottom padding: pb-[calc(56px+env(safe-area-inset-bottom))].\n4. components/layout/AuthShell.tsx: client shell — mounts BottomTabBar + UploadBanner. Extracts bandId/sessionId from pathname.\n5. app/(auth)/layout.tsx: server layout — auth guard, renders AuthShell.\n6. components/ui/EmptyState.tsx: reusable empty state with icon, title, description, action.\n7. components/ui/Button.tsx, ButtonLink.tsx: shared button components.\n8. components/ui/BottomSheet.tsx: slide-up modal for confirmations and input sheets.\n9. components/ui/InlineEdit.tsx: in-place editable text field.\n10. tailwind.config.ts: dark theme color tokens.",
   "decisions": [
     {
       "decision": "No PWA in V1 — standard responsive web app only",
-      "rationale": "PWA manifest + service worker caching adds complexity (update flow, cache invalidation, iOS limitations) without a compelling V1 benefit. The app is used on a browser in the car or at home — bookmarking is sufficient. PWA can be added later if add-to-home-screen demand is validated.",
-      "recommendation": "No next-pwa, no manifest.json, no service worker registration in V1. Standard Next.js build.",
+      "rationale": "PWA manifest + service worker caching adds complexity without a compelling V1 benefit. The app is used on a browser in the car or at home — bookmarking is sufficient.",
+      "recommendation": "No next-pwa, no manifest.json, no service worker in V1.",
       "date": "2026-04-10"
     },
     {
       "decision": "Dark-only, no light/dark toggle",
-      "rationale": "Primary use context is dim rehearsal rooms and cars at night. A light theme would be jarring. No user-configurable theme in V1 — dark is the only mode. Background #0a0a0a, accent amber #f59e0b for recording/active states.",
+      "rationale": "Primary use context is dim rehearsal rooms and cars at night. Background #0a0a0a, accent amber #f59e0b.",
       "recommendation": "Tailwind dark mode via class strategy on <html>. CSS custom properties for all color tokens. No toggle control.",
       "date": "2026-04-10"
     },
     {
       "decision": "Bottom tab bar navigation (not hierarchical-only)",
-      "rationale": "Users need to jump to Record from anywhere in one tap — that's the most critical action in a live jam context. Bottom tabs keep Record always reachable. The tab bar is hidden during full-screen experiences (recording, timeline editor) where it would clutter the primary task.",
-      "recommendation": "Four tabs: Sessions, Record, Clips, Band. Tab bar visible on all standard screens, hidden on /record and /edit routes. Record tab shows pulsing amber ring when recording in progress.",
+      "rationale": "Record needs to be reachable from anywhere in one tap during a live jam. Tab bar hidden only on /edit (full-screen waveform editor).",
+      "recommendation": "Four tabs: Sessions, Record, Clips, Band. Clips tab hidden when no sessionId context. Record tab hidden for MEMBER role.",
       "date": "2026-04-10"
+    },
+    {
+      "decision": "PageLayout back button uses Next.js <Link>, not <a href>",
+      "rationale": "Using <a href> for in-app navigation triggers a full page reload on every back tap — visible flash, loses scroll position, re-runs server components. <Link> performs a client-side transition via the Next.js router.",
+      "recommendation": "Import Link from next/link in PageLayout. Replace <a href={backHref}> with <Link href={backHref}>.",
+      "date": "2026-04-11"
+    },
+    {
+      "decision": "Session page uses pb-[calc(56px+env(safe-area-inset-bottom))] not pb-safe",
+      "rationale": "pb-safe only accounts for the device's safe area inset (home indicator bar). The fixed 56px tab bar sits on top of that. Without adding 56px, the last clip card could be hidden behind the tab bar on short viewports.",
+      "recommendation": "All full-page content areas use pb-[calc(56px+env(safe-area-inset-bottom))] to clear both the tab bar and any device notch.",
+      "date": "2026-04-11"
+    },
+    {
+      "decision": "Hide 'Clips' tab when no sessionId context",
+      "rationale": "When the user is on the band home page or any page without a session context, the Clips tab linked to /bands/[bandId] — identical to the Sessions tab. Having two tabs going to the same URL is confusing and clutters the navigation.",
+      "recommendation": "In BottomTabBar, add hidden: !sessionId to the Clips tab entry. The tab only appears when the user is inside a session.",
+      "date": "2026-04-11"
     },
     {
       "decision": "System fonts only — no custom font loading",
-      "rationale": "App is used in dark, low-bandwidth settings (post-jam, car). Custom fonts add bundle size, FOUT risk, and load time for zero perceptible benefit. System fonts are instantly available, legible, and familiar.",
+      "rationale": "App is used in dark, low-bandwidth settings. Custom fonts add bundle size, FOUT risk, and load time for zero perceptible benefit.",
       "recommendation": "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif. Monospace: ui-monospace for timestamps and durations only.",
-      "date": "2026-04-10"
-    },
-    {
-      "decision": "First-run band wizard on initial sign-in",
-      "rationale": "A new user with no bands cannot do anything useful. Rather than leaving them on an empty home screen, detect the zero-bands state and immediately show 'Create your first band' with Drive folder setup inline. Reduces time-to-first-recording.",
-      "recommendation": "After sign-in, check Postgres for user's band memberships. If zero: redirect to /setup instead of /bands.",
       "date": "2026-04-10"
     }
   ],
   "knownLimitations": [
-    "No add-to-home-screen in V1 — users must bookmark the app in their browser"
+    "No add-to-home-screen in V1 — users must bookmark the app in their browser",
+    "Tab bar not animated — no transition effects between tabs"
   ],
   "componentFile": "components/layout/BottomTabBar.tsx",
-  "userGuide": "After signing in, users land on their bands list. The bottom tab bar (Sessions / Record / Clips / Band) is always visible. Tap Record to go directly to the recording screen from anywhere. On first sign-in with no bands, the app redirects to a setup wizard to create the first band. Empty states guide users to the next action at every dead end — no blank screens.",
+  "userGuide": "After signing in, users land on their bands list. The bottom tab bar (Sessions / Record / Clips / Band) is always visible. Tap Record to go directly to the recording screen from anywhere. The Clips tab appears once you're inside a session — it shows the current session's clips. On first sign-in with no bands, the app redirects to a setup wizard to create the first band.",
   "statusHistory": [
     { "from": null, "to": "draft", "date": "2026-04-10" },
     { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    { "from": "active", "to": "frozen", "date": "2026-04-10" },
+    { "from": "frozen", "to": "active", "date": "2026-04-11", "reason": "Navigation fixes: <Link> back button, Clips tab hidden when no sessionId, safe-area padding fix" }
+  ],
+  "revisions": [
+    { "date": "2026-04-11", "author": "marc+claude", "fields_changed": ["implementation", "decisions", "knownLimitations", "userGuide", "successCriteria"], "reason": "Back button <a>→<Link>, Clips tab hidden without sessionId, pb-safe→pb-[56px+safe-area] session page fix, removed duplicate + Record button from session page" }
   ]
 }

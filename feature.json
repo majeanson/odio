@@ -55,10 +55,10 @@
   ],
   "knownLimitations": [
     "iOS Safari stops MediaRecorder if screen locks or user switches tabs — Wake Lock API (iOS 16.4+) mitigates; warning shown before recording",
-    "Concurrent JSON writes by two members at the same moment trigger a 412 conflict — rare at band scale, handled by reload-and-retry",
     "Polling (not WebSocket) — new versions/votes appear within 5-10s, not instantly",
     "MediaRecorder output format varies by browser (WebM/Opus on Chrome, AAC/MP4 on iOS) — transcoded to AAC on upload",
-    "Recorder's Google Drive storage used for band audio — 15GB free, sufficient for many sessions"
+    "Recorder's Google Drive storage used for band audio — 15GB free, ~350 raw clips before cleanup needed",
+    "Any Editor-role member can initiate a recording, but all audio lands in the band creator's Drive — one token serves the whole band"
   ],
   "revisions": [
     {
@@ -77,7 +77,13 @@
       "date": "2026-04-10",
       "author": "marc+claude",
       "fields_changed": ["analysis", "implementation", "decisions", "knownLimitations", "tags"],
-      "reason": "Removed Supabase entirely. Google Drive for audio + .meta.json sidecars. NextAuth.js. localStorage safety net only. Architecture v0.3."
+      "reason": "Removed Supabase entirely. Google Drive for audio. Postgres for all metadata. NextAuth.js. localStorage safety net only. Architecture v0.3."
+    },
+    {
+      "date": "2026-04-11",
+      "author": "marc+claude",
+      "fields_changed": ["knownLimitations", "lineage"],
+      "reason": "Removed stale .meta.json reference (all metadata is now Postgres). Added new child features: clip-detail, public-share-player, upload-banner."
     }
   ],
   "statusHistory": [
@@ -85,11 +91,24 @@
   ],
   "lineage": {
     "children": [
-      "feat-app-shell", "feat-auth", "feat-recording", "feat-session-mgmt",
-      "feat-versioning", "feat-timeline-editor", "feat-render",
-      "feat-band-space", "feat-collaboration", "feat-storage-mgmt",
-      "feat-multi-recorder", "feat-recording-resilience",
-      "feat-ffmpeg-poc", "feat-audio-input"
+      "odio-feat-ffmpeg-poc",
+      "odio-feat-auth",
+      "odio-feat-app-shell",
+      "odio-feat-band-space",
+      "odio-feat-recording",
+      "odio-feat-session-mgmt",
+      "odio-feat-multi-recorder",
+      "odio-feat-recording-resilience",
+      "odio-feat-upload-banner",
+      "odio-feat-timeline-editor",
+      "odio-feat-versioning",
+      "odio-feat-render",
+      "odio-feat-ffmpeg-poc",
+      "odio-feat-clip-detail",
+      "odio-feat-public-share-player",
+      "odio-feat-collaboration",
+      "odio-feat-storage-mgmt",
+      "odio-feat-audio-input"
     ]
   }
 }

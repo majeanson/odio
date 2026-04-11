@@ -1,0 +1,39 @@
+{
+  "featureKey": "odio-feat-public-share-player",
+  "title": "Public Share Player — Unauthenticated Clip Playback",
+  "status": "active",
+  "priority": "medium",
+  "buildOrder": 11,
+  "schemaVersion": 1,
+  "domain": "render",
+  "tags": ["public-share", "wavesurfer", "unauthenticated", "frozen", "stamps", "download"],
+  "problem": "A frozen clip should be shareable outside the band — with a producer, a friend, or social media. The listener should not need a Google account or any signup. Only the frozen render is exposed; no session metadata, band data, or version history leaks through the public page.",
+  "analysis": "The public share page (/share/[token]) fetches clip metadata by publicToken from Postgres. Audio is served via /api/audio/public/[token] — a separate proxy route that looks up the clip by token and streams the finalDriveFileId from Drive using the recorder's stored token. No user auth is required on either the page or the audio route.\n\nPublicPlayer.tsx uses WaveSurfer.js to render the waveform and play the frozen audio. Stamps are shown as tappable chips (currently display-only divs, not buttons — unlike the authenticated WaveformPlayer). A download button triggers the /api/audio/public/[token] route with a download intent, giving the user the .aac file.\n\nThe public page shows: clip name, band name (optional), clip duration, waveform player with stamps, play/pause, download. No version list, no vote buttons, no comments, no edit actions — nothing that reveals internal band structure.",
+  "successCriteria": "- /share/[token] loads without authentication\n- Waveform renders and plays the frozen render audio\n- Stamp chips displayed with correct emoji and timestamp\n- Play/pause 64px button — large touch target\n- Download button downloads the .aac file\n- Page shows clip name and duration\n- Error state shown if token is invalid or clip has been un-shared\n- Audio not exposed if publicToken is null or clip is not frozen",
+  "implementation": "1. components/share/PublicPlayer.tsx: client component. Props: token, sourceDurationMs, stamps[]. WaveSurfer.create({ url: /api/audio/public/{token}, interact: true }). Renders loading spinner, error state, waveform, stamp chips, play/pause button, download anchor. Stamp chips currently rendered as <div> (not tappable buttons — future improvement: convert to <button> with seek on click, same pattern as WaveformPlayer).\n2. app/share/[token]/page.tsx: server component. Fetches clip by publicToken from Postgres (clips table). If not found or clip.frozen=false: returns 404 page. Renders clip name, duration, PublicPlayer with stamps.\n3. app/api/audio/public/[token]/route.ts: streams audio from Drive. Looks up clip by publicToken, gets finalDriveFileId, fetches recorder's token from NextAuth accounts table, proxies Drive stream with Range header support. No auth middleware — open to public traffic.",
+  "decisions": [
+    {
+      "decision": "Audio served via server-side proxy even on public pages",
+      "rationale": "Even with Drive public permission enabled on the final file, the Drive URL format includes the file ID which reveals internal structure. Proxying via /api/audio/public/[token] keeps the only public identifier as the opaque token, allows revocation (clear token → proxy returns 404), and avoids exposing file IDs in the page source.",
+      "recommendation": "GET /api/audio/public/{token} → look up clip by token → stream Drive file via recorder's stored token. Supports Range requests. Returns 404 if token is null or clip not frozen.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "No version history, no collaboration data on the public page",
+      "rationale": "The public page is for external listeners — producers, fans, collaborators outside the band. Exposing version numbers, vote tallies, or comments reveals internal band workflow details. The public page is intentionally minimal: name, waveform, stamps, download.",
+      "recommendation": "Query only: clip.name, clip.sourceDurationMs, clip.finalDriveFileId, stamps. Nothing from votes, comments, band_members, or clip_versions tables.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "Stamp chips in PublicPlayer are currently display-only (not tappable to seek) — WaveformPlayer fixed this with <button> elements; PublicPlayer needs the same update",
+    "Public audio proxy uses the recorder's Drive token — if the recorder revokes access, public links break even for frozen clips",
+    "No view analytics — there's no way to know how many people have listened to a shared clip"
+  ],
+  "componentFile": "components/share/PublicPlayer.tsx",
+  "userGuide": "After freezing a clip, tap 'Enable public share' on the clip detail page to generate a /share/[token] link. Share this URL with anyone — they can open it in any browser without signing in. They'll see the clip name, a waveform player, and stamp markers. They can play, seek, and download the audio. To revoke access, tap 'Enable public share' again to disable — the link immediately stops working.",
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-11" },
+    { "from": "draft", "to": "active", "date": "2026-04-11" }
+  ]
+}

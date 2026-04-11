@@ -2,11 +2,12 @@
 
 // Clip card — shows clip name (inline editable), duration, stage chip,
 // version count badge, processing spinner, and frozen lock icon.
-// Swipe-left or long-press reveals the delete action (confirmation sheet).
+// "···" button on the right opens the delete confirmation sheet (replaces
+// the undiscoverable long-press pattern).
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { cn, formatDuration } from "@/lib/utils";
+import { formatDuration } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
@@ -34,8 +35,6 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
   const [deleteSheetOpen, setDeleteSheetOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
-  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pointerMoveRef = useRef(false);
 
   async function saveName(newName: string) {
     const trimmed = newName.trim();
@@ -59,14 +58,8 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
   }
 
   function handleNameKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
-      saveName(nameInput);
-      setEditingName(false);
-    }
-    if (e.key === "Escape") {
-      setNameInput(name);
-      setEditingName(false);
-    }
+    if (e.key === "Enter") { saveName(nameInput); setEditingName(false); }
+    if (e.key === "Escape") { setNameInput(name); setEditingName(false); }
   }
 
   async function handleDelete() {
@@ -83,27 +76,8 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
     }
   }
 
-  // Tap the card body → navigate to clip detail
-  // Long-press → open delete sheet
-  function handlePointerDown() {
-    pointerMoveRef.current = false;
-    longPressRef.current = setTimeout(() => setDeleteSheetOpen(true), 500);
-  }
-  function handlePointerMove() {
-    pointerMoveRef.current = true;
-    if (longPressRef.current) {
-      clearTimeout(longPressRef.current);
-      longPressRef.current = null;
-    }
-  }
-  function handlePointerUp() {
-    if (longPressRef.current) {
-      clearTimeout(longPressRef.current);
-      longPressRef.current = null;
-    }
-  }
   function handleCardClick() {
-    if (!editingName && !pointerMoveRef.current) {
+    if (!editingName) {
       router.push(`/bands/${bandId}/sessions/${clip.sessionId}/clips/${clip.id}`);
     }
   }
@@ -111,11 +85,7 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
   return (
     <>
       <div
-        className="flex items-start gap-3 rounded-2xl bg-surface px-4 py-3 transition-colors active:bg-elevated cursor-pointer"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
+        className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3 transition-colors active:bg-elevated cursor-pointer"
         onClick={handleCardClick}
       >
         {/* Main content */}
@@ -139,20 +109,15 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (longPressRef.current) clearTimeout(longPressRef.current);
                 setNameInput(name);
                 setEditingName(true);
               }}
             >
-              {saving ? (
-                <span className="opacity-60">{nameInput}</span>
-              ) : (
-                name
-              )}
+              {saving ? <span className="opacity-60">{nameInput}</span> : name}
             </button>
           )}
 
-          {/* Meta row: duration · stage */}
+          {/* Meta row: duration · stage · version count */}
           <div className="mt-1 flex flex-wrap items-center gap-2">
             {clip.sourceDurationMs != null && (
               <span className="font-mono text-xs text-muted">
@@ -170,8 +135,8 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
           </div>
         </div>
 
-        {/* Right side — processing spinner / frozen lock + chevron */}
-        <div className="flex items-center gap-2 shrink-0 self-center">
+        {/* Right side — state indicator + "···" menu button */}
+        <div className="flex items-center gap-1 shrink-0">
           {clip.transcodeStatus === "PENDING" ? (
             <span
               className="size-4 rounded-full border-2 border-muted border-t-transparent animate-spin"
@@ -192,18 +157,19 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           ) : null}
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-4 text-muted"
-            aria-hidden
+
+          {/* "···" — opens delete sheet. Stops propagation so card doesn't navigate. */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setDeleteSheetOpen(true); }}
+            aria-label="More actions"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:text-secondary hover:bg-elevated transition-colors"
           >
-            <path d="M9 18l6-6-6-6" />
-          </svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" className="size-4" aria-hidden>
+              <circle cx="5" cy="12" r="1.5" />
+              <circle cx="12" cy="12" r="1.5" />
+              <circle cx="19" cy="12" r="1.5" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -222,9 +188,11 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
             onClick={handleDelete}
             variant="danger"
             fullWidth
+            size="lg"
             disabled={deleting}
+            loading={deleting}
           >
-            {deleting ? "Deleting…" : "Delete clip"}
+            Delete clip
           </Button>
           <Button
             onClick={() => setDeleteSheetOpen(false)}

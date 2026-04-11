@@ -4,10 +4,12 @@
 // Shows: member list with role management, invite link, Drive folder, storage quota.
 // RECORDER can change member roles and remove members.
 // Any member can remove themselves (leave band).
+// Role change: inline pill buttons (no native select). Remove/leave: confirmation sheet.
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import type { BandMember } from "@/types";
 
 const ROLE_LABELS: Record<BandMember["role"], string> = {
@@ -66,6 +68,8 @@ export function BandSettingsClient({
   const [storageLoading, setStorageLoading] = useState(false);
   const [roleChanging, setRoleChanging] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
+  // Confirmation sheet state — holds the email of the member to remove/leave
+  const [removeConfirmEmail, setRemoveConfirmEmail] = useState<string | null>(null);
 
   useEffect(() => {
     setInviteUrl(`${window.location.origin}/join/${inviteCode}`);
@@ -114,8 +118,8 @@ export function BandSettingsClient({
       body: JSON.stringify({ targetEmail: userEmail }),
     });
     if (res.ok) {
+      setRemoveConfirmEmail(null);
       if (userEmail === currentUserEmail) {
-        // Self-removal — navigate away
         window.location.href = "/bands";
       } else {
         setMembers((prev) => prev.filter((m) => m.userEmail !== userEmail));
@@ -126,6 +130,10 @@ export function BandSettingsClient({
 
   const driveFolderUrl = `https://drive.google.com/drive/folders/${driveFolderId}`;
   const isRecorder = currentUserRole === "RECORDER";
+
+  // The member we're about to remove (for the confirmation sheet)
+  const removeTarget = members.find((m) => m.userEmail === removeConfirmEmail) ?? null;
+  const removingself = removeTarget?.userEmail === currentUserEmail;
 
   return (
     <div className="px-4 py-4 space-y-8">
@@ -142,7 +150,7 @@ export function BandSettingsClient({
         <p className="text-xs font-medium uppercase tracking-wider text-muted mb-3">
           Invite link
         </p>
-        <div className="rounded-xl bg-surface p-4 space-y-3">
+        <div className="rounded-2xl bg-surface p-4 space-y-3">
           <p className="break-all font-mono text-xs text-secondary select-all">
             {inviteUrl}
           </p>
@@ -165,13 +173,9 @@ export function BandSettingsClient({
           {members.map((m) => {
             const isSelf = m.userEmail === currentUserEmail;
             const isChanging = roleChanging === m.userEmail;
-            const isRemoving = removing === m.userEmail;
 
             return (
-              <li
-                key={m.userEmail}
-                className="rounded-xl bg-surface px-4 py-3"
-              >
+              <li key={m.userEmail} className="rounded-2xl bg-surface px-4 py-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-primary">
@@ -182,48 +186,54 @@ export function BandSettingsClient({
                     </p>
                     <p className="text-xs text-muted truncate">{m.userEmail}</p>
                   </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Badge variant={ROLE_VARIANTS[m.role]}>
-                      {ROLE_LABELS[m.role]}
-                    </Badge>
-                  </div>
+                  <Badge variant={ROLE_VARIANTS[m.role]}>
+                    {ROLE_LABELS[m.role]}
+                  </Badge>
                 </div>
 
                 {/* Role management — RECORDER only, non-RECORDER members */}
                 {isRecorder && !isSelf && m.role !== "RECORDER" && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <select
-                      value={m.role}
-                      disabled={isChanging}
-                      onChange={(e) =>
-                        changeRole(m.userEmail, e.target.value as "EDITOR" | "MEMBER")
-                      }
-                      className="rounded-lg border border-border bg-elevated px-2 py-1 text-xs text-primary focus:border-accent focus:outline-none disabled:opacity-50"
-                    >
-                      <option value="EDITOR">Editor</option>
-                      <option value="MEMBER">Member</option>
-                    </select>
-
+                  <div className="mt-3 flex items-center gap-2">
+                    {/* Pill buttons — active pill is highlighted, tapping the other switches role */}
                     <button
-                      onClick={() => removeMember(m.userEmail)}
-                      disabled={isRemoving}
-                      className="text-xs text-danger underline underline-offset-2 disabled:opacity-50"
+                      onClick={() => changeRole(m.userEmail, "EDITOR")}
+                      disabled={isChanging || m.role === "EDITOR"}
+                      className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+                        m.role === "EDITOR"
+                          ? "bg-accent/20 text-accent"
+                          : "bg-elevated text-muted hover:text-primary"
+                      }`}
                     >
-                      {isRemoving ? "Removing…" : "Remove"}
+                      Editor
+                    </button>
+                    <button
+                      onClick={() => changeRole(m.userEmail, "MEMBER")}
+                      disabled={isChanging || m.role === "MEMBER"}
+                      className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+                        m.role === "MEMBER"
+                          ? "bg-orange-500/20 text-orange-400"
+                          : "bg-elevated text-muted hover:text-primary"
+                      }`}
+                    >
+                      Member
+                    </button>
+                    <button
+                      onClick={() => setRemoveConfirmEmail(m.userEmail)}
+                      className="ml-auto rounded-xl px-3 py-1.5 text-xs font-medium bg-danger/10 text-danger hover:bg-danger/20 transition-colors"
+                    >
+                      Remove
                     </button>
                   </div>
                 )}
 
                 {/* Self-removal (leave band) — non-RECORDER members */}
                 {isSelf && m.role !== "RECORDER" && (
-                  <div className="mt-2">
+                  <div className="mt-3">
                     <button
-                      onClick={() => removeMember(m.userEmail)}
-                      disabled={isRemoving}
-                      className="text-xs text-danger underline underline-offset-2 disabled:opacity-50"
+                      onClick={() => setRemoveConfirmEmail(m.userEmail)}
+                      className="rounded-xl px-3 py-1.5 text-xs font-medium bg-danger/10 text-danger hover:bg-danger/20 transition-colors"
                     >
-                      {isRemoving ? "Leaving…" : "Leave band"}
+                      Leave band
                     </button>
                   </div>
                 )}
@@ -238,7 +248,7 @@ export function BandSettingsClient({
         <p className="text-xs font-medium uppercase tracking-wider text-muted mb-3">
           Storage
         </p>
-        <div className="rounded-xl bg-surface p-4 space-y-3">
+        <div className="rounded-2xl bg-surface p-4 space-y-3">
           <p className="text-sm text-secondary">
             Audio is stored in the band creator&apos;s Google Drive.
           </p>
@@ -265,7 +275,6 @@ export function BandSettingsClient({
             </svg>
           </a>
 
-          {/* Quota bar */}
           {storageLoading ? (
             <div className="flex items-center gap-2">
               <span className="size-3.5 rounded-full border-2 border-secondary border-t-transparent animate-spin" />
@@ -304,6 +313,42 @@ export function BandSettingsClient({
           ) : null}
         </div>
       </section>
+
+      {/* ── Remove / Leave confirmation sheet ── */}
+      <BottomSheet
+        open={removeConfirmEmail !== null}
+        onClose={() => setRemoveConfirmEmail(null)}
+        title={removingself ? "Leave band?" : `Remove ${removeTarget?.displayName ?? removeTarget?.userEmail ?? "member"}?`}
+      >
+        {removeTarget && (
+          <div className="space-y-4">
+            <div className="rounded-2xl bg-elevated px-5 py-4">
+              <p className="text-sm text-secondary">
+                {removingself
+                  ? `You'll lose access to ${bandName} and all its sessions.`
+                  : `${removeTarget.displayName ?? removeTarget.userEmail} will lose access to ${bandName}. Their audio in Drive is unaffected — remove Drive folder access separately.`}
+              </p>
+            </div>
+            <Button
+              onClick={() => removeMember(removeTarget.userEmail)}
+              disabled={removing === removeTarget.userEmail}
+              loading={removing === removeTarget.userEmail}
+              variant="danger"
+              fullWidth
+              size="lg"
+            >
+              {removingself ? "Leave band" : "Remove from band"}
+            </Button>
+            <Button
+              onClick={() => setRemoveConfirmEmail(null)}
+              variant="ghost"
+              fullWidth
+            >
+              Cancel
+            </Button>
+          </div>
+        )}
+      </BottomSheet>
     </div>
   );
 }

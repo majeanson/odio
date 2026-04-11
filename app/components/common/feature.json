@@ -1,0 +1,39 @@
+{
+  "featureKey": "odio-feat-upload-banner",
+  "title": "Upload Banner — Persistent Upload Progress Across All Pages",
+  "status": "active",
+  "priority": "high",
+  "buildOrder": 8,
+  "schemaVersion": 1,
+  "domain": "recording",
+  "tags": ["upload", "banner", "progress", "resilience", "indexeddb", "retry", "fixed-ui"],
+  "problem": "After stopping a recording, the band member needs to navigate away (to another song, to the session list, to collaborate) without losing visibility into whether the upload succeeded. The upload progress must persist across all pages — not just the record screen — as a fixed top banner.",
+  "analysis": "UploadBanner.tsx is a fixed-position (top-0, z-50) client component mounted in AuthShell, making it visible on every authenticated page. It receives the list of active pending uploads from usePendingUploads and renders the most actionable one prominently.\n\nStatus priority order: token-error > session-error > paused > uploading. The most actionable upload is shown first — an error that requires human action is more urgent than an active upload or a paused one.\n\nThree visual variants:\n- **uploading**: amber background, spinner icon, progress bar below text (byteOffset / blob.size)\n- **paused**: elevated background, no spinner, Retry button\n- **error**: danger/10 background, red text, Retry + 'Save file' buttons\n\nProgress bar is shown for active uploads only, using byteOffset from IndexedDB to compute percentage. When multiple uploads are pending, the banner shows the primary one with '+N more' count.\n\nThe banner auto-dismisses (returns null) when uploads.length === 0 — no manual close button for active uploads, since closing it would hide critical progress state.",
+  "successCriteria": "- Banner visible on every authenticated page during any upload state\n- Active upload: amber background, spinner, clip name, progress bar at bottom of banner\n- Paused upload: shows 'Upload paused — waiting for connection' with Retry button\n- Token error: shows 'Drive connection needs renewal — ask band creator to re-authorize' with Retry + Save file buttons\n- Session error: shows 'Session expired — sign in again to resume upload' with Retry + Save file buttons\n- Multiple pending: shows primary (most urgent) with '+N more' count\n- Banner disappears when all uploads complete (uploads.length === 0)\n- 'Save file' triggers browser download of raw blob (.aac or .webm)",
+  "implementation": "1. components/common/UploadBanner.tsx: client component. Props: uploads[], onRetry, onDiscard, onSaveToDevice. statusMessage() maps PendingUpload.status to {text, variant}. Priority: first token-error → session-error → paused → uploads[0]. Renders fixed div with variantStyles by variant. Progress bar: {variant === 'uploading' && byteOffset && blob.size > 0 && <div style={{width: percent%}} />}. Returns null when uploads.length === 0.\n2. components/layout/AuthShell.tsx: mounts UploadBanner + BottomTabBar at auth layout level. Passes upload state from usePendingUploads hook.\n3. hooks/usePendingUploads.ts: reads IndexedDB on mount, drives retry state machine, exposes uploads[], retry/discard/saveToDevice handlers to AuthShell.",
+  "decisions": [
+    {
+      "decision": "Most actionable upload shown first — errors before paused before active",
+      "rationale": "A token error requires a human action (band creator re-authorizes). A session error requires sign-in. These block recovery and are more urgent than an active upload silently progressing. Showing errors first ensures the user notices and acts on the blocker rather than assuming uploads are fine.",
+      "recommendation": "Priority order in UploadBanner: uploads.find(token-error) ?? uploads.find(session-error) ?? uploads.find(paused) ?? uploads[0].",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "No manual close button on the banner for active uploads",
+      "rationale": "A close button on an active upload banner would give the user false confidence that dismissing it is safe. If they close it and the upload later fails, they have no recovery path visible. The banner auto-dismisses only when uploads complete. Error states include actionable buttons (Retry, Save file) rather than a generic close.",
+      "recommendation": "No close/X button on the banner. Returns null when uploads.length === 0. Error variants include specific action buttons.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "Banner occupies top space on every authenticated page — pages with their own fixed headers need top padding adjustment",
+    "Progress bar accuracy depends on IndexedDB byteOffset being updated frequently during upload; if updates are sparse, the bar may jump",
+    "'Save file' downloads the raw browser-recorded blob (WebM on Chrome, AAC/MP4 on Safari) — not the transcoded AAC that would normally be stored in Drive"
+  ],
+  "componentFile": "components/common/UploadBanner.tsx",
+  "userGuide": "After stopping a recording, a banner appears at the top of every screen showing upload progress. If the upload completes successfully, the banner disappears automatically. If the connection drops, the banner shows 'Upload paused' with a Retry button — tap it once reconnected. If the band creator's Drive connection expires, the banner shows an error with a 'Save file' button as a last resort to download the raw recording to your device.",
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-11" },
+    { "from": "draft", "to": "active", "date": "2026-04-11" }
+  ]
+}
