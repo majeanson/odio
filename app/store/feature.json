@@ -49,7 +49,8 @@
     "IndexedDB is cleared when the user clears browser storage ('Clear site data') — the blob would be lost; this is unavoidable without server-side buffering and is an edge case the user controls",
     "Background Sync (automatic retry when tab is closed and connection restored) is not available on iOS Safari — recovery on iOS requires opening the app manually",
     "Drive resumable upload session URLs expire after 7 days — a blob stranded for > 7 days will need a fresh upload session, not a resume; the implementation must detect this (404 on session URL) and fall back to a new session",
-    "Storage pressure on low-end devices: a 43MB blob may trigger the browser's storage eviction policy on devices with < 1GB free — 'Save to device' should be surfaced proactively for large recordings"
+    "Storage pressure on low-end devices: a 43MB blob may trigger the browser's storage eviction policy on devices with < 1GB free — 'Save to device' should be surfaced proactively for large recordings",
+    "PostRecordScreen.doUpload() is a standalone async function that writes to IndexedDB directly without going through the Zustand store's action methods — fixed by calling usePendingUploadsStore.getState().refresh() on every status-changing path so the in-memory store stays in sync with IndexedDB and the banner dismisses immediately"
   ],
   "componentFile": "hooks/usePendingUploads.ts",
   "userGuide": "Recording resilience is automatic and invisible when things work. If an upload fails (network drops, Drive token expires), a banner appears at the top of the screen: 'You have [N] recording(s) waiting to upload'. Tap 'Retry' to resume when reconnected. Tap 'Save to device' to download the raw audio file to your phone or computer if Drive is permanently unavailable. Tap 'Discard' (with confirmation) to remove a pending recording from recovery. When the app reopens after a crash, pending recordings are detected automatically.",

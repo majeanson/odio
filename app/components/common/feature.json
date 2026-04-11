@@ -18,7 +18,7 @@
   "problem": "After stopping a recording, the band member needs to navigate away (to another song, to the session list, to collaborate) without losing visibility into whether the upload succeeded. The upload progress must persist across all pages — not just the record screen — as a fixed top banner.",
   "analysis": "UploadBanner.tsx is a fixed-position (top-0, z-50) client component mounted in AuthShell, making it visible on every authenticated page. It receives the list of active pending uploads from usePendingUploads and renders the most actionable one prominently.\n\nStatus priority order: token-error > session-error > paused > uploading. The most actionable upload is shown first — an error that requires human action is more urgent than an active upload or a paused one.\n\nThree visual variants:\n- **uploading**: amber background, spinner icon, progress bar below text (byteOffset / blob.size)\n- **paused**: elevated background, no spinner, Retry button\n- **error**: danger/10 background, red text, Retry + 'Save file' buttons\n\nProgress bar is shown for active uploads only, using byteOffset from IndexedDB to compute percentage. When multiple uploads are pending, the banner shows the primary one with '+N more' count.\n\nThe banner auto-dismisses (returns null) when uploads.length === 0 — no manual close button for active uploads, since closing it would hide critical progress state.",
   "successCriteria": "- Banner visible on every authenticated page during any upload state\n- Active upload: amber background, spinner, clip name, progress bar at bottom of banner\n- Paused upload: shows 'Upload paused — waiting for connection' with Retry button\n- Token error: shows 'Drive connection needs renewal — ask band creator to re-authorize' with Retry + Save file buttons\n- Session error: shows 'Session expired — sign in again to resume upload' with Retry + Save file buttons\n- Multiple pending: shows primary (most urgent) with '+N more' count\n- Banner disappears when all uploads complete (uploads.length === 0)\n- 'Save file' triggers browser download of raw blob (.aac or .webm)",
-  "implementation": "1. components/common/UploadBanner.tsx: client component. Props: uploads[], onRetry, onDiscard, onSaveToDevice. statusMessage() maps PendingUpload.status to {text, variant}. Priority: first token-error → session-error → paused → uploads[0]. Renders fixed div with variantStyles by variant. Progress bar: {variant === 'uploading' && byteOffset && blob.size > 0 && <div style={{width: percent%}} />}. Returns null when uploads.length === 0.\n2. components/layout/AuthShell.tsx: mounts UploadBanner + BottomTabBar at auth layout level. Passes upload state from usePendingUploads hook.\n3. hooks/usePendingUploads.ts: reads IndexedDB on mount, drives retry state machine, exposes uploads[], retry/discard/saveToDevice handlers to AuthShell.",
+  "implementation": "1. components/common/UploadBanner.tsx: client component. Fixed position top-0, full-width, z-50. On desktop (md+) offset right to avoid sidebar: md:left-[220px]. Progress percentage computed as a dedicated numeric variable (not inline JSX short-circuit, which renders literal '0' when byteOffset is 0): progressPercent = blob.size > 0 && byteOffset != null ? Math.round(byteOffset / blob.size * 100) : 0. Progress bar is absolute bottom-0 (2px strip, stable height). Error states (token-error, session-error) include a dismiss ✕ button — active/paused uploads do not. Uses ResizeObserver to write its height to --upload-banner-h CSS variable so sticky headers below can offset correctly. Returns null when uploads.length === 0.\n2. components/layout/AuthShell.tsx: mounts UploadBanner + BottomTabBar at auth layout level. Passes upload state from usePendingUploads hook.\n3. hooks/usePendingUploads.ts: reads IndexedDB on mount, drives retry state machine, exposes uploads[], retry/discard/saveToDevice handlers to AuthShell.\n4. app/record/post/page.tsx: PostRecordScreen.doUpload() calls usePendingUploadsStore.getState().refresh() on every status-changing path (success, session-error, token-error, paused, catch) so the Zustand store stays in sync with IndexedDB and the banner dismisses immediately after upload completes without requiring a page refresh.",
   "decisions": [
     {
       "decision": "Most actionable upload shown first — errors before paused before active",
@@ -27,14 +27,15 @@
       "date": "2026-04-10"
     },
     {
-      "decision": "No manual close button on the banner for active uploads",
-      "rationale": "A close button on an active upload banner would give the user false confidence that dismissing it is safe. If they close it and the upload later fails, they have no recovery path visible. The banner auto-dismisses only when uploads complete. Error states include actionable buttons (Retry, Save file) rather than a generic close.",
-      "recommendation": "No close/X button on the banner. Returns null when uploads.length === 0. Error variants include specific action buttons.",
-      "date": "2026-04-10"
+      "decision": "No close button on active/paused uploads; dismiss button only on error states",
+      "rationale": "Closing an active or paused upload banner hides critical progress state and gives false confidence. But permanently blocking the UI for an unresolvable error (token-error, session-error) that the user cannot fix immediately is hostile — they may need to navigate while waiting for the creator to re-authorize. Error states have an ✕ dismiss button that hides the banner without discarding the upload (it can still be retried from any page).",
+      "recommendation": "No ✕ on uploading/paused variants. Add ✕ dismiss to token-error and session-error variants. Returns null when uploads.length === 0.",
+      "date": "2026-04-11"
     }
   ],
   "knownLimitations": [
-    "Banner occupies top space on every authenticated page — pages with their own fixed headers need top padding adjustment",
+    "Banner occupies top space — sticky headers below must consume --upload-banner-h CSS variable; new pages with their own sticky headers need to adopt this pattern",
+    "On desktop the banner is offset md:left-[220px] to avoid the sidebar; if the sidebar width changes, this value must be updated manually",
     "Progress bar accuracy depends on IndexedDB byteOffset being updated frequently during upload; if updates are sparse, the bar may jump",
     "'Save file' downloads the raw browser-recorded blob (WebM on Chrome, AAC/MP4 on Safari) — not the transcoded AAC that would normally be stored in Drive"
   ],
@@ -45,6 +46,18 @@
       "from": "draft",
       "to": "active",
       "date": "2026-04-11"
+    }
+  ],
+  "revisions": [
+    {
+      "date": "2026-04-11",
+      "author": "marc+claude",
+      "fields_changed": [
+        "implementation",
+        "decisions",
+        "knownLimitations"
+      ],
+      "reason": "Fixed React '0' render bug (byteOffset short-circuit), added desktop sidebar offset (md:left-[220px]), added progress % label, added dismiss button for error states, documented Zustand store sync via refresh() in PostRecordScreen.doUpload(). Updated decisions to reflect error-only dismiss button."
     }
   ]
 }
