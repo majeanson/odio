@@ -179,6 +179,9 @@ function RecordingScreen() {
           {state === "idle" && "Ready to record"}
           {state === "stopped" && "Saving…"}
         </p>
+        {isRecording && (
+          <p className="text-sm text-muted mt-0.5">Tap the button to stop</p>
+        )}
 
         {/* Waveform / level meter */}
         <div className="mt-3" aria-label="Audio level" role="meter" aria-valuenow={Math.round(level * 100)} aria-valuemin={0} aria-valuemax={100}>

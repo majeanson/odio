@@ -97,11 +97,21 @@ export function WaveformPlayer({
     });
     ws.on("play", () => setIsPlaying(true));
     ws.on("pause", () => setIsPlaying(false));
-    ws.on("finish", () => setIsPlaying(false));
+    ws.on("finish", () => {
+      setIsPlaying(false);
+      // Reset cursor to the beginning so the waveform looks clean at rest
+      // rather than leaving an amber line pinned at the right edge.
+      ws.setTime(0);
+    });
     ws.on("timeupdate", (time: number) => {
       const ms = time * 1000;
+      // Always track position — currentTimeMsRef is used by the play button
+      // to re-seek before playback (fixes click-while-paused sync gap).
       currentTimeMsRef.current = ms;
       setCurrentTimeMs(ms);
+      // Only skip cuts during active playback — never during seeks while paused
+      // (which would cause position 0 after finish-reset to jump to a cut's endMs).
+      if (!ws.isPlaying()) return;
       const hit = activeCutsRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
       if (hit && wsRef.current) {
         const targetSec = hit.endMs / 1000;

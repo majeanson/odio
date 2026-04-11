@@ -40,9 +40,9 @@ export default async function BandsPage() {
   // Multi-band: show picker
   return (
     <PageLayout title="My Bands">
-      <div className="px-5 py-5 space-y-4">
+      <div className="px-5 py-5 space-y-4 md:px-8 md:py-8">
         {/* Band list */}
-        <ul className="space-y-3" role="list">
+        <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0" role="list">
           {memberships.map(({ band, role }) => (
             <li key={band.id}>
               <Link

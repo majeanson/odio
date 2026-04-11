@@ -57,9 +57,9 @@ export default async function ClipEditPage({
         <Link
           href={backHref}
           aria-label="Back to clip"
-          className="flex items-center justify-center size-8 rounded-full text-muted hover:text-primary transition-colors"
+          className="flex items-center justify-center size-11 rounded-full text-muted hover:text-primary transition-colors shrink-0"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden>
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
         </Link>

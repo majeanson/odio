@@ -16,7 +16,7 @@ export default async function AuthErrorPage({
         </p>
         <a
           href="/login"
-          className="inline-flex items-center gap-2 rounded-2xl bg-accent px-6 py-3 text-base font-bold text-[#080808] hover:bg-amber-400 transition-colors"
+          className="inline-flex items-center gap-2 rounded-2xl bg-accent px-6 py-5 text-base font-bold text-[#080808] hover:bg-amber-400 transition-colors"
         >
           Back to login
         </a>

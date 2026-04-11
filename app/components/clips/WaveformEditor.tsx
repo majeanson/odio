@@ -177,11 +177,16 @@ export function WaveformEditor({
     });
     ws.on("play", () => setIsPlaying(true));
     ws.on("pause", () => setIsPlaying(false));
-    ws.on("finish", () => setIsPlaying(false));
+    ws.on("finish", () => {
+      setIsPlaying(false);
+      // Reset cursor to the beginning so the waveform looks clean at rest.
+      ws.setTime(0);
+    });
     ws.on("timeupdate", (time: number) => {
       const ms = time * 1000;
       setCurrentTimeMs(ms);
-      // Skip-cuts preview
+      // Only skip cut-preview during active playback — not during seeks while paused.
+      if (!ws.isPlaying()) return;
       const hit = cutMarksRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
       if (hit && wsRef.current) {
         const targetSec = hit.endMs / 1000;

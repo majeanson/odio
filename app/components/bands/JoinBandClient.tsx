@@ -55,7 +55,7 @@ export function JoinBandClient({
 
       {/* Band info */}
       <div>
-        <h2 className="text-3xl font-bold text-primary">{bandName}</h2>
+        <h2 className="font-display text-3xl font-bold text-primary">{bandName}</h2>
         <p className="mt-2 text-base text-secondary">
           Invited by {creatorEmail}
         </p>

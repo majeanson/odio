@@ -93,12 +93,12 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
               onBlur={handleNameBlur}
               onKeyDown={handleNameKeyDown}
               maxLength={100}
-              className="w-full bg-transparent text-lg font-semibold text-primary focus:outline-none border-b border-accent pb-0.5"
+              className="w-full bg-transparent font-display text-lg font-semibold text-primary focus:outline-none border-b border-accent pb-0.5"
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
             <button
-              className="text-left text-lg font-semibold text-primary"
+              className="text-left font-display text-lg font-semibold text-primary"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

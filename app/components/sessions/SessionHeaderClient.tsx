@@ -5,6 +5,7 @@
 // QR code links to this session's URL so bandmates can scan and jump straight in.
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import QRCode from "react-qr-code";
 import { InlineEdit } from "@/components/ui/InlineEdit";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -74,7 +75,27 @@ export function SessionHeaderClient({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3 px-5 pt-6 pb-3">
+      <div className="flex items-center gap-3 px-5 pt-6 pb-3">
+        {/* Back to band */}
+        <Link
+          href={`/bands/${bandId}`}
+          aria-label="Back to band"
+          className="flex items-center justify-center shrink-0 text-secondary hover:text-primary transition-colors"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="size-7"
+            aria-hidden
+          >
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </Link>
+
         <div className="min-w-0 flex-1">
           {canEdit ? (
             <InlineEdit
