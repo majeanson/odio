@@ -1,44 +1,44 @@
 @import "tailwindcss";
 
-/* ─── Odio Design Tokens — "Dead Wax" Studio Console ─────────────────────── */
+/* Odio Design Tokens — "Dead Wax" Studio Console */
 
 @theme {
-  /* ── Surfaces ── */
+  /* Surfaces */
   --color-base:     #080808; /* deepest black — OLED-native */
   --color-surface:  #111111; /* card & sheet surfaces */
   --color-elevated: #1a1a1a; /* modals, overlays, tab bar */
   --color-border:   #333333; /* clearly visible dividers */
 
-  /* ── Text ── */
+  /* Text */
   --color-primary:   #ffffff; /* pure white — maximum contrast */
   --color-secondary: #999999; /* secondary labels */
   --color-muted:     #555555; /* placeholders, disabled */
 
-  /* ── Brand ── */
+  /* Brand */
   --color-accent:     #f59e0b; /* amber — the only color that matters */
   --color-accent-dim: #78350f; /* deep amber for pulse rings */
 
-  /* ── Semantic ── */
+  /* Semantic */
   --color-danger:  #ef4444;
   --color-success: #22c55e;
 
-  /* ── Stamps ── */
+  /* Stamps */
   --color-stamp-fire:      #ef4444;
   --color-stamp-keep:      #eab308;
   --color-stamp-uncertain: #f97316;
   --color-stamp-idea:      #3b82f6;
 
-  /* ── Typography ── */
+  /* Typography */
   /* CSS variables injected by next/font via className on <html> */
   --font-display: var(--font-heading), "Arial Black", system-ui, sans-serif;
   --font-sans:    var(--font-body), system-ui, sans-serif;
   --font-mono:    var(--font-code), "Cascadia Code", "Courier New", monospace;
 
-  /* ── Layout ── */
+  /* Layout */
   --tab-bar-height: 80px; /* extra tall — thumb-pressable in the dark */
 }
 
-/* ─── Base ────────────────────────────────────────────────────────────────── */
+/* Base */
 
 html {
   color-scheme: dark;
@@ -56,22 +56,21 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* ─── Display font utility ────────────────────────────────────────────────── */
-/* Apply to big headings: session names, wordmark, section headers */
+/* Display font utility — apply to big headings: session names, wordmark, section headers */
 
 .font-display {
   font-family: var(--font-display);
   letter-spacing: 0.01em;
 }
 
-/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+/* Scrollbar */
 
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }
 
-/* ─── Focus ───────────────────────────────────────────────────────────────── */
+/* Focus */
 
 :focus-visible {
   outline: 3px solid var(--color-accent);
@@ -79,7 +78,7 @@ body {
   border-radius: 6px;
 }
 
-/* ─── Touch targets — 64px minimum (WCAG 2.5.8 extended) ─────────────────── */
+/* Touch targets — 64px minimum (WCAG 2.5.8 extended) */
 
 button,
 a,
@@ -95,8 +94,7 @@ a.icon-sm {
   min-width: 44px;
 }
 
-/* ─── Physical press effect ───────────────────────────────────────────────── */
-/* Buttons have depth — they feel like they can be pushed */
+/* Physical press effect — buttons feel like they can be pushed */
 
 .btn-physical {
   transition: transform 80ms ease, box-shadow 80ms ease;
@@ -106,19 +104,19 @@ a.icon-sm {
   box-shadow: none !important;
 }
 
-/* ─── Safe Area Utilities ─────────────────────────────────────────────────── */
+/* Safe Area Utilities */
 
 .pt-safe { padding-top: env(safe-area-inset-top); }
 .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
 
-/* ─── Input fields ────────────────────────────────────────────────────────── */
+/* Input fields */
 
 input, textarea {
   font-family: var(--font-sans);
   font-size: inherit;
 }
 
-/* ─── Tablet: phone-column centering (640px–767px) ───────────────────────── */
+/* Tablet: phone-column centering (640px-767px) */
 
 @media (min-width: 640px) and (max-width: 767px) {
   body {
@@ -134,7 +132,7 @@ input, textarea {
   }
 }
 
-/* ─── Desktop: full-width layout with sidebar ────────────────────────────���── */
+/* Desktop: full-width layout, sidebar handles navigation */
 
 @media (min-width: 768px) {
   body {

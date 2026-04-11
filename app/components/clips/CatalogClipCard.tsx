@@ -4,24 +4,15 @@
 // Two visual modes driven by the `frozen` prop:
 //
 //   Final (frozen=true):  lock icon · clip name · session · duration · vote tally
-//   Raw   (frozen=false): note icon · clip name · session · duration · stage · version count
+//   Raw   (frozen=false): note icon · clip name · session · duration · version count
 //
+// Stage is shown only in the clip detail collaboration section, not in list views.
 // No inline rename — that lives in the clip detail page.
 // Click anywhere → navigate to clip detail.
 
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/Badge";
 import { formatDuration } from "@/lib/utils";
-import { STAGE_LABELS } from "@/types";
-import type { ClipStage } from "@/types";
 import type { CatalogClip } from "@/app/api/bands/[bandId]/catalog/route";
-
-const STAGE_VARIANTS: Record<ClipStage, "default" | "accent" | "warning" | "success"> = {
-  IDEA:       "default",
-  SKETCH:     "warning",
-  DEVELOPING: "accent",
-  DEMO_READY: "success",
-};
 
 interface CatalogClipCardProps {
   clip: CatalogClip;
@@ -188,9 +179,6 @@ export function CatalogClipCard({ clip, bandId }: CatalogClipCardProps) {
           )}
         </div>
         <div className="mt-1.5 flex items-center gap-2">
-          <Badge variant={STAGE_VARIANTS[clip.stage]}>
-            {STAGE_LABELS[clip.stage]}
-          </Badge>
           {clip.versionCount > 0 && (
             <span className="text-xs text-muted">{clip.versionCount}v</span>
           )}

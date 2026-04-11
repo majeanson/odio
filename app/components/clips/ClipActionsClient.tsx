@@ -1,6 +1,7 @@
 "use client";
 
-// Clip action rows — Stage, Freeze/Unfreeze, Share, Cleanup.
+// Clip action rows — Freeze/Unfreeze, Share, Cleanup.
+// Stage has moved to CollaborationSection — it's a band decision, not an edit action.
 // Each action is a full-width tappable row with icon + label + current state.
 // Large touch targets (py-4), easy to hit mid-jam with one hand.
 // Rendered inside ClipDetailClient's "Actions" section.
@@ -9,30 +10,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
-import { STAGE_LABELS } from "@/types";
-import type { ClipStage, ClipVersion, BandRole } from "@/types";
-
-const STAGE_ORDER: ClipStage[] = ["IDEA", "SKETCH", "DEVELOPING", "DEMO_READY"];
-
-const STAGE_DESCRIPTIONS: Record<ClipStage, string> = {
-  IDEA: "Raw idea — keep recording",
-  SKETCH: "Rough shape — needs work",
-  DEVELOPING: "Coming together",
-  DEMO_READY: "Ready to share as a demo",
-};
-
-// Accent colour per stage (for the left icon bg)
-const STAGE_COLOR: Record<ClipStage, string> = {
-  IDEA:       "bg-zinc-700 text-zinc-300",
-  SKETCH:     "bg-orange-500/20 text-orange-400",
-  DEVELOPING: "bg-accent/20 text-accent",
-  DEMO_READY: "bg-success/20 text-success",
-};
+import type { ClipVersion, BandRole } from "@/types";
 
 interface ClipActionsClientProps {
   clipId: string;
   clipName: string;
-  initialStage: ClipStage;
   frozen: boolean;
   transcodeStatus: "PENDING" | "DONE" | "FAILED";
   publicToken: string | null;
@@ -46,7 +28,6 @@ interface ClipActionsClientProps {
 export function ClipActionsClient({
   clipId,
   clipName,
-  initialStage,
   frozen,
   transcodeStatus,
   publicToken: initialPublicToken,
@@ -57,12 +38,10 @@ export function ClipActionsClient({
   driveFileId: initialDriveFileId,
 }: ClipActionsClientProps) {
   const router = useRouter();
-  const [stage, setStage] = useState<ClipStage>(initialStage);
   const [isFrozen, setIsFrozen] = useState(frozen);
   const [driveFileId, setDriveFileId] = useState(initialDriveFileId);
   const [publicToken, setPublicToken] = useState<string | null>(initialPublicToken);
 
-  const [stageSheetOpen, setStageSheetOpen] = useState(false);
   const [freezeSheetOpen, setFreezeSheetOpen] = useState(false);
   const [cleanupSheetOpen, setCleanupSheetOpen] = useState(false);
   const [selectedVersionId, setSelectedVersionId] = useState<string>(
@@ -78,20 +57,6 @@ export function ClipActionsClient({
   const [linkCopied, setLinkCopied] = useState(false);
 
   const isRecorder = currentUserRole === "RECORDER";
-
-  // ── Stage ─────────────────────────────────────────────────────────────────
-
-  async function handleStageChange(newStage: ClipStage) {
-    const prev = stage;
-    setStage(newStage);
-    setStageSheetOpen(false);
-    const res = await fetch(`/api/clips/${clipId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stage: newStage }),
-    });
-    if (!res.ok) setStage(prev);
-  }
 
   // ── Freeze ────────────────────────────────────────────────────────────────
 
@@ -210,25 +175,6 @@ export function ClipActionsClient({
 
   return (
     <>
-      {/* Stage */}
-      {canEdit && !isFrozen && (
-        <ActionRow
-          onClick={() => setStageSheetOpen(true)}
-          icon={iconBox(STAGE_COLOR[stage],
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden>
-              <circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-            </svg>
-          )}
-          label="Stage"
-          sub={STAGE_DESCRIPTIONS[stage]}
-          right={
-            <span className="shrink-0 text-sm font-medium text-muted capitalize">
-              {STAGE_LABELS[stage]}
-            </span>
-          }
-        />
-      )}
-
       {/* Freeze */}
       {canEdit && !isFrozen && versions.length > 0 && transcodeStatus !== "PENDING" && (
         <ActionRow
@@ -315,25 +261,6 @@ export function ClipActionsClient({
           </div>
         </div>
       )}
-
-      {/* ── Stage picker sheet ── */}
-      <BottomSheet open={stageSheetOpen} onClose={() => setStageSheetOpen(false)} title="Change stage">
-        <div className="space-y-2">
-          {STAGE_ORDER.map((s) => (
-            <button
-              key={s}
-              onClick={() => handleStageChange(s)}
-              className={`w-full rounded-2xl px-5 py-5 text-left transition-colors ${
-                s === stage ? "bg-accent/20 text-accent" : "bg-surface text-primary hover:bg-elevated"
-              }`}
-            >
-              <span className="text-lg font-semibold">{STAGE_LABELS[s]}</span>
-              <span className="block text-sm text-muted mt-1">{STAGE_DESCRIPTIONS[s]}</span>
-            </button>
-          ))}
-          <Button onClick={() => setStageSheetOpen(false)} variant="ghost" fullWidth>Cancel</Button>
-        </div>
-      </BottomSheet>
 
       {/* ── Freeze picker sheet ── */}
       <BottomSheet open={freezeSheetOpen} onClose={() => setFreezeSheetOpen(false)} title="Freeze clip">
