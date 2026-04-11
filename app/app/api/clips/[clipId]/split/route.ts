@@ -1,26 +1,29 @@
 // POST /api/clips/[clipId]/split
 //
-// Splits a clip at a given time position into two NEW virtual clips.
-// The original clip is left completely unchanged — its v1 raw recording
-// remains intact as a reference.
+// Splits a clip at a given time position into two new INDEPENDENT clips.
+// The original clip is left completely unchanged.
 //
-// Part A (new clip) — covers 0 → splitMs
-//   v1 cutMarks: [{ startMs: splitMs, endMs: sourceDurationMs }]
-//   (removes the tail, plays the head)
+// Each new clip gets its own trimmed Drive source file (produced via FFmpeg):
+//   Part A — covers 0 → splitMs, uploaded as "${nameA} - source.aac"
+//   Part B — covers splitMs → end, uploaded as "${nameB} - source.aac"
 //
-// Part B (new clip) — covers splitMs → end
-//   v1 cutMarks: [{ startMs: 0, endMs: splitMs }]
-//   (removes the head, plays the tail)
-//
-// Both clips point at the same Drive source file — no audio is copied.
-// The cut marks are applied on-the-fly during playback and only rendered on freeze.
+// v1 of each new clip has empty cutMarks — the trimmed file IS their raw.
+// sourceDurationMs is set to the actual split duration, not the original full length.
 //
 // Body: { splitMs: number }
 // Response: { clipA: { id, name }, clipB: { id, name } }
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getCreatorTokens, uploadDriveFile } from "@/lib/google";
+import { renderAudioWithCuts, downloadToTmp, getTmpOutputPath } from "@/lib/render";
 import { apiError, apiOk } from "@/lib/utils";
+import { promises as fs } from "fs";
+
+export const runtime = "nodejs"; // FFmpeg requires Node.js runtime
+export const maxDuration = 300;  // Vercel Pro: up to 5 min for long clips
+
+const sanitize = (s: string) => s.replace(/[/\\?:*"<>|]/g, "-").trim();
 
 export async function POST(
   req: Request,
@@ -63,63 +66,119 @@ export async function POST(
   if (!member || member.role === "MEMBER") return apiError("Forbidden", 403);
   if (clip.frozen) return apiError("Cannot split a frozen clip", 400);
   if (!clip.sourceDurationMs) return apiError("Clip audio not ready", 400);
+  if (!clip.driveFileId) return apiError("Clip audio not ready", 400);
   if (splitMs >= clip.sourceDurationMs) {
     return apiError("Split point must be before the end of the clip", 400);
   }
 
-  // Name the new clips after the original with an A / B suffix
   const nameA = `${clip.name} - A`;
   const nameB = `${clip.name} - B`;
 
-  const [clipA, clipB] = await prisma.$transaction([
-    // Part A — plays 0 → splitMs (tail is cut off)
-    prisma.clip.create({
-      data: {
-        sessionId: clip.sessionId,
-        name: nameA,
-        stage: "IDEA",
-        driveFileId: clip.driveFileId,
-        sourceDurationMs: clip.sourceDurationMs,
-        transcodeStatus: "DONE",
-        createdBy: clip.createdBy,
-        recordedByEmail: clip.recordedByEmail,
-        sourceClipId: clipId,
-        versions: {
-          create: {
-            versionNumber: 1,
-            createdBy: session.user.email,
-            cutMarks: [{ startMs: splitMs, endMs: clip.sourceDurationMs }],
-            resultDurationMs: splitMs,
-          },
-        },
-      },
-    }),
-    // Part B — plays splitMs → end (head is cut off)
-    prisma.clip.create({
-      data: {
-        sessionId: clip.sessionId,
-        name: nameB,
-        stage: "IDEA",
-        driveFileId: clip.driveFileId,
-        sourceDurationMs: clip.sourceDurationMs,
-        transcodeStatus: "DONE",
-        createdBy: clip.createdBy,
-        recordedByEmail: clip.recordedByEmail,
-        sourceClipId: clipId,
-        versions: {
-          create: {
-            versionNumber: 1,
-            createdBy: session.user.email,
-            cutMarks: [{ startMs: 0, endMs: splitMs }],
-            resultDurationMs: clip.sourceDurationMs - splitMs,
-          },
-        },
-      },
-    }),
-  ]);
+  const driveFolderId = clip.session.band.driveFolderId as string | undefined;
+  if (!driveFolderId) return apiError("Band Drive folder not configured", 500);
 
-  return apiOk({
-    clipA: { id: clipA.id, name: nameA },
-    clipB: { id: clipB.id, name: nameB },
-  });
+  let accessToken: string;
+  try {
+    const tokens = await getCreatorTokens(clip.session.band.createdBy);
+    accessToken = tokens.accessToken;
+  } catch (err) {
+    const code = err instanceof Error ? err.message : "";
+    if (code === "CREATOR_TOKEN_MISSING" || code === "CREATOR_TOKEN_INVALID") {
+      return apiError("CREATOR_TOKEN_INVALID", 503);
+    }
+    throw err;
+  }
+
+  const outputPathA = getTmpOutputPath("aac");
+  const outputPathB = getTmpOutputPath("aac");
+  let inputPath: string | null = null;
+
+  try {
+    // Download source once — both trims read from the same file
+    inputPath = await downloadToTmp(accessToken, clip.driveFileId, "aac");
+
+    // Trim both halves in parallel
+    await Promise.all([
+      renderAudioWithCuts(
+        inputPath,
+        outputPathA,
+        [{ startMs: splitMs, endMs: clip.sourceDurationMs }], // removes tail → keeps 0→split
+        clip.sourceDurationMs,
+      ),
+      renderAudioWithCuts(
+        inputPath,
+        outputPathB,
+        [{ startMs: 0, endMs: splitMs }], // removes head → keeps split→end
+        clip.sourceDurationMs,
+      ),
+    ]);
+
+    // Read rendered buffers and upload to Drive in parallel
+    const [bufA, bufB] = await Promise.all([
+      fs.readFile(outputPathA),
+      fs.readFile(outputPathB),
+    ]);
+
+    const [driveFileIdA, driveFileIdB] = await Promise.all([
+      uploadDriveFile(accessToken, driveFolderId, `${sanitize(nameA)} - source.aac`, "audio/aac", bufA),
+      uploadDriveFile(accessToken, driveFolderId, `${sanitize(nameB)} - source.aac`, "audio/aac", bufB),
+    ]);
+
+    // Create both Postgres clip records (v1 has no cut marks — the trimmed file IS the raw)
+    const [clipA, clipB] = await prisma.$transaction([
+      prisma.clip.create({
+        data: {
+          sessionId: clip.sessionId,
+          name: nameA,
+          stage: "IDEA",
+          driveFileId: driveFileIdA,
+          sourceDurationMs: splitMs,
+          transcodeStatus: "DONE",
+          createdBy: clip.createdBy,
+          recordedByEmail: clip.recordedByEmail,
+          sourceClipId: clipId,
+          versions: {
+            create: {
+              versionNumber: 1,
+              createdBy: session.user.email,
+              cutMarks: [],
+              resultDurationMs: splitMs,
+            },
+          },
+        },
+      }),
+      prisma.clip.create({
+        data: {
+          sessionId: clip.sessionId,
+          name: nameB,
+          stage: "IDEA",
+          driveFileId: driveFileIdB,
+          sourceDurationMs: clip.sourceDurationMs - splitMs,
+          transcodeStatus: "DONE",
+          createdBy: clip.createdBy,
+          recordedByEmail: clip.recordedByEmail,
+          sourceClipId: clipId,
+          versions: {
+            create: {
+              versionNumber: 1,
+              createdBy: session.user.email,
+              cutMarks: [],
+              resultDurationMs: clip.sourceDurationMs - splitMs,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return apiOk({
+      clipA: { id: clipA.id, name: nameA },
+      clipB: { id: clipB.id, name: nameB },
+    });
+  } finally {
+    await Promise.allSettled([
+      inputPath ? fs.unlink(inputPath) : Promise.resolve(),
+      fs.unlink(outputPathA),
+      fs.unlink(outputPathB),
+    ]);
+  }
 }

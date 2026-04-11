@@ -181,6 +181,50 @@ export async function generateResumableUploadUrl(params: {
 // ─── File Access ──────────────────────────────────────────────────────────────
 
 /**
+ * Copy a Drive file into the same folder under a new name.
+ * Used by the split route — each child clip gets its own source file in Drive.
+ * Returns the new file's Drive ID.
+ */
+export async function copyDriveFile(
+  accessToken: string,
+  fileId: string,
+  folderId: string,
+  name: string,
+): Promise<string> {
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}/copy`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, parents: [folderId] }),
+    },
+  );
+  if (!res.ok) throw new Error(`Drive copy failed: ${res.status}`);
+  const data = await res.json() as { id: string };
+  return data.id;
+}
+
+/**
+ * Fetch only size + mimeType metadata for a Drive file.
+ * Used by the audio proxy HEAD handler — no audio bytes transferred.
+ */
+export async function getDriveFileMeta(
+  accessToken: string,
+  fileId: string,
+): Promise<{ size: number; mimeType: string }> {
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?fields=size%2CmimeType`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  if (!res.ok) throw new Error(`Drive metadata failed: ${res.status}`);
+  const data = await res.json() as { size: string; mimeType: string };
+  return { size: parseInt(data.size, 10), mimeType: data.mimeType };
+}
+
+/**
  * Get a readable stream for a Drive file. Used by the audio proxy route.
  * Returns the response so the caller can pipe it to the client with
  * Range support.
