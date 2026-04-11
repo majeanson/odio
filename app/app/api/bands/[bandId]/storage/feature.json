@@ -1,0 +1,34 @@
+{
+  "featureKey": "odio-feat-storage-mgmt",
+  "title": "Storage Management — Drive Quota, Cleanup, Archive",
+  "status": "frozen",
+  "priority": "medium",
+  "buildOrder": 13,
+  "schemaVersion": 1,
+  "domain": "storage",
+  "tags": ["storage", "google-drive", "cleanup", "archive", "quota"],
+  "problem": "Audio files in Google Drive grow over time (~43MB per raw clip, ~10MB per frozen render). The recorder's free Drive tier (15GB) supports roughly 350 raw clips before action is needed. The app must surface this, and provide a clean way to free space after songs are finalized.",
+  "analysis": "Storage indicator shown in band settings and session list: total Drive storage used by Odio files for this band (queried via Drive API quotas endpoint). Post-freeze cleanup: once a clip is frozen and the band is satisfied, the source .aac (raw recording) can be deleted from Drive — the frozen render and Postgres metadata remain. Archive: delete all versions of a clip from Postgres + Drive (both source and render). Bulk cleanup: session-level 'Archive all frozen clips' removes source audio for all frozen clips in a session at once.",
+  "successCriteria": "- Band settings shows Drive storage used by Odio files (MB / GB)\n- Post-freeze: 'Clean up source audio' button removes raw .aac from Drive, keeps frozen render\n- Confirmation dialog shows exactly what will be deleted and what will remain\n- Archive clip: removes Postgres records + Drive files; cannot be undone\n- Bulk cleanup: 'Clean up all frozen clips in session' removes source audio for all frozen clips at once\n- Storage indicator updates after cleanup\n- Cleaned-up clips remain playable via their frozen render file",
+  "implementation": "1. app/api/bands/[bandId]/storage/route.ts: GET — fetches Drive API about endpoint using creator's token (returns storageQuota.usage). Also queries Postgres for all driveFileId + finalDriveFileId for this band's clips. Returns { usedBytes, limitBytes, fileCount }. Cached in memory for 5 minutes.\n2. app/api/clips/[clipId]/cleanup/route.ts: POST — deletes clip.driveFileId from Drive (source .aac). Sets clip.driveFileId=null. Requires clip.frozen=true.\n3. app/api/clips/[clipId]/route.ts DELETE: RECORDER only. Deletes clip from Postgres (cascades to versions, votes, comments). Deletes both driveFileId and finalDriveFileId from Drive via lib/drive.ts deleteFile.\n4. components/bands/BandSettingsClient.tsx: fetches /api/bands/[bandId]/storage on mount. Renders storage bar (used / total). Lists members with role management. formatBytes helper: converts bytes to human-readable MB/GB string.\n5. components/clips/ClipActionsClient.tsx: shows 'Clean up source audio' button when clip.frozen=true and clip.driveFileId is not null. Shows 'Delete clip' button (RECORDER only). Confirmation bottom sheets for both.",
+  "decisions": [
+    {
+      "decision": "Cleanup is explicit and manual — no automatic deletion",
+      "rationale": "Automatic deletion after freeze could destroy recordings the band wanted to keep. Storage cleanup is a deliberate action. The app nudges (shows quota, shows how much can be freed) but never deletes automatically.",
+      "recommendation": "Show storage usage prominently in band settings. No automatic deletion triggers.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "Drive API quota query may not reflect real-time usage — cache with 5-minute TTL",
+    "After cleanup, v1 source audio is gone — if the frozen render was also deleted and the band wants to re-edit, they would need to re-record",
+    "Drive storage is the recorder's personal quota — shared with all their other Drive content"
+  ],
+  "componentFile": "app/api/bands/[bandId]/storage/route.ts",
+  "userGuide": "In the Band tab, tap Settings to see Drive storage usage. The bar shows how many MB/GB of Drive are used by this band's recordings. After a clip is frozen and the band is happy with it, tap 'Clean up source audio' on the clip detail page to delete the raw recording from Drive — the final rendered file is kept and the clip remains fully playable. Tap 'Delete clip' (Recorder only) to permanently remove a clip and all its files from Drive.",
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-10" },
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ]
+}

@@ -1,0 +1,232 @@
+// Odio — Prisma Schema
+// Stack: Neon Postgres (free tier) + NextAuth v5 PrismaAdapter
+// All Drive audio files referenced by ID only — no binary data in Postgres
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── NextAuth v5 Required Tables ─────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  bandMemberships BandMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Odio Domain Tables ───────────────────────────────────────────────────────
+
+model Band {
+  id            String   @id @default(cuid())
+  name          String
+  createdBy     String   // user email — Drive owner; used to fetch tokens for audio ops
+  inviteCode    String   @unique @default(cuid())
+  driveFolderId String   // Google Drive folder ID for audio files
+  autoFreeze    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  members  BandMember[]
+  sessions JamSession[]
+}
+
+model BandMember {
+  bandId      String
+  userEmail   String
+  displayName String?
+  role        BandRole @default(EDITOR)
+  joinedAt    DateTime @default(now())
+
+  band Band @relation(fields: [bandId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+
+  @@id([bandId, userEmail])
+}
+
+enum BandRole {
+  RECORDER // band creator — Drive owner; full access
+  EDITOR   // can record, create versions, freeze
+  MEMBER   // vote + comment only
+}
+
+model JamSession {
+  id         String   @id @default(cuid())
+  bandId     String
+  name       String   // "2026-04-10 Jam", editable
+  notes      String?
+  recordedBy String   // user email
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  band  Band   @relation(fields: [bandId], references: [id], onDelete: Cascade)
+  clips Clip[]
+}
+
+model Clip {
+  id               String          @id @default(cuid())
+  sessionId        String
+  name             String          // "Song 1 · 9:41pm", editable
+  stage            ClipStage       @default(IDEA)
+  driveFileId      String?         // source .aac in Drive (null while transcoding)
+  finalDriveFileId String?         // rendered .aac in Drive (set on freeze)
+  sourceDurationMs Int?
+  frozen           Boolean         @default(false)
+  frozenVersionId  String?
+  publicToken      String?         @unique
+  transcodeStatus  TranscodeStatus @default(PENDING)
+  createdBy        String          // band creator email (Drive owner)
+  recordedByEmail  String?         // actual recorder — may differ from createdBy
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  session     JamSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  versions    ClipVersion[]
+  stamps      Stamp[]
+  votes       Vote[]
+  comments    Comment[]
+  annotations Annotation[]
+}
+
+enum ClipStage {
+  IDEA
+  SKETCH
+  DEVELOPING
+  DEMO_READY
+}
+
+enum TranscodeStatus {
+  PENDING
+  DONE
+  FAILED
+}
+
+model ClipVersion {
+  id               String   @id @default(cuid())
+  clipId           String
+  versionNumber    Int
+  createdBy        String   // user email
+  fromVersionId    String?
+  description      String?  // optional on submit
+  cutMarks         Json     @default("[]") // [{startMs, endMs}]
+  resultDurationMs Int?
+  createdAt        DateTime @default(now())
+
+  clip          Clip          @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  fromVersion   ClipVersion?  @relation("VersionChain", fields: [fromVersionId], references: [id])
+  childVersions ClipVersion[] @relation("VersionChain")
+  votes         Vote[]
+
+  @@unique([clipId, versionNumber])
+}
+
+model Stamp {
+  id          String    @id @default(cuid())
+  clipId      String
+  timestampMs Int
+  type        StampType
+  createdBy   String    // user email
+  createdAt   DateTime  @default(now())
+
+  clip Clip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+}
+
+enum StampType {
+  FIRE      // 🔥
+  KEEP      // ⭐
+  UNCERTAIN // ❓
+  IDEA      // 💡
+}
+
+model Annotation {
+  id          String   @id @default(cuid())
+  clipId      String
+  versionId   String?
+  timestampMs Int
+  text        String
+  authorEmail String
+  private     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clip Clip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+}
+
+model Vote {
+  clipId    String
+  versionId String
+  userEmail String
+  value     VoteValue
+  updatedAt DateTime  @default(now()) @updatedAt
+
+  clip    Clip        @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  version ClipVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@id([clipId, userEmail]) // one active vote per person per clip
+}
+
+enum VoteValue {
+  KEEP
+  REVISE
+  PASS
+}
+
+model Comment {
+  id          String    @id @default(cuid())
+  clipId      String
+  versionId   String?
+  userEmail   String
+  text        String
+  timestampMs Int?      // null = general; set = waveform pin
+  editedAt    DateTime?
+  createdAt   DateTime  @default(now())
+
+  clip Clip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+}

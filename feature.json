@@ -1,0 +1,95 @@
+{
+  "featureKey": "odio-2026-001",
+  "title": "Odio — Collaborative Jam Session Recorder",
+  "status": "draft",
+  "schemaVersion": 1,
+  "domain": "audio/collaboration",
+  "tags": ["audio", "recording", "jam", "musicians", "collaboration", "pwa", "web", "versioning", "google-drive", "next.js"],
+  "problem": "Musicians lose the best moments from their jam sessions. When they do record, the raw file is long, unedited, buried — nobody goes back and cleans it up. No tool lets a small band record on any device, pass the recording around in the car on the way home, each person trimming a song into its final form, and arrive with a clean versioned archive — all from a browser, no install, no DAW.",
+  "analysis": "Pure web PWA (Next.js). No native app. Browser MediaRecorder API covers recording on iOS Safari 14.5+, Android Chrome, and desktop. The core primitive is versioning: every clip starts as v1 (raw recording), band members create new versions by marking cut regions, and any version can be frozen — triggering a server-side FFmpeg render. Versions are metadata only (cutMarks + annotations JSON) pointing at the same source audio. No simultaneous editing; linear versioning. Storage split: audio files (.aac) in Google Drive (recorder's account, free), all structured metadata (sessions, clips, versions, votes, comments, stamps) in a free-tier Postgres (Neon or Vercel Postgres). No Supabase. Auth: NextAuth.js + Google OAuth (drive.file scope). Real-time: polling every 5-10s. Edit state in localStorage as safety net; submit requires connection. External services: Google + free Postgres. Cost: $0/month.",
+  "successCriteria": "- Recorder opens browser (any device), records a session, all clips uploaded to Google Drive and metadata saved to Postgres\n- Band member opens a link in mobile browser, opens a clip in the editor within 2 taps\n- Editor loads waveform via Drive audio proxy, marks cuts, previews result without re-encoding\n- Submitting a version writes to Postgres; others see it within 5-10s via polling\n- Three people can each edit a different clip simultaneously, each producing their own version\n- Freeze triggers server-side render, produces downloadable file within 10s for a typical 2-8 min clip\n- Version history shows full chain with author, timestamp, description, and result duration\n- Total infrastructure cost: $0/month",
+  "implementation": "**Stack:** Next.js (App Router) + TypeScript + Tailwind CSS, deployed on Vercel\n**Recording:** Browser MediaRecorder API + Web Audio API (level meter) + Wake Lock API (screen-on)\n**Waveform editing:** wavesurfer.js 7.x + Regions plugin\n**Storage — audio:** Google Drive (resumable upload bypassing Vercel 4.5MB body limit; transcoded to AAC on finalize)\n**Storage — metadata:** Neon Postgres free tier (sessions, clips, versions, votes, comments, stamps, bands, members)\n**Auth:** NextAuth.js + Google OAuth (drive.file scope) + NextAuth DB adapter (Prisma + Neon, required to store recorder's refresh token for audio proxy)\n**Audio proxy:** Next.js API route fetches audio from recorder's Drive using stored token, streams to client with Range support\n**Real-time:** Client-side polling every 5-10s when session active\n**Render:** fluent-ffmpeg + @ffmpeg-installer/ffmpeg in Next.js API route (triggered on freeze only)\n**Edit safety:** localStorage (cut marks saved on every change, restored on editor reopen, cleared on submit)\n**External services: 2** — Google (OAuth + Drive) + Neon (Postgres). Cost: $0/month.",
+  "decisions": [
+    {
+      "decision": "Web-only PWA — no native app",
+      "rationale": "Browser MediaRecorder API works on iOS Safari 14.5+, Android Chrome, and desktop. No install removes friction for bandmates who only need to edit/review. The 'in the car editing' use case requires web access — native would require app install on every bandmate's phone.",
+      "recommendation": "Next.js PWA on Vercel. Add-to-home-screen on mobile for app-like feel.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Google Drive for audio, Neon Postgres for metadata — no Supabase",
+      "rationale": "Supabase Storage costs accumulate at ~100MB/session. Google Drive is free (15GB) for audio. Structured metadata (sessions, clips, versions, votes, comments) belongs in a relational DB for querying, not in JSON sidecars with ETag concurrency management. Neon Postgres free tier (512MB) handles years of band metadata. Both services are $0.",
+      "recommendation": "Audio files (.aac): Google Drive, recorder's account. Metadata: Neon Postgres via Prisma ORM. Auth tokens: NextAuth DB adapter writing to same Neon instance.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "NextAuth DB adapter required — not JWT-only",
+      "rationale": "The audio proxy route serves the recorder's Drive files to all band members. To do this, the server needs the recorder's valid refresh token when any member makes a request — not just when the recorder is logged in. NextAuth's DB adapter stores access_token and refresh_token in Postgres per user, enabling server-side token lookup by user email. JWT-only strategy cannot support this cross-user token access.",
+      "recommendation": "NextAuth with Prisma adapter. Tokens stored in Postgres accounts table. Proxy route looks up recorder's token by bandId → band.createdBy → accounts.userId.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Versioning as core primitive — versions are metadata, not audio files",
+      "rationale": "Storing a full audio file per version would be prohibitively expensive. Versions (cutMarks + annotations JSON) are bytes vs megabytes. Source audio stored once; versions are lightweight edit instructions applied at render time or virtually during preview.",
+      "recommendation": "versions array inside .meta.json: [{cutMarks, annotations, description, createdBy, fromVersionId}]. Source audio never mutated.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Linear versioning only — no simultaneous co-editing",
+      "rationale": "Real-time simultaneous editing (CRDT/Y.js) adds significant complexity. The real use case is 3 people each editing a different song. Linear versioning covers all realistic scenarios without conflict resolution logic.",
+      "recommendation": "Append-only version chain. 'Edit from this version' creates a new version. No locking, no presence cursors.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "localStorage for in-progress edit safety — no offline sync",
+      "rationale": "Full offline support adds complexity. The real need is simpler: if the browser crashes mid-edit, cut marks shouldn't be lost. localStorage solves this with minimal code. Submit still requires a connection — that's acceptable.",
+      "recommendation": "Save cut marks to localStorage on every change. Restore draft on editor reopen. Clear on successful submit.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Resumable Drive upload from browser — bypass Vercel body limit",
+      "rationale": "Vercel's 4.5MB request body limit cannot accommodate a 30-min audio recording (~43MB). Resumable uploads: server generates a Drive upload session URL, client uploads directly to Drive. Audio never passes through Vercel.",
+      "recommendation": "POST /api/upload/init → resumable session URL → browser uploads to Drive → POST /api/upload/finalize → server transcodes to AAC + creates .meta.json.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "iOS Safari stops MediaRecorder if screen locks or user switches tabs — Wake Lock API (iOS 16.4+) mitigates; warning shown before recording",
+    "Concurrent JSON writes by two members at the same moment trigger a 412 conflict — rare at band scale, handled by reload-and-retry",
+    "Polling (not WebSocket) — new versions/votes appear within 5-10s, not instantly",
+    "MediaRecorder output format varies by browser (WebM/Opus on Chrome, AAC/MP4 on iOS) — transcoded to AAC on upload",
+    "Recorder's Google Drive storage used for band audio — 15GB free, sufficient for many sessions"
+  ],
+  "revisions": [
+    {
+      "date": "2026-04-10",
+      "author": "marc+claude",
+      "fields_changed": ["problem", "tags", "domain"],
+      "reason": "Initial project creation"
+    },
+    {
+      "date": "2026-04-10",
+      "author": "marc+claude",
+      "fields_changed": ["problem", "analysis", "successCriteria", "implementation", "decisions", "knownLimitations", "tags"],
+      "reason": "Platform pivot to web-only PWA. Versioning as core primitive. PRD v0.2 + Architecture v0.2 + Epics v0.2."
+    },
+    {
+      "date": "2026-04-10",
+      "author": "marc+claude",
+      "fields_changed": ["analysis", "implementation", "decisions", "knownLimitations", "tags"],
+      "reason": "Removed Supabase entirely. Google Drive for audio + .meta.json sidecars. NextAuth.js. localStorage safety net only. Architecture v0.3."
+    }
+  ],
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-10" }
+  ],
+  "lineage": {
+    "children": [
+      "feat-app-shell", "feat-auth", "feat-recording", "feat-session-mgmt",
+      "feat-versioning", "feat-timeline-editor", "feat-render",
+      "feat-band-space", "feat-collaboration", "feat-storage-mgmt",
+      "feat-multi-recorder", "feat-recording-resilience",
+      "feat-ffmpeg-poc", "feat-audio-input"
+    ]
+  }
+}

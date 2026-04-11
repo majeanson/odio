@@ -1,0 +1,41 @@
+{
+  "featureKey": "odio-feat-render",
+  "title": "Render — Server-Side FFmpeg on Freeze + Public Share",
+  "status": "frozen",
+  "priority": "high",
+  "buildOrder": 11,
+  "schemaVersion": 1,
+  "domain": "render",
+  "tags": ["ffmpeg", "server-side", "freeze", "render", "next.js-api", "public-share"],
+  "problem": "When a version is frozen, a real audio file must be produced — so the band can download it, share it outside the band, or export it. This cannot happen client-side. The frozen clip should also be shareable publicly without requiring sign-in.",
+  "analysis": "Next.js API route POST /api/render: fetch source .aac from Drive (via recorder's stored token), run FFmpeg atrim+concat to apply cutMarks, output final .aac at 192kbps, upload result as {clipId}-final.aac to Drive. Update clips row: frozen=true, frozenVersionId, frozenDriveFileId. Progress communicated via Postgres poll — client polls GET /api/clips/{id} every 3s until frozen=true. For public share: frozen clips get a public Drive permission set ('anyone with link can read') and a short public token stored in Postgres. Public page /share/[token] fetches clip metadata from Postgres and streams audio from the Drive public URL — no sign-in required.",
+  "successCriteria": "- Freeze triggers render within 2s of user confirmation\n- Rendered file available within 10s for a typical 2-8 min output clip\n- Clip page shows lock icon and download button after successful render\n- Render failure shows clear error with retry option\n- Public share toggle: generates /share/[token] URL, shareable outside the band\n- Public page: waveform player + stamps + clip name + date — no other session data exposed\n- Public listener does not need a Google account\n- Download of rendered file available on clip page (authenticated) and public page",
+  "implementation": "1. app/api/clips/[clipId]/freeze/route.ts: POST — Editor+ role. Validates versionId. Fetches creator's Drive token from NextAuth accounts table. Downloads source .aac to /tmp. Runs fluent-ffmpeg atrim+aconcat with cutMarks from the version. Uploads output as {clipId}-final.aac to band's Drive folder. Sets clip.frozen=true, clip.frozenVersionId, clip.finalDriveFileId. Returns updated clip.\n2. app/api/clips/[clipId]/unfreeze/route.ts: POST — RECORDER only. Sets clip.frozen=false, clip.frozenVersionId=null. Keeps finalDriveFileId.\n3. app/api/clips/[clipId]/route.ts: PATCH handles generatePublicToken (requires frozen=true — sets publicToken=crypto.randomUUID(), sets Drive public permission) and removePublicToken (clears publicToken, removes Drive public permission).\n4. app/share/[token]/page.tsx: public page — no auth. Fetches clip by publicToken from Postgres. Renders waveform player with Drive public audio URL + clip name + stamps.\n5. FFmpeg atrim+aconcat filter chain: for each non-cut segment, atrim=start=X:end=Y, asetpts=PTS-STARTPTS, then aconcat=n=N. Output: -b:a 192k -f adts (AAC).\n6. lib/drive.ts: downloadToTemp(fileId, token) → /tmp/{fileId}.aac. uploadFromTemp(path, folderId, token) → new driveFileId. setPublicPermission(fileId, token). removePublicPermission(fileId, permissionId, token).",
+  "decisions": [
+    {
+      "decision": "Server-side FFmpeg only — no client-side WASM",
+      "rationale": "WASM FFmpeg is slow on mobile (~3x slower than native), memory-constrained, and adds bundle size. Server-side runs once per clip lifetime in < 10s on Vercel. Acceptable trade-off.",
+      "recommendation": "fluent-ffmpeg in Next.js API route. Source and output files are Drive files; server downloads, processes, re-uploads. Temp files in /tmp (Vercel ephemeral storage).",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Public share via Drive public permission + Postgres token",
+      "rationale": "A frozen clip can be shared outside the band (with a producer, a friend). Setting Drive file permission to 'anyone with link' gives a direct audio URL. Odio stores a short token in Postgres mapping to the clip, so the public URL is /share/[token] (not a raw Drive ID), giving control over revocation.",
+      "recommendation": "On public share enable: Drive API setPermission(fileId, {type:'anyone', role:'reader'}). Store publicToken in clips row. On disable: Drive API deletePermission.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "Vercel /tmp is ephemeral (512MB limit) — source download (~43MB) + FFmpeg output (~10MB) is within limits for typical clips",
+    "Render requires recorder's valid Drive token from Postgres — if token refresh fails (e.g., recorder revoked access), render fails with a clear error and re-auth prompt",
+    "@ffmpeg-installer/ffmpeg bundles ~38MB compressed — close to Vercel's function size limit; this is the highest-risk technical component and needs a spike before building",
+    "Any band Editor role can trigger freeze, but the render always uses the recorder's Drive token — recorder does not need to be signed in at the moment of freeze"
+  ],
+  "componentFile": "app/api/clips/[clipId]/freeze/route.ts",
+  "userGuide": "On a clip's detail page, tap 'Freeze' on any version to produce the final audio file. The page shows 'Rendering…' for a few seconds, then displays a lock icon and download button. To share publicly: tap the Share icon on a frozen clip and copy the /share/[token] link. Anyone with the link can listen without signing in. To revoke public access, tap Share again and toggle it off.",
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-10" },
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ]
+}

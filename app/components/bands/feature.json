@@ -1,0 +1,39 @@
+{
+  "featureKey": "odio-feat-band-space",
+  "title": "Band Space — Band Creation, Invites, Drive Folder, Members",
+  "status": "frozen",
+  "priority": "critical",
+  "buildOrder": 4,
+  "schemaVersion": 1,
+  "domain": "band",
+  "tags": ["band", "invite", "members", "google-drive", "postgres", "qr-code"],
+  "problem": "Band members need a shared space where all sessions are visible and access is controlled. Joining must be frictionless. The recorder's Google Drive folder is the audio source of truth — the app needs to bridge from 'here is an invite link' to 'you now have access to the band's recordings'.",
+  "analysis": "Band metadata (name, members, Drive folder ID, invite code) stored in Postgres. Audio files live in a Google Drive folder owned by the recorder. When a member joins via invite link and signs in, the app shows their Google email prominently and instructs the recorder to share the Drive folder with that email — a one-time manual step per member, done outside the app via Drive. Once the folder is shared, the joining member's token can read audio files from it (because Drive sharing grants direct file access regardless of OAuth scope). Sessions and clips are stored in Postgres (not in Drive JSON files), so session/clip data is readable by all band members once their account is linked in the band's member list. A user can belong to multiple bands. The session screen shows a large QR code pointing to the current session URL — scan to open instantly without navigating.",
+  "successCriteria": "- Create band: enter name → band record created in Postgres → invite link generated\n- Invite link opens a join page: shows band name, prompts Google sign-in\n- After joining, app shows member's Google email with copy button and clear instruction to recorder\n- Recorder is prompted to share the Drive folder with the new member's email\n- Once Drive folder is shared, member can play audio from the band's clips\n- Session screen shows QR code of current session URL\n- Band member list: name, avatar, role, join date\n- Recorder can remove a member (removes from Postgres member list; recorder revokes Drive share separately)\n- Multiple bands: user sees all their bands on the home screen\n- Band roles: Recorder (full access + can delete clips + unfreeze), Editor (create versions + freeze + initiate recordings), Member (vote + comment only)\n- Default role for new members: Editor\n- Editor-role members can initiate recordings; audio uploads to band creator's Drive via creator's stored token (no separate Drive setup required for recording)",
+  "implementation": "1. app/(auth)/bands/page.tsx: lists all bands for current user. Links to /bands/[bandId].\n2. app/(auth)/bands/[bandId]/page.tsx: session list for a band. Shows band name, sessions, + New Session button.\n3. app/api/bands/route.ts: POST creates a new band (name, inviteCode = UUID, sets creator as RECORDER role).\n4. app/api/bands/[bandId]/route.ts: GET band details.\n5. app/api/bands/[bandId]/members/route.ts: GET member list; DELETE removes a member (RECORDER only).\n6. app/api/bands/[bandId]/members/[email]/role/route.ts: PATCH updates member role (RECORDER only).\n7. app/api/bands/[bandId]/join/route.ts: POST joins band via inviteCode. Creates BandMember row with default role EDITOR.\n8. app/join/[inviteCode]/page.tsx: invite landing page — shows band name, triggers sign-in, redirects to band after join.\n9. components/bands/BandSettingsClient.tsx: client component — member list, role management, remove member, Drive storage indicator, leave band.\n10. app/(auth)/bands/[bandId]/settings/page.tsx: server component — loads band + membership, renders BandSettingsClient.\n11. QR code for session URL rendered via react-qr-code in SessionHeaderClient.",
+  "decisions": [
+    {
+      "decision": "Postgres for band membership, Drive for audio access",
+      "rationale": "Drive's drive.file scope prevents one user from reading files created by another user. Band membership and session/clip metadata live in Postgres (readable by all authenticated members). Audio files live in the recorder's Drive, shared at the folder level via standard Drive sharing. This cleanly separates 'who is in the band' (Postgres) from 'where the audio lives' (Drive).",
+      "recommendation": "Postgres tables: bands, band_members, sessions, clips, versions, votes, comments. Drive: audio files only (.aac source + final render).",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Manual Drive folder sharing — no programmatic share",
+      "rationale": "Programmatically sharing a Drive folder requires the recorder's refresh token to be stored server-side and used to make Drive Permissions API calls. This adds server-side token management complexity and a sensitive security surface. Manual sharing (recorder shares via Drive UI, one time per member) is a minor friction that avoids storing user refresh tokens on a server.",
+      "recommendation": "After a member joins via invite, show a clear prompt with their email address and a 'Open Drive' button. Document this as a one-time step in onboarding.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "New members cannot hear audio until the recorder manually shares the Drive folder with their Google email — this is a one-time step but requires out-of-app action",
+    "If the recorder loses access to their Google account, band audio becomes inaccessible — no recovery path without exporting files first"
+  ],
+  "componentFile": "components/bands/BandSettingsClient.tsx",
+  "userGuide": "Create a band from the home screen. Share the invite link or QR code with bandmates — they sign in with Google and are added as Editor-role members. After someone joins, their email appears in Settings → Members; share the Drive folder with that email from Google Drive. Band settings (Settings tab) shows member list, roles, storage usage. Remove members via the settings page. Session QR codes let anyone scan to jump directly to a session URL.",
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-10" },
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ]
+}

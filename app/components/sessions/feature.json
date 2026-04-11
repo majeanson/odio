@@ -1,0 +1,39 @@
+{
+  "featureKey": "odio-feat-session-mgmt",
+  "title": "Session Management — Sessions, Clips, Naming, Stages",
+  "status": "frozen",
+  "priority": "critical",
+  "buildOrder": 6,
+  "schemaVersion": 1,
+  "domain": "sessions",
+  "tags": ["sessions", "clips", "crud", "naming", "song-stage", "postgres"],
+  "problem": "A jam night produces 3-8 clips. Band members need to find, name, and navigate them easily. The recorder needs to delete mistakes. After many sessions, the band needs to track which songs are developed vs. still just ideas.",
+  "analysis": "Sessions and clips stored in Postgres (not Drive JSON). A session auto-creates on first record of the night (date-based name). Each clip is one song — 5-30 min raw. Clips auto-named on stop: 'Song 1 - 9:41pm', 'Song 2 - 10:03pm'. Any band member can rename a clip — the person who remembers 'that was the blues thing in E' should fix the name without friction. Clip records include: name, sourceDurationMs, driveFileId (audio .aac in Drive), frozenDriveFileId (render .aac in Drive, post-freeze), frozen status, song stage, version count. Session list visible to all band members immediately (Postgres read, no polling needed — just fresh fetch on load). Session notes: optional freeform text field per session ('working on the 7/8 riff Marc wrote').",
+  "successCriteria": "- Session auto-created on first record of the night\n- Session name is editable inline by any member\n- Clip auto-named with sequence + time-of-recording: 'Song 1 - 9:41pm'\n- Any band member can rename a clip inline\n- Clip shows 'Processing…' badge while transcode_status is 'pending'; editor and playback disabled until 'done'\n- Recorder-only: delete clip (confirmation required — deletes Postgres records + Drive audio files)\n- Clip list shows: name, raw duration, version count, frozen status, stage, processing state, who recorded\n- Session has optional notes field\n- Clip has song stage field: idea / sketch / developing / demo-ready (default: idea)\n- Storage indicator: shows Drive quota used by this band's audio files\n- Post-freeze cleanup: option to delete source .aac from Drive (keep rendered final only)",
+  "implementation": "1. app/(auth)/bands/[bandId]/sessions/[sessionId]/page.tsx: server component — loads session + clips via Prisma, renders SessionHeaderClient + ClipCard list.\n2. components/sessions/SessionHeaderClient.tsx: client component — inline name edit (PATCH /api/bands/[bandId]/sessions/[sessionId]), notes bottom sheet, QR code bottom sheet.\n3. app/api/bands/[bandId]/sessions/route.ts: POST creates a new session.\n4. app/api/bands/[bandId]/sessions/[sessionId]/route.ts: GET session, PATCH (name, notes).\n5. components/clips/ClipCard.tsx: clip list row — name, duration, version count, frozen badge, stage badge, processing badge, recorded-by label.\n6. app/(auth)/bands/[bandId]/sessions/[sessionId]/clips/[clipId]/page.tsx: clip detail server component — loads clip, versions, votes, comments.\n7. app/api/clips/[clipId]/route.ts: GET clip, PATCH (name, stage, generatePublicToken, removePublicToken), DELETE (RECORDER only — deletes Postgres + Drive files).\n8. components/clips/ClipActionsClient.tsx: freeze/unfreeze, cleanup, public share toggle, stage selector, delete.\n9. lib/drive.ts: Drive API helpers — getFileUrl, deleteFile, createResumableUploadSession.\n10. Prisma schema: JamSession (id, bandId, name, notes, createdAt), Clip (id, sessionId, name, stage, driveFileId, finalDriveFileId, frozen, frozenVersionId, transcodeStatus, sourceDurationMs, recordedByEmail, createdBy, publicToken).",
+  "decisions": [
+    {
+      "decision": "Sessions and clips in Postgres, audio files in Drive",
+      "rationale": "Postgres is readable by all band members without Drive folder sharing. Audio files in Drive get accessed via the Drive API using each member's token (once the folder is shared with them). This separation means session/clip browsing works immediately for new members, but audio playback requires the recorder to share the Drive folder first.",
+      "recommendation": "Postgres: sessions, clips tables. Drive: {clipId}-source.aac, {clipId}-final.aac. Clip record stores driveFileId pointing to the audio file.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Song stage is separate from frozen status",
+      "rationale": "'Frozen' means this recording is done. It says nothing about the song. A frozen recording can be of a song that's still just an idea — and a developed song may have no clean recording yet. Stage tracks the song's creative progress, not the file state.",
+      "recommendation": "stage field on clips row. Default: 'idea'. Settable by any member. Values: idea / sketch / developing / demo-ready.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "Drive storage is under the recorder's account — ~43MB per 30-min clip, 15GB Drive free tier supports ~350 raw clips before cleanup needed",
+    "Clip delete requires two steps: Postgres record deletion + Drive file deletion via API — if one fails, a cleanup job or manual reconciliation may be needed"
+  ],
+  "componentFile": "app/(auth)/bands/[bandId]/sessions/[sessionId]/page.tsx",
+  "userGuide": "Sessions appear in the band's session list sorted by date. Tap a session to see its clips. Tap the session name to rename it inline. Tap the notes icon to add session notes. Tap the QR icon to show a QR code bandmates can scan. Each clip card shows the clip name, duration, version count, and processing state. Tap a clip to open its detail page. Long-press the clip name to rename it. Tap the stage badge to change the song's development stage (idea/sketch/developing/demo-ready).",
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-10" },
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ]
+}

@@ -1,0 +1,254 @@
+// Google Drive API helpers
+// All audio files live in the band creator's Drive.
+// We use the creator's stored refresh_token (in NextAuth accounts table)
+// for every Drive operation — upload, proxy, render, cleanup.
+
+import { google } from "googleapis";
+import { prisma } from "@/lib/prisma";
+
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+);
+
+// ─── Token Management ─────────────────────────────────────────────────────────
+
+/**
+ * Fetch the band creator's Google OAuth tokens from the NextAuth accounts table.
+ * Automatically refreshes the access_token if it has expired.
+ * Throws if no account is found or refresh fails.
+ */
+export async function getCreatorTokens(creatorEmail: string): Promise<{
+  accessToken: string;
+  refreshToken: string;
+}> {
+  const account = await prisma.account.findFirst({
+    where: {
+      user: { email: creatorEmail },
+      provider: "google",
+    },
+    select: {
+      access_token: true,
+      refresh_token: true,
+      expires_at: true,
+    },
+  });
+
+  if (!account?.refresh_token) {
+    throw new Error("CREATOR_TOKEN_MISSING");
+  }
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const isExpired = account.expires_at ? account.expires_at < nowSec + 60 : true;
+
+  if (!isExpired && account.access_token) {
+    return {
+      accessToken: account.access_token,
+      refreshToken: account.refresh_token,
+    };
+  }
+
+  // Token is expired — refresh it using the stored refresh_token
+  oauth2Client.setCredentials({ refresh_token: account.refresh_token });
+
+  let newTokens: { access_token?: string | null; expiry_date?: number | null };
+  try {
+    const { credentials } = await oauth2Client.refreshAccessToken();
+    newTokens = credentials;
+  } catch {
+    throw new Error("CREATOR_TOKEN_INVALID");
+  }
+
+  if (!newTokens.access_token) {
+    throw new Error("CREATOR_TOKEN_INVALID");
+  }
+
+  // Persist refreshed token back to Postgres so next call doesn't re-refresh
+  await prisma.account.updateMany({
+    where: {
+      user: { email: creatorEmail },
+      provider: "google",
+    },
+    data: {
+      access_token: newTokens.access_token,
+      expires_at: newTokens.expiry_date
+        ? Math.floor(newTokens.expiry_date / 1000)
+        : undefined,
+    },
+  });
+
+  return {
+    accessToken: newTokens.access_token,
+    refreshToken: account.refresh_token,
+  };
+}
+
+/**
+ * Build a configured Drive client using the given access token.
+ */
+export function getDriveClient(accessToken: string) {
+  oauth2Client.setCredentials({ access_token: accessToken });
+  return google.drive({ version: "v3", auth: oauth2Client });
+}
+
+// ─── Drive Folder ─────────────────────────────────────────────────────────────
+
+/**
+ * Create a Google Drive folder named "Odio — {bandName}".
+ * Returns the folder ID. Called once when a band is created.
+ */
+export async function createBandDriveFolder(
+  accessToken: string,
+  bandName: string,
+): Promise<string> {
+  const drive = getDriveClient(accessToken);
+
+  const folder = await drive.files.create({
+    requestBody: {
+      name: `Odio — ${bandName}`,
+      mimeType: "application/vnd.google-apps.folder",
+    },
+    fields: "id",
+  });
+
+  if (!folder.data.id) throw new Error("Failed to create Drive folder");
+  return folder.data.id;
+}
+
+// ─── Resumable Upload ─────────────────────────────────────────────────────────
+
+/**
+ * Generate a Google Drive resumable upload session URL.
+ * The client browser uploads the audio blob directly to this URL —
+ * the file never passes through our Vercel function.
+ *
+ * Returns the upload session URL.
+ */
+export async function generateResumableUploadUrl(params: {
+  accessToken: string;
+  folderId: string;
+  fileName: string; // e.g. "{clipId}-source"
+  mimeType: string; // "audio/aac" or "audio/webm"
+  fileSize: number; // bytes
+}): Promise<string> {
+  const { accessToken, folderId, fileName, mimeType, fileSize } = params;
+
+  // We call the Drive API upload endpoint directly to get the session URI.
+  // The googleapis client doesn't expose the raw resumable URI easily,
+  // so we use a manual fetch here.
+  const res = await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+        "X-Upload-Content-Type": mimeType,
+        "X-Upload-Content-Length": String(fileSize),
+      },
+      body: JSON.stringify({
+        name: fileName,
+        parents: [folderId],
+      }),
+    },
+  );
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Drive resumable upload init failed: ${res.status} ${body}`);
+  }
+
+  const location = res.headers.get("Location");
+  if (!location) throw new Error("Drive did not return a Location header");
+
+  return location;
+}
+
+// ─── File Access ──────────────────────────────────────────────────────────────
+
+/**
+ * Get a readable stream for a Drive file. Used by the audio proxy route.
+ * Returns the response so the caller can pipe it to the client with
+ * Range support.
+ */
+export async function getDriveFileStream(
+  accessToken: string,
+  fileId: string,
+  rangeHeader?: string,
+): Promise<Response> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${accessToken}`,
+  };
+  if (rangeHeader) headers["Range"] = rangeHeader;
+
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+    { headers },
+  );
+
+  if (!res.ok && res.status !== 206) {
+    throw new Error(`Drive file fetch failed: ${res.status}`);
+  }
+
+  return res;
+}
+
+/**
+ * Upload a file buffer to Drive using multipart upload.
+ * Used for the FFmpeg-rendered frozen clip.
+ * Returns the Drive file ID.
+ */
+export async function uploadDriveFile(
+  accessToken: string,
+  folderId: string,
+  fileName: string,
+  mimeType: string,
+  buffer: Buffer,
+): Promise<string> {
+  const drive = getDriveClient(accessToken);
+
+  const { Readable } = await import("stream");
+  const readable = Readable.from(buffer);
+
+  const res = await drive.files.create({
+    requestBody: {
+      name: fileName,
+      parents: [folderId],
+    },
+    media: {
+      mimeType,
+      body: readable,
+    },
+    fields: "id",
+  });
+
+  if (!res.data.id) throw new Error("Drive upload did not return a file ID");
+  return res.data.id;
+}
+
+/**
+ * Delete a file from Drive. Used for cleanup after freeze or clip deletion.
+ */
+export async function deleteDriveFile(
+  accessToken: string,
+  fileId: string,
+): Promise<void> {
+  const drive = getDriveClient(accessToken);
+  await drive.files.delete({ fileId });
+}
+
+/**
+ * Get Drive storage quota for the creator's account.
+ * Returns used and limit in bytes.
+ */
+export async function getDriveQuota(
+  accessToken: string,
+): Promise<{ used: number; limit: number }> {
+  const drive = getDriveClient(accessToken);
+  const res = await drive.about.get({ fields: "storageQuota" });
+  const quota = res.data.storageQuota;
+  return {
+    used: parseInt(quota?.usage ?? "0"),
+    limit: parseInt(quota?.limit ?? "0"),
+  };
+}

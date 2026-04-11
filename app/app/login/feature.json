@@ -1,0 +1,40 @@
+{
+  "featureKey": "odio-feat-auth",
+  "title": "Auth — Google OAuth via NextAuth.js",
+  "status": "frozen",
+  "priority": "critical",
+  "buildOrder": 2,
+  "schemaVersion": 1,
+  "domain": "auth",
+  "tags": ["auth", "google-oauth", "nextauth", "session", "drive.file"],
+  "problem": "Band members need a shared identity layer — without creating yet another account. Google sign-in is universal in the target audience and doubles as the credential for Google Drive access.",
+  "analysis": "NextAuth.js with Google provider. Scopes requested at sign-in: openid, email, profile, https://www.googleapis.com/auth/drive.file (access only to files Odio creates in the user's Drive). No Supabase. The access_token and refresh_token are stored server-side in the NextAuth session (encrypted cookie or database adapter). All Drive API calls are proxied through Next.js API routes — the token is never exposed to the client. Auth state (user email, displayName, avatar) held in Zustand. The public frozen clip page (/share/[token]) is the only unauthenticated route.",
+  "successCriteria": "- Sign in with Google works on iOS Safari, Android Chrome, and desktop\n- Session persists across browser restarts (refresh token handled by NextAuth)\n- All private routes redirect to /login if unauthenticated\n- Sign-out clears session and redirects to landing\n- drive.file scope requested at initial sign-in (needed for audio upload and clip access)\n- Token refreshed automatically by NextAuth before expiry\n- Auth state available synchronously on client via Zustand (no flicker)",
+  "implementation": "1. lib/auth.ts: NextAuth.js config with GoogleProvider (scopes: openid + email + profile + drive.file). PrismaAdapter with Neon Postgres. Session strategy: database.\n2. app/api/auth/[...nextauth]/route.ts: standard NextAuth route handler.\n3. middleware.ts: protects all routes except /, /login, /share/[token]. Redirects unauthenticated requests to /login.\n4. lib/prisma.ts: singleton Prisma client.\n5. Prisma schema: User, Account (NextAuth tables), Band, BandMember, JamSession, Clip, ClipVersion, Vote, Comment tables.\n6. app/(auth) route group: all authenticated pages wrapped in a layout that verifies session.\n7. app/login/page.tsx: sign-in page with Google OAuth button.\n8. The accounts table managed by PrismaAdapter stores access_token + refresh_token per user — required for server-side Drive API calls.",
+  "decisions": [
+    {
+      "decision": "drive.file scope at sign-in, not deferred",
+      "rationale": "drive.file is needed for all core features (upload recording, read session/clip data, write meta). Deferring it to a later step would require a second OAuth flow and would break the first recording attempt. Request it upfront with a clear explanation in the sign-in screen: 'Odio only accesses files it creates in your Drive.'",
+      "recommendation": "Include drive.file in the initial Google OAuth scope request. Show a one-line privacy note on the sign-in screen.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "NextAuth.js with Prisma DB adapter — required from day one, not deferred",
+      "rationale": "Supabase Auth adds a paid service. NextAuth.js is open-source and integrates directly with Next.js. The DB adapter (Prisma + Neon) is not optional: it is required to persist the recorder's refresh_token in the accounts table, which is the only way the audio proxy route can stream Drive audio to all band members. JWT-only session strategy is explicitly rejected — it cannot store the refresh_token server-side.",
+      "recommendation": "NextAuth.js + GoogleProvider + PrismaAdapter (Neon Postgres). Session strategy: 'database'. The accounts table (managed by PrismaAdapter) holds access_token, refresh_token, expires_at for every signed-in user.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "drive.file scope only covers files the app created under that specific user's account — bandmates stream audio through the server-side proxy (which uses the recorder's stored token), so bandmates do not need Drive scope just to listen",
+    "Google OAuth tokens expire after 1 hour — NextAuth DB adapter stores refresh_token in Postgres and rotates on expiry; JWT-only strategy is insufficient and must not be used",
+    "If the recorder revokes Odio's Drive access (in Google account settings), all audio becomes inaccessible to the entire band until re-authorized"
+  ],
+  "componentFile": "lib/auth.ts",
+  "userGuide": "Users visit the app and click 'Sign in with Google'. They are prompted to grant Google Drive access (files created by Odio only). After sign-in, they are redirected to the bands home page. Sessions persist across browser restarts. Sign-out via the Band settings page. The /share/[token] public page requires no sign-in.",
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-10" },
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ]
+}

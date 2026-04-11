@@ -1,0 +1,58 @@
+{
+  "featureKey": "odio-feat-timeline-editor",
+  "title": "Timeline Editor — Waveform, Cut Regions, Version Submit",
+  "status": "frozen",
+  "priority": "high",
+  "buildOrder": 9,
+  "schemaVersion": 1,
+  "domain": "editing",
+  "tags": ["wavesurfer", "waveform", "cut-regions", "preview", "web", "touch", "localstorage"],
+  "problem": "Band members need to trim dead air and setup noise from a recording — visually, in a browser, on a phone in a car or on a laptop at home — and preview the result before committing it as a new version.",
+  "analysis": "Wavesurfer.js 7.x with Regions plugin. Audio loaded from Google Drive via a server-proxied signed URL (the Drive API download link is proxied through a Next.js API route so the user's Drive token is never exposed client-side). At 5-30 min clips, client-side WebAudio backend decodes the file fully — fast enough, no server-generated peaks needed. Cut regions are colored overlays; drag handles to define regions to remove. Multiple cut regions allowed. Preview: during playback, when the playhead enters a cut region, wavesurfer seeks to the region end — instant virtual preview, no re-encode. Stamps (fire/keep/uncertain/idea) from the original recording shown as colored dots on the waveform timeline. Annotations (timestamped text) shown as pins. Submit writes a new version row to Postgres. localStorage saves draft cut state on every change.",
+  "successCriteria": "- Waveform renders within 3 seconds of opening editor on a typical 10-min clip\n- Audio plays via Drive proxied URL — no full download required before playback starts\n- Drag handles create, resize, and delete cut regions\n- Preview playback skips cut regions in real-time without re-encoding\n- Result duration updates live in top bar: '8:12 → 5:34 (-2:38)'\n- Stamps visible as colored dots on waveform — tap shows type label\n- Annotation pins visible as text pin icons — tap to read full note\n- Cut regions: red-tinted overlay, drag handles (44px wide touch targets), duration label inside region\n- Waveform pinch-to-zoom supported (two-finger gesture changes time scale); +/- buttons also available for non-touch\n- Both stamps and annotations are read-only in the editor; new annotations can be added in the editor\n- Annotation creation: tap on the waveform (outside a cut region) → a vertical timestamp line appears at the tap point → text input appears below the waveform → confirm adds annotation pin at that timestamp\n- Overlapping cut regions are prevented: if a drag would cause a new or resized region to overlap an existing one, it clamps to the boundary of that region (cannot cross into it)\n- Description field visible but optional — placeholder 'What changed? (optional)'; submit button always active\n- Submit posts to Postgres, clears localStorage draft\n- Undo/redo for cut operations (local state only, not persisted until submit)\n- Tab bar hidden during editing (editor is near-full-screen)\n- 'Edit from this version' pre-loads an existing version's cuts into the editor",
+  "implementation": "1. components/clips/WaveformEditor.tsx: main editor component. Manages wavesurfer.js instance + RegionsPlugin. Initializes with audio from /api/audio/[clipId] proxied URL. Renders cut regions as draggable overlays. Handles region-created, region-updated, region-removed events. Tracks cutMarks in state + ref (ref needed for timeupdate closure). Saves draft to localStorage (key: odio:draft:{clipId}) on every cut change (gated by draftRestored). Submits via POST /api/clips/[clipId]/versions.\n2. Skip-cuts preview: wavesurfer 'timeupdate' handler checks if currentTime falls within any cutMark; if so, seeks to cutMark.endMs/1000 immediately.\n3. Draft restoration: on mount, checks localStorage for saved draft. If found, shows 'Resume draft?' prompt. On resume: calls applyDraftToEditor which adds regions via regionsRef.current.addRegion().\n4. app/(auth)/bands/[bandId]/sessions/[sessionId]/clips/[clipId]/edit/page.tsx: server component — validates membership, loads clip + current version, renders WaveformEditor.\n5. app/api/audio/[clipId]/route.ts: proxies Drive audio with Range request support. Fetches file using current user's stored token.\n6. Stamps rendered as small colored dots below the waveform using absolute positioning (left: timestampMs / sourceDurationMs * 100%).\n7. Version diff in VersionRow: compares cutMarks to parentVersion cutMarks within 500ms tolerance to detect added/removed cuts.",
+  "decisions": [
+    {
+      "decision": "Client-side WebAudio decode — no server-generated peaks",
+      "rationale": "At 5-30 min clips, the WebAudio backend in wavesurfer.js decodes the file quickly (< 3s on modern mobile). Server-generated peaks add an upload/processing step with no meaningful UX benefit at this file size. Simplicity wins.",
+      "recommendation": "wavesurfer.js WebAudio backend. Load audio from Drive proxy URL. No peaks pre-generation.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Virtual cut preview via seek — no re-encode",
+      "rationale": "Re-encoding for preview requires server round-trip or WASM FFmpeg. wavesurfer.js can seek to any position — skip cut regions during playback by intercepting timeupdate events. Zero server cost, instant response.",
+      "recommendation": "Intercept wavesurfer 'timeupdate': if currentTime falls within a cut region, seek to region.endMs immediately.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Drive audio proxied through Next.js API route",
+      "rationale": "Drive API download URLs require an Authorization header with the user's access token. Browsers cannot add auth headers to an <audio> src or wavesurfer source URL. Proxying through a Next.js API route (which has the token server-side) solves this without exposing the token to the client.",
+      "recommendation": "GET /api/audio/{clipId} → server fetches from Drive with token → streams response to client. Supports Range requests for seeking.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Overlapping cut regions are clamped, not merged",
+      "rationale": "Allowing overlapping regions would produce invalid FFmpeg atrim chains and confusing previews. Auto-merging silently changes the user's intent. Clamping — stopping the drag at the adjacent region's boundary — is the most predictable behavior: the user sees the handle stop and understands there's already a region there.",
+      "recommendation": "On drag of any region handle, compare position to all other regions. If the handle would cross into an adjacent region, clamp its value to that region's start or end. No merging logic needed.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Annotation creation via waveform tap + vertical line",
+      "rationale": "Annotations need a precise timestamp. Tapping the waveform is the natural way to pick a moment. A vertical line appearing at the tap point gives visual confirmation of the exact timestamp before the user types. This is the same mental model as video editing tools (Final Cut, Premiere) where you click a timeline position first, then act on it.",
+      "recommendation": "On waveform tap (outside a cut region): pause playback, render a vertical line at the tap timestamp, show a text input below the waveform. Confirm creates annotation row in Postgres. Cancel removes the line. The line persists as an annotation pin after confirm.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "Audio proxy route adds latency vs direct URL — mitigated by the server having fast egress to Google's CDN",
+    "Drag handles on mobile require touch targets >= 44px — wavesurfer region handles are small by default, CSS override needed",
+    "If the clip's Drive file is unavailable (recorder revoked share, Drive outage), editor shows an error"
+  ],
+  "componentFile": "components/clips/WaveformEditor.tsx",
+  "userGuide": "Open a clip and tap 'Open editor' (or 'Edit from this version' on any version card). The waveform loads within a few seconds. Drag on the waveform to create a cut region (red-tinted area). Drag the handles to resize it. Tap a region to select it; tap the trash icon to delete it. Press play to preview — the cut regions are skipped in real-time. The result duration updates live in the top bar. Add a description (optional) and tap 'Submit version' to save. Your draft is auto-saved if you close and reopen the editor.",
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-10" },
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ]
+}

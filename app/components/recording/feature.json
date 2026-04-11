@@ -1,0 +1,33 @@
+{
+  "featureKey": "odio-feat-audio-input",
+  "title": "Audio Input Selection — External Mic, USB Interface, Headset",
+  "status": "frozen",
+  "priority": "low",
+  "buildOrder": 14,
+  "schemaVersion": 1,
+  "domain": "recording",
+  "tags": ["recording", "audio-input", "external-mic", "mediadevices", "nice-to-have"],
+  "problem": "The recording always uses the device's default microphone. Bands that record with an external condenser mic, USB audio interface, or headset mic plugged in cannot select it — the app always captures from the built-in mic. This limits recording quality for bands that bring audio gear.",
+  "analysis": "MediaDevices.enumerateDevices() returns all available audio input devices. A device picker shown before recording starts (or in band settings) lets the user select their preferred input. The selected deviceId is passed to getUserMedia({ audio: { deviceId: { exact: selectedId } } }).\n\nV1 behavior (current): always uses the browser's default audio input. This is correct for most users (phone built-in mic) and has no UX overhead.\n\nThis feature adds a device picker — shown only when more than one audio input is available. If the device has only one input, nothing changes. The selected input is remembered in localStorage per device.\n\nNote: USB audio interfaces appear as separate audio input devices in most browsers. iOS Safari may not enumerate all Bluetooth audio inputs consistently — this is a known iOS limitation.",
+  "successCriteria": "- Before starting a recording, app calls enumerateDevices() to list available audio inputs\n- If only one audio input is available: no picker shown, record starts immediately (current behavior)\n- If multiple inputs available: a bottom sheet shows the list with device names; user selects one\n- Selected device is passed to getUserMedia as deviceId constraint\n- Selected deviceId is saved to localStorage; pre-selected on next recording\n- If the saved device is no longer available (unplugged): fall back to default + show a brief 'Using built-in mic' toast\n- Level meter reflects the selected input device",
+  "implementation": "1. hooks/useRecorder.ts: on mount, calls navigator.mediaDevices.enumerateDevices(), filters for audioinput, maps to AudioDevice[]. Re-enumerates on devicechange event. Initializes selectedDeviceId from localStorage (key: odio:selectedDeviceId). Passes deviceId: { exact: selectedDeviceId } to getUserMedia constraints when selectedDeviceId is set. Falls back to default getUserMedia on OverconstrainedError — sets deviceFallbackWarning=true for 4s.\n2. components/recording/DevicePicker.tsx: BottomSheet with list of AudioDevice items. Highlights current selection. Calls onSelect(deviceId) on tap.\n3. app/record/page.tsx: renders mic button (left of record button) when devices.length > 1 and !isRecording. Tapping opens DevicePicker. Renders deviceFallbackWarning toast when active.",
+  "decisions": [
+    {
+      "decision": "Picker only shown when multiple inputs exist",
+      "rationale": "For the majority of users (phone, built-in mic only), showing a device picker is unnecessary friction. Detecting whether to show the picker at all keeps the zero-overhead path intact for the common case.",
+      "recommendation": "Call enumerateDevices() on recording screen mount. Filter for audioinput kind. Show picker sheet only if count > 1.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "iOS Safari does not consistently enumerate Bluetooth audio inputs — users on iOS may not see all available inputs",
+    "enumerateDevices() requires microphone permission to return device labels; before permission is granted, labels are empty strings (can only show device index, not name)"
+  ],
+  "componentFile": "components/recording/DevicePicker.tsx",
+  "userGuide": "If you have an external microphone, USB audio interface, or headset plugged in when you open the recording screen, a small mic icon appears to the left of the record button. Tap it to choose your audio input from the list. Your selection is remembered for next time. If the chosen device is unplugged after selection, the app automatically falls back to the built-in mic and shows a brief notification.",
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-10" },
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ]
+}

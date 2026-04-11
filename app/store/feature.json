@@ -1,0 +1,53 @@
+{
+  "featureKey": "odio-feat-recording-resilience",
+  "title": "Recording Resilience — IndexedDB Safety Net, Upload Retry, Save-to-Device Fallback",
+  "status": "frozen",
+  "priority": "high",
+  "buildOrder": 8,
+  "schemaVersion": 1,
+  "domain": "recording",
+  "tags": ["recording", "indexeddb", "resilience", "offline", "retry", "upload", "fallback"],
+  "problem": "A recording is a one-time, irreplaceable event. Currently, if the internet drops during upload or the band creator's Drive token is invalid, the audio blob — which only exists in memory — is permanently lost when the user navigates away or the tab closes. A live jam session cannot be re-played. The recording must survive any upload failure and remain recoverable until it reaches Drive.",
+  "analysis": "The audio blob lives in RAM from record-start until upload completes. If anything breaks during the upload window — network drop, Drive token expiry, browser crash, tab close — the blob is gone. This is the highest-risk data loss scenario in the app.\n\nThe fix is a two-layer safety net:\n\nLayer 1 — IndexedDB persistence (immediate): The moment recording stops and the blob is assembled, write it to IndexedDB before starting the upload. IndexedDB stores binary blobs up to the device's available storage (typically several GB on modern phones), survives page refresh and browser restarts, and is cleared only explicitly. Key: odio-pending-upload-{tempId}. Also store: tempId, recordedAt, durationMs, bandId, sessionId, blob.\n\nLayer 2 — Resumable upload retry: Google Drive resumable uploads natively support resume from a byte offset. If the upload is interrupted mid-transfer, the server stores the upload session URL in the pending record. On retry, the client queries Drive for the current byte offset and resumes from there — no re-upload of already-transferred bytes.",
+  "successCriteria": "- Audio blob written to IndexedDB immediately on recording stop, before upload begins\n- IndexedDB entry keyed by tempId; stores blob + recordedAt + durationMs + bandId + sessionId + uploadSessionUrl (if partially started)\n- If upload succeeds: IndexedDB entry cleared; no other change\n- If network drops during upload: banner shows 'Upload paused — waiting for connection'; auto-retries on window 'online' event; resumable upload continues from last committed byte\n- If creator's Drive token is invalid: banner shows 'Drive connection needs renewal — ask [creator name] to re-authorize'; IndexedDB blob retained; retry button enabled once token is refreshed\n- If recording member's own session token expires mid-upload: client silently calls getSession() to refresh; if refresh succeeds, upload resumes automatically; if refresh fails, banner shows 'Session expired — sign in again to resume'; after re-sign-in, IndexedDB blob is still present and recovery banner activates\n- On app reopen: check IndexedDB for pending recordings on mount; if found, show recovery banner: 'You have [N] recording(s) waiting to upload'\n- Recovery banner persists until all pending recordings are uploaded or manually discarded\n- 'Save to device' fallback button available on any failed upload: triggers browser download of blob (.webm or .aac depending on browser)\n- User can discard a pending recording from the recovery UI (with confirmation: 'Discard this recording? It cannot be recovered.')\n- 'Pending uploads' count visible in the Record tab (badge) and on the session screen\n- Successful retry creates the clip in Postgres and Drive exactly as a normal upload would",
+  "implementation": "1. lib/pendingUploads.ts: IndexedDB helpers using idb library. Database 'odio-recordings', object store 'pending-uploads'. Functions: savePendingUpload(upload), getPendingUploads(), deletePendingUpload(tempId), updatePendingUpload(tempId, patch).\n2. hooks/useRecorder.ts: calls savePendingUpload immediately on MediaRecorder onstop before any network request.\n3. hooks/usePendingUploads.ts: checks IndexedDB on mount, drives retry logic, manages upload state machine (idle/uploading/paused/error), listens to window 'online' event for auto-retry.\n4. components/recording/PendingUploadsBanner.tsx: recovery banner shown when usePendingUploads reports pending items. Shows count, retry button, save-to-device button, discard button with confirmation.\n5. app/(auth)/layout.tsx: renders PendingUploadsBanner at top of all authenticated pages.\n6. lib/uploadAudio.ts: manages the Drive resumable upload from browser — tracks byte offset, handles chunking, updates IndexedDB with uploadSessionUrl on each successful chunk.\n7. 'Save to device': URL.createObjectURL(blob) + programmatic anchor download. Extension .aac or .webm based on mimeType.",
+  "decisions": [
+    {
+      "decision": "IndexedDB as the primary persistence layer for unuploaded audio blobs",
+      "rationale": "localStorage cannot store binary blobs. The File System Access API requires explicit user permission. IndexedDB is the only browser-native store that (a) handles large binary data, (b) persists across sessions without user action, and (c) is available in all browsers including iOS Safari 10.3+. A 43MB blob fits easily — IndexedDB storage limits are typically 50-80% of available disk space.",
+      "recommendation": "Use idb (lightweight IndexedDB wrapper) or raw IndexedDB API. Store blob immediately on recording stop. Key on tempId (UUID generated client-side at record start).",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Resumable upload — save session URL to IndexedDB for byte-accurate retry",
+      "rationale": "A naive retry re-uploads the entire blob from byte 0. For a 43MB file on a slow mobile connection, this could fail again at the same spot. Google Drive resumable uploads let you query the committed offset and resume from there. Storing the uploadSessionUrl in IndexedDB alongside the blob enables true resume, not restart.",
+      "recommendation": "After /api/upload/init returns the uploadSessionUrl, immediately write it to the IndexedDB record. On retry, PUT to the same session URL with Content-Range starting at the last committed offset.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "'Save to device' as the last-resort fallback — never lose the audio",
+      "rationale": "If Drive is permanently unavailable (creator deleted their account, Drive quota exceeded, token irrecoverable), the band should still get their recording. A browser download gives them the raw file. They lose the Odio versioning workflow but not the audio. The guarantee is: if you recorded it, you can get the file.",
+      "recommendation": "Show 'Save to device' button whenever a pending recording has failed > 3 retry attempts or has been in 'token-error' state for > 24 hours. Trigger via URL.createObjectURL + anchor download.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Check IndexedDB for pending recordings on every app mount",
+      "rationale": "Background Sync is not reliable on iOS Safari. The safest recovery path is: when the app is opened, check for stranded blobs and surface them immediately. This catches the crash-during-upload, tab-closed-early, and came-back-later scenarios without relying on service worker scheduling.",
+      "recommendation": "usePendingUploads() hook runs on app mount. If IndexedDB has entries in pending-uploads, render a PendingUploadsRecoveryBanner component at the top of the screen. Badge count on Record tab icon.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "IndexedDB is cleared when the user clears browser storage ('Clear site data') — the blob would be lost; this is unavoidable without server-side buffering and is an edge case the user controls",
+    "Background Sync (automatic retry when tab is closed and connection restored) is not available on iOS Safari — recovery on iOS requires opening the app manually",
+    "Drive resumable upload session URLs expire after 7 days — a blob stranded for > 7 days will need a fresh upload session, not a resume; the implementation must detect this (404 on session URL) and fall back to a new session",
+    "Storage pressure on low-end devices: a 43MB blob may trigger the browser's storage eviction policy on devices with < 1GB free — 'Save to device' should be surfaced proactively for large recordings"
+  ],
+  "componentFile": "hooks/usePendingUploads.ts",
+  "userGuide": "Recording resilience is automatic and invisible when things work. If an upload fails (network drops, Drive token expires), a banner appears at the top of the screen: 'You have [N] recording(s) waiting to upload'. Tap 'Retry' to resume when reconnected. Tap 'Save to device' to download the raw audio file to your phone or computer if Drive is permanently unavailable. Tap 'Discard' (with confirmation) to remove a pending recording from recovery. When the app reopens after a crash, pending recordings are detected automatically.",
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-10" },
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ]
+}

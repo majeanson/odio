@@ -1,0 +1,45 @@
+{
+  "featureKey": "odio-feat-versioning",
+  "title": "Versioning — Version Chain, Freeze, Prune",
+  "status": "frozen",
+  "priority": "high",
+  "buildOrder": 10,
+  "schemaVersion": 1,
+  "domain": "versioning",
+  "tags": ["versioning", "version-history", "freeze", "prune", "postgres", "localstorage"],
+  "problem": "A raw recording needs to evolve from v1 (messy, includes setup and dead air) to vFinal (clean, trimmed) through a series of collaborative edits — with full history, the ability to revert, and a clear end state (freeze).",
+  "analysis": "Versions stored in Postgres as rows: cutMarks (jsonb), annotations (jsonb), description (text, optional), createdBy, fromVersionId, resultDurationMs. Source audio never mutated — versions are lightweight edit instructions. Linear chain: v1 → v2 → v3 → vFinal. Any band member can create a new version from any existing version. Version description is optional — submit button is always active. Freeze: any Editor-role member can freeze; OR auto-freeze triggers when all members vote Keep on the same version (configurable per band, off by default). Recorder can unfreeze. Prune deletes a version row from Postgres — source audio unaffected. In-progress edit state stored in localStorage (saved on every cut change, cleared on submit). Submit requires internet. New versions visible to all band members within 5-10s via polling.",
+  "successCriteria": "- Version list shows full chain: author, timestamp, result duration, description (if any)\n- Version diff: shows cutMarks added/removed vs parent version\n- Submit button is always active — description is optional (placeholder: 'What changed? (optional)')\n- Any member can create a version from any existing version\n- Freeze locks the version, triggers render (see feat-render), prevents further versions from it\n- Unfreeze available to recorder only\n- Auto-freeze: off by default, configurable per band\n- Prune removes a version row; v1 cannot be pruned while any other version exists\n- In-progress edits survive browser crash via localStorage draft\n- Draft detected on editor reopen: 'You have unsaved edits from [time]. Resume?'\n- New versions appear within 5-10s for all band members without manual refresh",
+  "implementation": "1. app/api/clips/[clipId]/versions/route.ts: GET returns version list ordered by createdAt. POST creates a new version from fromVersionId with cutMarks + annotations + description. Validates fromVersionId exists and belongs to this clip.\n2. app/api/clips/[clipId]/versions/[versionId]/route.ts: DELETE prunes a version (Editor+ only; blocks if v1 with dependents).\n3. app/api/clips/[clipId]/freeze/route.ts: POST triggers freeze — validates versionId, sets clip.frozen=true, clip.frozenVersionId, queues render job.\n4. app/api/clips/[clipId]/unfreeze/route.ts: POST — RECORDER only. Sets clip.frozen=false, clip.frozenVersionId=null.\n5. components/clips/CollaborationSection.tsx: client component — tabs (Versions / Comments). VersionRow sub-component shows version number, author, timestamp, result duration, description, diff badges, 'Edit from here' button, freeze button, prune button. Polls GET /api/clips/[clipId]/versions every 8s when clip is not frozen.\n6. components/clips/WaveformEditor.tsx: on submit, POSTs to /api/clips/[clipId]/versions with cutMarks + annotations + description, clears localStorage draft, navigates back to clip detail.\n7. Version diff: VersionRow computes added/removed cuts by comparing cutMarks to parentVersion cutMarks within 500ms tolerance. Displays as '+N cuts (green)' and '-N cuts (red)'.\n8. Prisma schema ClipVersion: {id, clipId, fromVersionId, cutMarks jsonb, annotations jsonb, description, resultDurationMs, createdBy, createdAt}.",
+  "decisions": [
+    {
+      "decision": "Versions are metadata only — not audio files",
+      "rationale": "Audio duplication per version is prohibitively expensive. Versions are cut instructions (which segments to remove) + annotations. Source audio stored once in Drive; versions point to it. A real audio file is only produced on freeze.",
+      "recommendation": "Postgres clip_versions table: {cutMarks: [{startMs, endMs}], annotations: [{timestampMs, text, authorEmail}], fromVersionId, resultDurationMs, description}",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "Linear versioning — no simultaneous co-editing",
+      "rationale": "Concurrent editing of the same version requires CRDT infrastructure. The real use case is sequential: each person edits a different clip, or one person at a time refines the same clip. Linear versioning with 'edit from any version' covers all realistic scenarios without conflict resolution complexity.",
+      "recommendation": "Append-only version chain. 'Edit from vN' opens editor pre-loaded with that version's cuts, submits as vN+1 (or vN+1 branched from vN). No locking.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "localStorage for in-progress edit safety — no offline sync",
+      "rationale": "Full offline sync adds complexity for minimal gain. The real risk is a browser crash mid-edit. localStorage persists cut marks across crashes with zero infrastructure. Submit still requires connection — acceptable for a post-jam editing flow.",
+      "recommendation": "WaveformEditor writes cutMarks to localStorage on every change. Key: odio:draft:{clipId}. Clear on successful submit. Restore on editor open if draft exists.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "If two members edit v2 independently at the same time, they both produce v3 — the band sees two v3s and must choose. Displayed clearly in version list.",
+    "Submit requires internet connection — cuts are safe in localStorage but cannot be written to Postgres while offline"
+  ],
+  "componentFile": "app/api/clips/[clipId]/versions/route.ts",
+  "userGuide": "The Versions tab on a clip detail page shows the full edit history. Each version shows who created it, when, the result duration, and a diff (cuts added/removed vs parent). Tap 'Edit from here' on any version to open the editor pre-loaded with that version's cuts. After submitting, the new version appears in the list within a few seconds. Freeze a version (lock icon) when the band is done — this triggers the final audio render. Only the Recorder can unfreeze. Prune (trash icon) removes a version from history without affecting other versions or audio.",
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-10" },
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ]
+}

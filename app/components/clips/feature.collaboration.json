@@ -1,0 +1,40 @@
+{
+  "featureKey": "odio-feat-collaboration",
+  "title": "Collaboration — Votes, Comments, Stamp Heat Map, Activity",
+  "status": "frozen",
+  "priority": "medium",
+  "buildOrder": 12,
+  "schemaVersion": 1,
+  "domain": "collaboration",
+  "tags": ["votes", "comments", "stamps", "heat-map", "activity", "polling", "postgres"],
+  "problem": "After editing, the band needs a lightweight way to converge on which version is final — without a group chat thread full of voice notes and confusion. Voting, timestamped comments, and stamp heat maps give structure without overhead.",
+  "analysis": "All collaboration data stored in Postgres (votes, comments). Polling (5-10s when clip page is open) surfaces new activity. Per clip: one vote per member per version (Keep / Revise / Pass), changeable. Vote tally visible to all. Comments: general or timestamped (shown as pins on waveform). Waveform also shows stamps (fire/keep/uncertain/idea, created during recording) and annotations (text notes, created during recording or in editor) — both as pins. Stamp heat map: multiple stamps near the same timestamp aggregate into a denser marker. Version list has an inline mini-player: play/pause directly from the version card. Activity feed per clip. In-app notification dot when all members have voted Keep on the same version. UX priority: during active versioning, version list is the primary view and comments are secondary (collapsed behind a tab). After a clip is frozen, comments/activity becomes the primary view — the collaborative discussion is most valuable once the cut is finalized. Comment authors can edit or delete their own comments.",
+  "successCriteria": "- Vote (Keep/Revise/Pass) per member per version; tally visible to all; changeable\n- Votes and vote tally update within 5-10s via polling\n- Timestamped comments show as pins on waveform during playback\n- Stamp heat map overlay visible on waveform — denser where more stamps exist\n- Version list: inline mini-player on each version card\n- Activity feed: version creates + votes + comments in order\n- Notification dot on clip when all members have voted Keep on same version\n- Private annotation toggle: any annotation can be marked private (visible only to author)\n- Comment author can edit their comment (shows 'edited' label after edit)\n- Comment author can delete their comment (confirmation required; removes from feed)\n- Clip detail layout: during active versioning, version list is default open tab; after freeze, comments/activity is default open tab",
+  "implementation": "1. app/api/clips/[clipId]/votes/route.ts: POST upserts a vote (clipId, userEmail unique). PATCH changes vote value. GET returns all votes for clip.\n2. app/api/clips/[clipId]/comments/route.ts: POST creates a comment (text, optional timestampMs). GET returns comments ordered by createdAt.\n3. app/api/clips/[clipId]/comments/[commentId]/route.ts: PATCH edits own comment (checks authorEmail === currentUser). DELETE removes own comment.\n4. components/clips/CollaborationSection.tsx: client component. Tabs: Versions (default when not frozen) / Comments (default when frozen). VoteBar sub-component shows Keep/Revise/Pass buttons and tally. CommentThread sub-component lists comments with edit/delete for own. Polls GET /api/clips/[clipId]/votes and /comments every 8s while page is open.\n5. usePolling hook: generic hook — takes async fetch fn + intervalMs, calls fn on mount and on interval.\n6. Prisma schema Vote: {clipId, versionId, userEmail, value (KEEP/REVISE/PASS), updatedAt}. Unique on (clipId, userEmail). Schema Comment: {id, clipId, versionId?, userEmail, text, timestampMs?, createdAt, updatedAt, editedAt?}.\n7. All-voted-Keep notification: CollaborationSection checks if all band members have a KEEP vote pointing to the same versionId. If true, shows a 'All members voted Keep on v[N]' banner with 'Freeze this version' button.",
+  "decisions": [
+    {
+      "decision": "Votes scoped to version, not clip",
+      "rationale": "Voting on a clip as a whole ('is this song good?') is separate from voting on a specific edit ('is this cut right?'). Scoping votes to a version makes it clear what the band is approving — the specific cut. A member can vote Keep on v2 and Revise on v3 if they think v3 overcorrected.",
+      "recommendation": "votes table: {clipId, versionId, userEmail, value, updatedAt}. Unique constraint on (clipId, userEmail) — one active vote per person per clip, pointing to a specific version.",
+      "date": "2026-04-10"
+    },
+    {
+      "decision": "No suggest-a-cut feature — comments are text only",
+      "rationale": "Suggest-a-cut adds a structured comment type with startMs/endMs that renders as a shaded waveform region with an 'Apply' button. The complexity (schema columns, waveform rendering, editor integration) is not justified for V1. Bandmates who want to suggest a cut can just create a new version themselves — that's what the versioning system is for.",
+      "recommendation": "comments table has no type, start_ms, or end_ms columns. All comments are plain text, optionally timestamped. If a member wants to propose a cut, they open the editor and submit a version.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "No push notifications — members need to open the app to see new votes/comments",
+    "Polling at 5-10s means activity is not instant — acceptable for post-jam async workflow",
+    "Stamp heat map is derived from recording-time stamps only (not from member actions during review)"
+  ],
+  "componentFile": "components/clips/CollaborationSection.tsx",
+  "userGuide": "On a clip's detail page, the Versions tab shows all edits; the Comments tab shows the discussion. Vote on any version by tapping Keep, Revise, or Pass — the tally updates for all band members within seconds. Leave a comment in the text field (optionally tap the waveform first to attach a timestamp). When everyone has voted Keep on the same version, a banner appears prompting the Recorder or an Editor to freeze it. Comments can be edited or deleted by their author (long-press or tap the '...' menu).",
+  "statusHistory": [
+    { "from": null, "to": "draft", "date": "2026-04-10" },
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ]
+}
