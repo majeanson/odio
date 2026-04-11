@@ -249,7 +249,7 @@ function PostRecordScreen() {
         <button
           onClick={handleDone}
           className="flex items-center justify-center text-secondary hover:text-primary transition-colors"
-          aria-label="Close"
+          aria-label="Go to session"
         >
           <svg
             viewBox="0 0 24 24"
@@ -264,7 +264,9 @@ function PostRecordScreen() {
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
-        <h1 className="ml-4 font-display text-2xl font-bold">Clip saved</h1>
+        <h1 className="ml-4 font-display text-2xl font-bold">
+          {isDone ? "Clip saved" : isError ? "Upload paused" : "Uploading…"}
+        </h1>
       </div>
 
       {/* Clip name */}

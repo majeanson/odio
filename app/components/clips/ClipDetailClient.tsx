@@ -104,14 +104,14 @@ export function ClipDetailClient({
                   onClick={() => setSelectedVersionId(v.id)}
                   className={`flex items-center gap-4 rounded-2xl px-5 py-5 text-left transition-colors ${
                     isActive
-                      ? "bg-blue-500/15 border border-blue-500/30"
+                      ? "bg-accent/10 border border-accent/30"
                       : "bg-surface hover:bg-elevated"
                   }`}
                 >
                   {/* Version badge */}
                   <span
                     className={`shrink-0 min-w-[3rem] text-center rounded-xl px-2 py-1.5 text-base font-bold tabular-nums ${
-                      isActive ? "bg-blue-500/30 text-blue-300" : "bg-elevated text-secondary"
+                      isActive ? "bg-accent/25 text-accent" : "bg-elevated text-secondary"
                     }`}
                   >
                     v{v.versionNumber}
@@ -140,7 +140,7 @@ export function ClipDetailClient({
 
                   {/* Active indicator */}
                   {isActive && (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="size-5 text-blue-400 shrink-0" aria-hidden>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="size-5 text-accent shrink-0" aria-hidden>
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   )}
@@ -151,7 +151,19 @@ export function ClipDetailClient({
         </section>
       )}
 
-      {/* ── 3. ACTIONS — only render when there's at least one action to show ── */}
+      {/* ── 3. VOTE + COMMENTS — comes before Actions so all members reach it fast ── */}
+      <CollaborationSection
+        clipId={clipId}
+        memberCount={memberCount}
+        currentUserEmail={currentUserEmail}
+        frozen={frozen}
+        versions={versions}
+        initialVotes={initialVotes}
+        initialComments={initialComments}
+        activeVersionId={selectedVersionId ?? undefined}
+      />
+
+      {/* ── 4. ACTIONS — only render when there's at least one action to show ── */}
       {(canEdit || frozen) && (
       <section aria-label="Actions">
         <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted px-1">
@@ -197,18 +209,6 @@ export function ClipDetailClient({
         </div>
       </section>
       )}
-
-      {/* ── 4. VOTE + COMMENTS ────────────────────────────────────────────── */}
-      <CollaborationSection
-        clipId={clipId}
-        memberCount={memberCount}
-        currentUserEmail={currentUserEmail}
-        frozen={frozen}
-        versions={versions}
-        initialVotes={initialVotes}
-        initialComments={initialComments}
-        activeVersionId={selectedVersionId ?? undefined}
-      />
     </div>
   );
 }

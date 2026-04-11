@@ -1,7 +1,7 @@
 "use client";
 
-// Bottom tab bar — always visible except on /record and /edit routes.
-// 4 tabs: Sessions, Record, Clips, Band.
+// Bottom tab bar — always visible except on /edit routes.
+// 5 tabs (max): Sessions, Catalog, Record, Clips (session-only), Band.
 // Record tab shows a pulsing amber ring when recording is in progress.
 
 import Link from "next/link";
@@ -67,6 +67,15 @@ function MusicNoteIcon() {
   );
 }
 
+function DiscIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-8" aria-hidden>
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
 function UsersIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-8" aria-hidden>
@@ -96,11 +105,18 @@ export function BottomTabBar({
       href: `/bands/${bandId}`,
       label: "Sessions",
       icon: <CalendarIcon />,
-      // Active on band home only — not on specific session/clip pages (Clips tab handles those)
+      // Active on band home only — not on session/clip, settings, or catalog pages
       match: (p: string) =>
         p.startsWith(`/bands/${bandId}`) &&
         !p.startsWith(`/bands/${bandId}/sessions/`) &&
-        !p.includes("/settings"),
+        !p.includes("/settings") &&
+        !p.includes("/catalog"),
+    },
+    {
+      href: `/bands/${bandId}/catalog`,
+      label: "Catalog",
+      icon: <DiscIcon />,
+      match: (p: string) => p.includes("/catalog"),
     },
     {
       href: `/record?bandId=${bandId}${sessionId ? `&sessionId=${sessionId}` : ""}`,

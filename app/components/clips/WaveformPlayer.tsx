@@ -152,14 +152,14 @@ export function WaveformPlayer({
               {(audioErrorStatus === 401 || audioErrorStatus === 503) && (
                 <a
                   href="/login"
-                  className="rounded-xl bg-accent px-3.5 py-1.5 text-xs font-medium text-white"
+                  className="icon-sm rounded-xl bg-accent px-3.5 py-1.5 text-xs font-medium text-white"
                 >
                   Reconnect Drive
                 </a>
               )}
               <button
                 onClick={() => { setAudioErrorStatus(null); setRetryKey((k) => k + 1); }}
-                className="text-xs text-muted underline underline-offset-2"
+                className="icon-sm text-xs text-muted underline underline-offset-2"
               >
                 Try again
               </button>
@@ -176,7 +176,7 @@ export function WaveformPlayer({
               key={stamp.id}
               onClick={() => wsRef.current?.setTime(stamp.timestampMs / 1000)}
               aria-label={`Jump to ${formatDuration(stamp.timestampMs)}`}
-              className="flex-shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs active:scale-95 transition-transform"
+              className="icon-sm flex-shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs active:scale-95 transition-transform"
               style={{
                 backgroundColor: `${STAMP_COLORS[stamp.type]}20`,
                 color: STAMP_COLORS[stamp.type],

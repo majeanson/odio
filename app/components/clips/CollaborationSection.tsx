@@ -255,7 +255,7 @@ export function CollaborationSection({
                           />
                           <button
                             onClick={() => editCommentMutation.mutate({ commentId: comment.id, text: editText.trim() })}
-                            className="text-sm text-accent font-medium"
+                            className="icon-sm text-sm text-accent font-medium px-1"
                           >
                             Save
                           </button>
@@ -269,7 +269,7 @@ export function CollaborationSection({
                       <div className="flex gap-1 shrink-0 mt-0.5">
                         <button
                           onClick={() => { setEditText(comment.text); setEditingCommentId(comment.id); }}
-                          className="p-1.5 text-muted hover:text-secondary"
+                          className="icon-sm p-1.5 text-muted hover:text-secondary"
                           aria-label="Edit"
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden>
@@ -279,7 +279,7 @@ export function CollaborationSection({
                         </button>
                         <button
                           onClick={() => deleteCommentMutation.mutate(comment.id)}
-                          className="p-1.5 text-muted hover:text-danger"
+                          className="icon-sm p-1.5 text-muted hover:text-danger"
                           aria-label="Delete"
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden>

@@ -2,7 +2,11 @@
 
 // Fixed top banner shown whenever an upload is in progress or paused.
 // Appears on any screen, persists until upload + transcode confirmed complete.
+//
+// Side-effect: sets --upload-banner-h on <html> so PageLayout's sticky header
+// can offset itself below the banner. Cleared when no uploads are active.
 
+import { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { PendingUpload } from "@/types";
 
@@ -44,8 +48,35 @@ function statusMessage(upload: PendingUpload): {
  * Fixed top banner for active upload states.
  * Shows for all pending uploads; collapses when all are done.
  * Positioned above the page content at top-0 with z-50.
+ *
+ * Sets --upload-banner-h on <html> so sticky headers can offset themselves
+ * below the banner. Clears the variable when no uploads are active.
  */
 export function UploadBanner({ uploads, onRetry, onDiscard, onSaveToDevice }: UploadBannerProps) {
+  const bannerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (uploads.length === 0) {
+      document.documentElement.style.removeProperty("--upload-banner-h");
+      return;
+    }
+    const el = bannerRef.current;
+    if (!el) return;
+    const update = () => {
+      document.documentElement.style.setProperty(
+        "--upload-banner-h",
+        `${el.offsetHeight}px`,
+      );
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty("--upload-banner-h");
+    };
+  }, [uploads.length]);
+
   if (uploads.length === 0) return null;
 
   // Show the most actionable upload first
@@ -65,6 +96,7 @@ export function UploadBanner({ uploads, onRetry, onDiscard, onSaveToDevice }: Up
 
   return (
     <div
+      ref={bannerRef}
       role="status"
       aria-live="polite"
       className={cn(
@@ -83,7 +115,8 @@ export function UploadBanner({ uploads, onRetry, onDiscard, onSaveToDevice }: Up
         {(variant === "paused" || variant === "error") && onRetry && (
           <button
             onClick={() => onRetry(primary.tempId)}
-            className="text-xs font-medium underline underline-offset-2 flex-shrink-0"
+            style={{ minHeight: 0, minWidth: 0 }}
+            className="text-xs font-medium underline underline-offset-2 flex-shrink-0 px-1 py-1"
           >
             Retry
           </button>
@@ -91,7 +124,8 @@ export function UploadBanner({ uploads, onRetry, onDiscard, onSaveToDevice }: Up
         {variant === "error" && onSaveToDevice && (
           <button
             onClick={() => onSaveToDevice(primary.tempId)}
-            className="text-xs font-medium underline underline-offset-2 flex-shrink-0"
+            style={{ minHeight: 0, minWidth: 0 }}
+            className="text-xs font-medium underline underline-offset-2 flex-shrink-0 px-1 py-1"
           >
             Save file
           </button>

@@ -34,7 +34,10 @@ export function PageLayout({
     >
       {/* Header */}
       {(title || headerRight || backHref) && (
-        <header className="sticky top-0 z-30 flex h-[72px] items-center gap-3 border-b border-border bg-base px-5">
+        <header
+          className="sticky z-30 flex h-[72px] items-center gap-3 border-b border-border bg-base px-5"
+          style={{ top: "var(--upload-banner-h, 0px)" }}
+        >
           {backHref && (
             <Link
               href={backHref}
