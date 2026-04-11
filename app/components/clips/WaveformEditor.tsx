@@ -94,6 +94,7 @@ export function WaveformEditor({
   const [wsState, setWsState] = useState<"loading" | "ready" | "error">("loading");
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
+  const [retryKey, setRetryKey] = useState(0);
   const [cutMarks, setCutMarks] = useState<CutMark[]>([]);
   const [hasDraft, setHasDraft] = useState(false);
   const [submitSheetOpen, setSubmitSheetOpen] = useState(false);
@@ -148,6 +149,7 @@ export function WaveformEditor({
 
   useEffect(() => {
     if (!containerRef.current) return;
+    setWsState("loading");
     const regions = RegionsPlugin.create();
     regionsRef.current = regions;
 
@@ -187,7 +189,7 @@ export function WaveformEditor({
     });
 
     return () => { ws.destroy(); wsRef.current = null; };
-  }, [clipId]);
+  }, [clipId, retryKey]);
 
   // ── Drag-to-create overlay ────────────────────────────────────────────────
 
@@ -389,8 +391,24 @@ export function WaveformEditor({
             </div>
           )}
           {wsState === "error" && (
-            <div className="h-[88px] flex items-center justify-center">
-              <p className="text-sm text-danger">Audio unavailable — Drive connection may need renewal</p>
+            <div className="h-[88px] flex flex-col items-center justify-center gap-3">
+              <p className="text-sm text-muted text-center leading-snug">
+                Drive connection needs renewal
+              </p>
+              <div className="flex items-center gap-3">
+                <a
+                  href="/login"
+                  className="rounded-xl bg-accent px-3.5 py-1.5 text-xs font-medium text-white"
+                >
+                  Reconnect Drive
+                </a>
+                <button
+                  onClick={() => setRetryKey((k) => k + 1)}
+                  className="text-xs text-muted underline underline-offset-2"
+                >
+                  Try again
+                </button>
+              </div>
             </div>
           )}
         </div>

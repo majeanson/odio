@@ -122,16 +122,24 @@ export function WaveformPlayer({
           </div>
         )}
         {wsState === "error" && (
-          <div className="h-[88px] flex flex-col items-center justify-center gap-2">
-            <p className="text-sm text-danger text-center">
-              Audio unavailable — Drive connection may need renewal
+          <div className="h-[88px] flex flex-col items-center justify-center gap-3">
+            <p className="text-sm text-muted text-center leading-snug">
+              Drive connection needs renewal
             </p>
-            <button
-              onClick={() => setRetryKey((k) => k + 1)}
-              className="text-xs text-accent underline underline-offset-2"
-            >
-              Try again
-            </button>
+            <div className="flex items-center gap-3">
+              <a
+                href="/login"
+                className="rounded-xl bg-accent px-3.5 py-1.5 text-xs font-medium text-white"
+              >
+                Reconnect Drive
+              </a>
+              <button
+                onClick={() => setRetryKey((k) => k + 1)}
+                className="text-xs text-muted underline underline-offset-2"
+              >
+                Try again
+              </button>
+            </div>
           </div>
         )}
       </div>
