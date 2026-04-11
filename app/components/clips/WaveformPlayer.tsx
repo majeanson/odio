@@ -30,6 +30,11 @@ export function WaveformPlayer({
   const wsRef = useRef<WaveSurfer | null>(null);
   const regionsRef = useRef<ReturnType<typeof RegionsPlugin.create> | null>(null);
   const activeCutsRef = useRef(activeCuts);
+  // Tracks the current position outside of React state so the play button handler
+  // is never stale. Updated by every timeupdate (both playback and click-to-seek).
+  // Used to re-seek right before play() — fixes WaveSurfer's click-while-paused
+  // sync gap where the visual cursor moves but the audio element's currentTime lags.
+  const currentTimeMsRef = useRef(0);
 
   const [wsState, setWsState] = useState<"loading" | "ready" | "error">("loading");
   const [audioErrorStatus, setAudioErrorStatus] = useState<number | null>(null);
@@ -95,6 +100,7 @@ export function WaveformPlayer({
     ws.on("finish", () => setIsPlaying(false));
     ws.on("timeupdate", (time: number) => {
       const ms = time * 1000;
+      currentTimeMsRef.current = ms;
       setCurrentTimeMs(ms);
       const hit = activeCutsRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
       if (hit && wsRef.current) {
@@ -152,7 +158,7 @@ export function WaveformPlayer({
               {(audioErrorStatus === 401 || audioErrorStatus === 503) && (
                 <a
                   href="/login"
-                  className="icon-sm rounded-xl bg-accent px-3.5 py-1.5 text-xs font-medium text-white"
+                  className="icon-sm rounded-xl bg-accent px-3.5 py-1.5 text-xs font-bold text-[#080808]"
                 >
                   Reconnect Drive
                 </a>
@@ -192,7 +198,19 @@ export function WaveformPlayer({
       {/* Play button */}
       <div className="pb-6 pt-2 flex justify-center">
         <button
-          onClick={() => wsRef.current?.playPause()}
+          onClick={() => {
+            const ws = wsRef.current;
+            if (!ws) return;
+            if (ws.isPlaying()) {
+              ws.pause();
+            } else {
+              // Explicitly re-seek to the last known position before playing.
+              // WaveSurfer's click-to-seek while paused updates the visual cursor
+              // via timeupdate but the audio element's currentTime can lag behind.
+              ws.setTime(currentTimeMsRef.current / 1000);
+              ws.play();
+            }
+          }}
           disabled={wsState !== "ready"}
           aria-label={isPlaying ? "Pause" : "Play"}
           className="flex h-20 w-20 items-center justify-center rounded-full bg-accent shadow-[0_4px_0_0_#78350f] transition-[transform,box-shadow] duration-75 active:translate-y-[4px] active:shadow-none disabled:opacity-40 disabled:shadow-none"
