@@ -115,9 +115,9 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
             <span className="text-sm text-muted">
               {new Date(clip.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
             </span>
-            {clip.sourceDurationMs != null && (
+            {(clip.latestResultDurationMs ?? clip.sourceDurationMs) != null && (
               <span className="font-mono text-sm text-muted">
-                {formatDuration(clip.sourceDurationMs)}
+                {formatDuration((clip.latestResultDurationMs ?? clip.sourceDurationMs)!)}
               </span>
             )}
             {clip._count && clip._count.versions > 0 && (

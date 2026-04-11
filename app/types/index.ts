@@ -54,6 +54,7 @@ export interface Clip {
   createdBy: string;
   recordedByEmail: string | null;
   createdAt: string;
+  latestResultDurationMs?: number | null;
   _count?: { versions: number };
 }
 

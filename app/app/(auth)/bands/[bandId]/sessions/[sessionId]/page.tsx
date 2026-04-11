@@ -34,7 +34,10 @@ export default async function SessionPage({
     include: {
       clips: {
         orderBy: { createdAt: "asc" },
-        include: { _count: { select: { versions: true } } },
+        include: {
+          _count: { select: { versions: true } },
+          versions: { orderBy: { versionNumber: "desc" }, take: 1, select: { resultDurationMs: true } },
+        },
       },
     },
   });
@@ -60,6 +63,7 @@ export default async function SessionPage({
     createdBy: c.createdBy,
     recordedByEmail: c.recordedByEmail,
     createdAt: c.createdAt.toISOString(),
+    latestResultDurationMs: c.versions[0]?.resultDurationMs ?? null,
     _count: { versions: c._count.versions },
   }));
 
