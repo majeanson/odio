@@ -7,6 +7,7 @@
 // Role change: inline pill buttons (no native select). Remove/leave: confirmation sheet.
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -252,28 +253,29 @@ export function BandSettingsClient({
           <p className="text-base text-secondary">
             Audio is stored in the band creator&apos;s Google Drive.
           </p>
-          <a
-            href={driveFolderUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-accent underline underline-offset-4"
-          >
-            Open Drive folder
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-3"
-              aria-hidden
+          <div className="flex items-center gap-4 flex-wrap">
+            <a
+              href={driveFolderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-accent underline underline-offset-4"
             >
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              <polyline points="15 3 21 3 21 9" />
-              <line x1="10" y1="14" x2="21" y2="3" />
-            </svg>
-          </a>
+              Open Drive folder
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-3" aria-hidden>
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+            </a>
+            {currentUserRole !== "MEMBER" && (
+              <Link
+                href={`/bands/${bandId}/drive`}
+                className="inline-flex items-center gap-1.5 text-sm text-accent underline underline-offset-4"
+              >
+                Manage files / sync
+              </Link>
+            )}
+          </div>
 
           {storageLoading ? (
             <div className="flex items-center gap-2">
