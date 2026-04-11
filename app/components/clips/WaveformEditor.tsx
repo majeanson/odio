@@ -326,6 +326,7 @@ export function WaveformEditor({
       setDescription("");
       clearAllCuts();
       clearDraft(clipId);
+      router.refresh();
       router.back();
     } catch { setSubmitError("Network error"); setSubmitting(false); }
   }
