@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import type { Account } from "next-auth";
 
 // NextAuth v5 configuration
 // DB adapter is REQUIRED (not optional) — we need the accounts table to store
@@ -36,15 +37,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
     error: "/auth-error",
   },
-  events: {
-    async signIn({ user, account, isNewUser }) {
-      console.log("[AUTH] signIn", { userId: user.id, provider: account?.provider, isNewUser });
-    },
-    async session({ session }) {
-      console.log("[AUTH] session", { userId: (session as { userId?: string }).userId });
-    },
-  },
   callbacks: {
+    // On every sign-in, update the stored OAuth tokens so the Drive access
+    // token stays current. The PrismaAdapter doesn't do this automatically
+    // on repeat sign-ins, so old tokens (missing drive.file scope) persist.
+    async signIn({ user, account }: { user: { id?: string }; account: Account | null }) {
+      if (account?.provider === "google" && user.id) {
+        await prisma.account.updateMany({
+          where: { userId: user.id, provider: "google" },
+          data: {
+            access_token: account.access_token,
+            refresh_token: account.refresh_token ?? undefined,
+            expires_at: account.expires_at,
+            scope: account.scope,
+          },
+        });
+      }
+      return true;
+    },
     // Expose the user's email and id on the session object
     async session({ session, user }) {
       if (session.user) {

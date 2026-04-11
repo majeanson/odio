@@ -20,7 +20,7 @@ export default function LoginPage() {
         <form
           action={async () => {
             "use server";
-            await signIn("google");
+            await signIn("google", { redirectTo: "/" });
           }}
         >
           <Button type="submit" variant="secondary" fullWidth size="lg">
