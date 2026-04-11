@@ -63,7 +63,7 @@ export default async function SessionPage({
   }));
 
   return (
-    <div className="flex min-h-svh flex-col bg-base text-primary pb-safe">
+    <div className="flex min-h-svh flex-col bg-base text-primary pb-[calc(56px+env(safe-area-inset-bottom))]">
       {/* Session header with inline rename + QR */}
       <SessionHeaderClient
         bandId={bandId}
@@ -72,18 +72,6 @@ export default async function SessionPage({
         initialNotes={jamSession.notes}
         canEdit={canRecord}
       />
-
-      {/* Record button */}
-      {canRecord && (
-        <div className="flex justify-end px-6 pb-3">
-          <ButtonLink
-            href={`/record?bandId=${bandId}&sessionId=${sessionId}`}
-            size="sm"
-          >
-            + Record
-          </ButtonLink>
-        </div>
-      )}
 
       {/* Clip list */}
       <main className="px-4 py-2">

@@ -111,7 +111,7 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
   return (
     <>
       <div
-        className="flex items-start gap-3 rounded-xl bg-surface px-4 py-3 transition-colors active:bg-elevated cursor-pointer"
+        className="flex items-start gap-3 rounded-2xl bg-surface px-4 py-3 transition-colors active:bg-elevated cursor-pointer"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -170,9 +170,14 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
           </div>
         </div>
 
-        {/* Right side — frozen lock only; delete via long-press */}
-        {clip.frozen && (
-          <div className="shrink-0 pt-0.5">
+        {/* Right side — processing spinner / frozen lock + chevron */}
+        <div className="flex items-center gap-2 shrink-0 self-center">
+          {clip.transcodeStatus === "PENDING" ? (
+            <span
+              className="size-4 rounded-full border-2 border-muted border-t-transparent animate-spin"
+              aria-label="Processing"
+            />
+          ) : clip.frozen ? (
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -186,8 +191,20 @@ export function ClipCard({ clip, bandId, onDelete }: ClipCardProps) {
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
-          </div>
-        )}
+          ) : null}
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="size-4 text-muted"
+            aria-hidden
+          >
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </div>
       </div>
 
       {/* Delete confirmation sheet */}

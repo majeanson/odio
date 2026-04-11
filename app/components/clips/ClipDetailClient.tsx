@@ -99,7 +99,7 @@ export function ClipDetailClient({
               return (
                 <button
                   key={v.id}
-                  onClick={() => setSelectedVersionId(isActive ? null : v.id)}
+                  onClick={() => setSelectedVersionId(v.id)}
                   className={`flex items-center gap-4 rounded-2xl px-5 py-4 text-left transition-colors ${
                     isActive
                       ? "bg-blue-500/15 border border-blue-500/30"
@@ -149,7 +149,8 @@ export function ClipDetailClient({
         </section>
       )}
 
-      {/* ── 3. ACTIONS ────────────────────────────────────────────────────── */}
+      {/* ── 3. ACTIONS — only render when there's at least one action to show ── */}
+      {(canEdit || frozen) && (
       <section aria-label="Actions">
         <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted px-1">
           Actions
@@ -192,6 +193,7 @@ export function ClipDetailClient({
           />
         </div>
       </section>
+      )}
 
       {/* ── 4. VOTE + COMMENTS ────────────────────────────────────────────── */}
       <CollaborationSection

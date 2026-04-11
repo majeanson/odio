@@ -108,15 +108,13 @@ export function BottomTabBar({
       hidden: !canRecord,
     },
     {
-      href: sessionId
-        ? `/bands/${bandId}/sessions/${sessionId}`
-        : `/bands/${bandId}`,
+      href: `/bands/${bandId}/sessions/${sessionId}`,
       label: "Clips",
       icon: <MusicNoteIcon />,
       match: (p: string) =>
-        sessionId
-          ? p.startsWith(`/bands/${bandId}/sessions/${sessionId}`)
-          : false,
+        p.startsWith(`/bands/${bandId}/sessions/${sessionId}`),
+      // Only meaningful when inside a session — avoids two tabs going to the same URL
+      hidden: !sessionId,
     },
     {
       href: `/bands/${bandId}/settings`,

@@ -131,9 +131,11 @@ export function WaveformPlayer({
       {stamps.length > 0 && wsState === "ready" && (
         <div className="px-5 pb-2 flex gap-2 overflow-x-auto">
           {stamps.map((stamp) => (
-            <div
+            <button
               key={stamp.id}
-              className="flex-shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs"
+              onClick={() => wsRef.current?.setTime(stamp.timestampMs / 1000)}
+              aria-label={`Jump to ${formatDuration(stamp.timestampMs)}`}
+              className="flex-shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs active:scale-95 transition-transform"
               style={{
                 backgroundColor: `${STAMP_COLORS[stamp.type]}20`,
                 color: STAMP_COLORS[stamp.type],
@@ -141,7 +143,7 @@ export function WaveformPlayer({
             >
               <span>{STAMP_EMOJI[stamp.type]}</span>
               <span className="font-mono">{formatDuration(stamp.timestampMs)}</span>
-            </div>
+            </button>
           ))}
         </div>
       )}

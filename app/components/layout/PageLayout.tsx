@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -35,7 +36,7 @@ export function PageLayout({
       {(title || headerRight || backHref) && (
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-base px-4">
           {backHref && (
-            <a
+            <Link
               href={backHref}
               aria-label="Go back"
               className="flex items-center gap-1 text-secondary hover:text-primary transition-colors -ml-1"
@@ -52,7 +53,7 @@ export function PageLayout({
               >
                 <path d="M15 18l-6-6 6-6" />
               </svg>
-            </a>
+            </Link>
           )}
           {title && (
             <h1 className="flex-1 truncate text-base font-semibold text-primary">
