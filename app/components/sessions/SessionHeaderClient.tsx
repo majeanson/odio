@@ -75,7 +75,11 @@ export function SessionHeaderClient({
 
   return (
     <>
-      <div className="flex items-center gap-3 px-5 pt-6 pb-3">
+      {/* Sticky header — offsets below the upload banner when active */}
+      <div
+        className="sticky z-20 flex min-h-[72px] items-center gap-3 px-5 py-3 bg-base border-b border-border"
+        style={{ top: "var(--upload-banner-h, 0px)" }}
+      >
         {/* Back to band */}
         <Link
           href={`/bands/${bandId}`}
