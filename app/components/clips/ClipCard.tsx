@@ -1,25 +1,17 @@
 "use client";
 
-// Clip card — shows clip name (inline editable), duration, stage chip,
+// Clip card — shows clip name (inline editable), duration,
 // version count badge, processing spinner, and frozen lock icon.
+// Stage is shown only in the clip detail collaboration section, not here.
 // "···" button on the right opens the delete confirmation sheet (replaces
 // the undiscoverable long-press pattern).
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDuration } from "@/lib/utils";
-import { Badge } from "@/components/ui/Badge";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
-import { STAGE_LABELS } from "@/types";
-import type { Clip, ClipStage } from "@/types";
-
-const STAGE_VARIANTS: Record<ClipStage, "default" | "accent" | "warning" | "success" | "danger"> = {
-  IDEA: "default",
-  SKETCH: "warning",
-  DEVELOPING: "accent",
-  DEMO_READY: "success",
-};
+import type { Clip } from "@/types";
 
 interface ClipCardProps {
   clip: Clip;
@@ -86,7 +78,7 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
   return (
     <>
       <div
-        className="flex items-center gap-4 rounded-2xl bg-surface px-5 py-4 transition-colors active:bg-elevated cursor-pointer"
+        className="flex items-center gap-4 rounded-2xl bg-surface px-5 py-4 transition-colors active:bg-elevated cursor-pointer h-full"
         onClick={handleCardClick}
       >
         {/* Main content */}
@@ -118,7 +110,7 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
             </button>
           )}
 
-          {/* Meta row: time · duration · stage · version count */}
+          {/* Meta row: time · duration · version count */}
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <span className="text-sm text-muted">
               {new Date(clip.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
@@ -128,9 +120,6 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
                 {formatDuration(clip.sourceDurationMs)}
               </span>
             )}
-            <Badge variant={STAGE_VARIANTS[clip.stage]}>
-              {STAGE_LABELS[clip.stage]}
-            </Badge>
             {clip._count && clip._count.versions > 0 && (
               <span className="text-sm text-muted">
                 {clip._count.versions}v

@@ -64,7 +64,7 @@ export default async function SessionPage({
   }));
 
   return (
-    <div className="flex min-h-svh flex-col bg-base text-primary pb-[calc(80px+env(safe-area-inset-bottom))]">
+    <div className="flex min-h-svh flex-col bg-base text-primary pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-0">
       {/* Session header with inline rename + QR */}
       <SessionHeaderClient
         bandId={bandId}
@@ -75,7 +75,7 @@ export default async function SessionPage({
       />
 
       {/* Clip list */}
-      <main className="px-5 py-3">
+      <main className="px-5 py-3 md:px-8 md:py-6">
         {clips.length === 0 ? (
           <EmptyState
             icon="🎵"
@@ -97,7 +97,7 @@ export default async function SessionPage({
             }
           />
         ) : (
-          <ul className="space-y-3" role="list">
+          <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0" role="list">
             {clips.map((clip) => (
               <li key={clip.id}>
                 <ClipCard clip={clip} bandId={bandId} canDelete={canDelete} />

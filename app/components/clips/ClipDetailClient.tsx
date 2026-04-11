@@ -74,7 +74,7 @@ export function ClipDetailClient({
       : [];
 
   return (
-    <div className="flex flex-col gap-6 px-4 py-6">
+    <div className="flex flex-col gap-6 px-4 py-6 md:max-w-3xl md:mx-auto">
 
       {/* ── 1. PLAYER ─────────────────────────────────────────────────────── */}
       <WaveformPlayer
@@ -151,7 +151,7 @@ export function ClipDetailClient({
         </section>
       )}
 
-      {/* ── 3. VOTE + COMMENTS — comes before Actions so all members reach it fast ── */}
+      {/* ── 3. VOTE + COMMENTS + STAGE — before Actions so all members reach it fast ── */}
       <CollaborationSection
         clipId={clipId}
         memberCount={memberCount}
@@ -161,6 +161,8 @@ export function ClipDetailClient({
         initialVotes={initialVotes}
         initialComments={initialComments}
         activeVersionId={selectedVersionId ?? undefined}
+        initialStage={initialStage}
+        canEditStage={canEdit && !frozen}
       />
 
       {/* ── 4. ACTIONS — only render when there's at least one action to show ── */}
@@ -192,11 +194,10 @@ export function ClipDetailClient({
             </Link>
           )}
 
-          {/* Stage / Freeze / Share / Cleanup */}
+          {/* Freeze / Share / Cleanup */}
           <ClipActionsClient
             clipId={clipId}
             clipName={clipName}
-            initialStage={initialStage}
             frozen={frozen}
             transcodeStatus={transcodeStatus}
             publicToken={publicToken}

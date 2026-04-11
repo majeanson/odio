@@ -47,7 +47,10 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         onDiscard={discardUpload}
         onSaveToDevice={saveToDevice}
       />
-      {children}
+      {/* On desktop, push content right of the 220px sidebar */}
+      <div className="md:ml-[220px]">
+        {children}
+      </div>
       {bandId && (
         <BottomTabBar bandId={bandId} sessionId={sessionId} memberRole={memberRole} />
       )}

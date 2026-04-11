@@ -28,7 +28,7 @@ export function PageLayout({
     <div
       className={cn(
         "flex min-h-svh flex-col bg-base text-primary",
-        !fullScreen && "pb-[calc(80px+env(safe-area-inset-bottom))]",
+        !fullScreen && "pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-0",
         className,
       )}
     >

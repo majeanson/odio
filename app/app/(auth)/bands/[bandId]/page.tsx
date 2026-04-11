@@ -62,7 +62,7 @@ export default async function BandHomePage({
         </Link>
       }
     >
-      <div className="px-5 py-5">
+      <div className="px-5 py-5 md:px-8 md:py-8">
         {sessions.length === 0 ? (
           <EmptyState
             icon="🎸"
@@ -81,12 +81,12 @@ export default async function BandHomePage({
             }
           />
         ) : (
-          <ul className="space-y-3" role="list">
+          <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0" role="list">
             {sessions.map((s) => (
               <li key={s.id}>
                 <Link
                   href={`/bands/${bandId}/sessions/${s.id}`}
-                  className="flex items-center justify-between rounded-2xl bg-surface px-5 py-5 transition-colors active:bg-elevated"
+                  className="flex items-center justify-between rounded-2xl bg-surface px-5 py-5 transition-colors active:bg-elevated h-full"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-lg font-semibold text-primary">{s.name}</p>

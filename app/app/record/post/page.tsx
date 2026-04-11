@@ -243,7 +243,7 @@ function PostRecordScreen() {
   const isError = status === "paused" || status === "token-error" || status === "session-error";
 
   return (
-    <div className="flex min-h-svh flex-col bg-base text-primary px-6 pt-safe">
+    <div className="flex min-h-svh flex-col bg-base text-primary px-6 pt-safe md:max-w-lg md:mx-auto">
       {/* Header */}
       <div className="flex h-[72px] items-center">
         <button

@@ -133,7 +133,7 @@ function RecordingScreen() {
   const hasMultipleDevices = devices.length > 1;
 
   return (
-    <div className="flex min-h-svh flex-col bg-base text-primary px-6 pt-safe">
+    <div className="flex min-h-svh flex-col bg-base text-primary px-6 pt-safe md:max-w-lg md:mx-auto">
       {/* Cancel / back — only shown when idle (not mid-recording) */}
       {!isRecording && !isStopping && state !== "stopped" && (
         <div className="flex h-[72px] items-center">

@@ -118,9 +118,9 @@ input, textarea {
   font-size: inherit;
 }
 
-/* ─── Desktop centering ───────────────────────────────────────────────────── */
+/* ─── Tablet: phone-column centering (640px–767px) ───────────────────────── */
 
-@media (min-width: 640px) {
+@media (min-width: 640px) and (max-width: 767px) {
   body {
     display: flex;
     justify-content: center;
@@ -131,5 +131,19 @@ input, textarea {
     width: 100%;
     max-width: 500px;
     box-shadow: 1px 0 0 0 var(--color-border), -1px 0 0 0 var(--color-border);
+  }
+}
+
+/* ─── Desktop: full-width layout with sidebar ────────────────────────────���── */
+
+@media (min-width: 768px) {
+  body {
+    display: block;
+    background: var(--color-base);
+  }
+
+  body > * {
+    max-width: 100%;
+    box-shadow: none;
   }
 }
