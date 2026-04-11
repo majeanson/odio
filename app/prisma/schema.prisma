@@ -124,6 +124,7 @@ model Clip {
   transcodeStatus  TranscodeStatus @default(PENDING)
   createdBy        String          // band creator email (Drive owner)
   recordedByEmail  String?         // actual recorder — may differ from createdBy
+  sourceClipId     String?         // set when this clip was created by splitting another clip
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
@@ -133,6 +134,8 @@ model Clip {
   votes       Vote[]
   comments    Comment[]
   annotations Annotation[]
+  sourceClip  Clip?         @relation("SplitFrom", fields: [sourceClipId], references: [id], onDelete: SetNull)
+  splitInto   Clip[]        @relation("SplitFrom")
 }
 
 enum ClipStage {

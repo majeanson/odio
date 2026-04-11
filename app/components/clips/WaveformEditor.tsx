@@ -38,6 +38,8 @@ interface WaveformEditorProps {
   stamps: Stamp[];
   /** URL of the session page — used to navigate after a split so both new clips are visible. */
   sessionHref: string;
+  /** Clips that were created by splitting this clip — shown as provenance info. */
+  splitInto?: Array<{ id: string; name: string }>;
 }
 
 interface CutMark {
@@ -80,6 +82,7 @@ export function WaveformEditor({
   initialVersions,
   stamps,
   sessionHref,
+  splitInto = [],
 }: WaveformEditorProps) {
   const router = useRouter();
 
@@ -607,6 +610,31 @@ export function WaveformEditor({
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Split provenance — shown when this clip has been split ── */}
+      {splitInto.length > 0 && (
+        <div className="rounded-2xl bg-surface px-5 py-4 flex items-start gap-3">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4 shrink-0 text-muted mt-0.5" aria-hidden>
+            <circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" />
+            <line x1="20" y1="4" x2="8.12" y2="15.88" /><line x1="14.47" y1="14.48" x2="20" y2="20" /><line x1="8.12" y1="8.12" x2="12" y2="12" />
+          </svg>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">
+              Split into
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {splitInto.map((c) => (
+                <span
+                  key={c.id}
+                  className="rounded-lg bg-elevated px-2.5 py-1 text-xs font-medium text-secondary"
+                >
+                  {c.name}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       )}

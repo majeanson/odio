@@ -25,8 +25,9 @@ export default async function ClipEditPage({
     prisma.clip.findFirst({
       where: { id: clipId, sessionId },
       include: {
-        versions: { orderBy: { versionNumber: "asc" } },
-        stamps: { orderBy: { timestampMs: "asc" } },
+        versions:  { orderBy: { versionNumber: "asc" } },
+        stamps:    { orderBy: { timestampMs: "asc" } },
+        splitInto: { select: { id: true, name: true }, orderBy: { createdAt: "asc" } },
       },
     }),
   ]);
@@ -44,8 +45,9 @@ export default async function ClipEditPage({
     redirect(`/bands/${bandId}/sessions/${sessionId}/clips/${clipId}`);
   }
 
-  const versions = clip.versions.map(mapClipVersion);
-  const stamps = clip.stamps.map(mapStamp);
+  const versions  = clip.versions.map(mapClipVersion);
+  const stamps    = clip.stamps.map(mapStamp);
+  const splitInto = clip.splitInto.map((c) => ({ id: c.id, name: c.name }));
 
   const backHref = `/bands/${bandId}/sessions/${sessionId}/clips/${clipId}`;
   const sessionHref = `/bands/${bandId}/sessions/${sessionId}`;
@@ -82,6 +84,7 @@ export default async function ClipEditPage({
           initialVersions={versions}
           stamps={stamps}
           sessionHref={sessionHref}
+          splitInto={splitInto}
         />
       </div>
     </div>

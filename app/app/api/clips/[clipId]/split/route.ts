@@ -87,6 +87,7 @@ export async function POST(
         transcodeStatus: "DONE",
         createdBy: clip.createdBy,
         recordedByEmail: clip.recordedByEmail,
+        sourceClipId: clipId,
         versions: {
           create: {
             versionNumber: 1,
@@ -109,6 +110,7 @@ export async function POST(
         transcodeStatus: "DONE",
         createdBy: clip.createdBy,
         recordedByEmail: clip.recordedByEmail,
+        sourceClipId: clipId,
         versions: {
           create: {
             versionNumber: 1,
