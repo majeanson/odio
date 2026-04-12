@@ -4,10 +4,20 @@
 // Shows all clips with their Drive source / final file status.
 // Per-file actions: delete source, detect broken references.
 // Sync button: checks all file IDs against the Drive metadata API.
+// Import section: scans Drive folder for unimported audio files.
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+
+interface UnimportedFile {
+  fileId: string;
+  name: string;
+  sizeMb: number | null;
+  mimeType: string;
+  createdTime: string | null;
+}
 
 interface DriveItem {
   clipId: string;
@@ -36,11 +46,19 @@ function formatMins(ms: number | null): string {
 }
 
 export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }: DriveFilesClientProps) {
+  const router = useRouter();
   const [items, setItems] = useState<DriveItem[]>(initialItems);
   const [fileStatus, setFileStatus] = useState<Record<string, FileStatus>>({});
   const [syncing, setSyncing] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [confirmItem, setConfirmItem] = useState<{ clipId: string; clipName: string; type: "source" | "clip" } | null>(null);
+
+  // Import state
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<{ unimported: UnimportedFile[]; total: number; tracked: number } | null>(null);
+  const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
+  const [importing, setImporting] = useState(false);
+  const [importedSessionId, setImportedSessionId] = useState<string | null>(null);
 
   const driveFolderUrl = `https://drive.google.com/drive/folders/${driveFolderId}`;
 
@@ -107,6 +125,72 @@ export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }:
     }
   }
 
+  async function handleScan() {
+    setScanning(true);
+    setScanResult(null);
+    setSelectedFileIds(new Set());
+    setImportedSessionId(null);
+    try {
+      const res = await fetch(`/api/bands/${bandId}/drive/scan`);
+      if (!res.ok) throw new Error("Scan failed");
+      const data = await res.json() as { unimported: UnimportedFile[]; total: number; tracked: number };
+      setScanResult(data);
+    } finally {
+      setScanning(false);
+    }
+  }
+
+  function toggleFile(fileId: string) {
+    setSelectedFileIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(fileId)) next.delete(fileId);
+      else next.add(fileId);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (!scanResult) return;
+    if (selectedFileIds.size === scanResult.unimported.length) {
+      setSelectedFileIds(new Set());
+    } else {
+      setSelectedFileIds(new Set(scanResult.unimported.map((f) => f.fileId)));
+    }
+  }
+
+  async function handleImport() {
+    if (!scanResult || selectedFileIds.size === 0) return;
+    setImporting(true);
+    try {
+      const files = scanResult.unimported
+        .filter((f) => selectedFileIds.has(f.fileId))
+        .map((f) => ({ fileId: f.fileId, name: f.name }));
+
+      const res = await fetch(`/api/bands/${bandId}/drive/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files }),
+      });
+
+      if (!res.ok) throw new Error("Import failed");
+      const data = await res.json() as { imported: { clipId: string; name: string }[]; sessionId: string };
+      setImportedSessionId(data.sessionId);
+      // Remove imported files from scan results
+      setScanResult((prev) =>
+        prev
+          ? {
+              ...prev,
+              unimported: prev.unimported.filter((f) => !selectedFileIds.has(f.fileId)),
+            }
+          : null,
+      );
+      setSelectedFileIds(new Set());
+      router.refresh();
+    } finally {
+      setImporting(false);
+    }
+  }
+
   // Group by session
   const bySession = items.reduce<Record<string, { sessionName: string; sessionId: string; clips: DriveItem[] }>>((acc, item) => {
     if (!acc[item.sessionId]) {
@@ -166,6 +250,105 @@ export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }:
           <p className="text-xs text-muted">
             {Object.values(fileStatus).filter((s) => s === "ok").length} of {Object.keys(fileStatus).length} files confirmed in Drive
           </p>
+        )}
+      </div>
+
+      {/* Import from Drive */}
+      <div className="rounded-2xl bg-surface px-5 py-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-base font-semibold text-primary">Import from Drive</p>
+          {scanResult && (
+            <p className="text-xs text-muted">
+              {scanResult.total} file{scanResult.total !== 1 ? "s" : ""} in folder
+            </p>
+          )}
+        </div>
+        <p className="text-sm text-secondary">
+          Scan the Drive folder for audio files that aren&apos;t tracked in Odio yet — useful if recordings were lost from the database.
+        </p>
+
+        {importedSessionId && (
+          <div className="rounded-xl bg-accent/10 px-4 py-3 flex items-center justify-between gap-3">
+            <p className="text-sm text-accent font-medium">Imported successfully</p>
+            <a
+              href={`/bands/${bandId}/sessions/${importedSessionId}`}
+              className="text-sm text-accent underline underline-offset-4 shrink-0"
+            >
+              View session
+            </a>
+          </div>
+        )}
+
+        <Button
+          onClick={handleScan}
+          disabled={scanning || importing}
+          loading={scanning}
+          variant="secondary"
+          fullWidth
+        >
+          {scanning ? "Scanning Drive…" : "Scan for unimported files"}
+        </Button>
+
+        {scanResult && (
+          <>
+            {scanResult.unimported.length === 0 ? (
+              <p className="text-sm text-muted text-center py-1">
+                All Drive files are already tracked in Odio.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {/* Select all */}
+                <button
+                  onClick={toggleAll}
+                  className="text-xs text-accent underline underline-offset-4"
+                >
+                  {selectedFileIds.size === scanResult.unimported.length ? "Deselect all" : "Select all"}
+                </button>
+
+                {scanResult.unimported.map((file) => {
+                  const checked = selectedFileIds.has(file.fileId);
+                  return (
+                    <label
+                      key={file.fileId}
+                      className={`flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer transition-colors ${
+                        checked ? "bg-accent/10" : "bg-elevated"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleFile(file.fileId)}
+                        className="size-4 accent-[var(--color-accent)] shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-primary truncate">
+                          {file.name.replace(/\.[^.]+$/, "") || file.fileId}
+                        </p>
+                        <p className="text-xs text-muted font-mono">
+                          {file.mimeType.replace("audio/", "")}
+                          {file.sizeMb !== null ? ` · ${file.sizeMb} MB` : ""}
+                          {file.createdTime
+                            ? ` · ${new Date(file.createdTime).toLocaleDateString()}`
+                            : ""}
+                        </p>
+                      </div>
+                    </label>
+                  );
+                })}
+
+                <Button
+                  onClick={handleImport}
+                  disabled={selectedFileIds.size === 0 || importing}
+                  loading={importing}
+                  fullWidth
+                >
+                  {importing
+                    ? "Importing…"
+                    : `Import ${selectedFileIds.size} file${selectedFileIds.size !== 1 ? "s" : ""}`}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
