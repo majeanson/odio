@@ -99,22 +99,32 @@ export function WaveformPlayer({
     ws.on("ready", () => {
       setWsState("ready");
       const wsDur = ws.getDuration() * 1000;
-      if (sourceDurationMs === 0) {
-        // Duration unknown (imported clip). Set the ref synchronously so the
-        // very first timeupdate tick already has the right value — don't wait
-        // for the React state re-render that setDetectedDurationMs triggers.
+      // A stale upload (Drive file contains the wrong audio — e.g. the full
+      // original before a split) produces wsDur dramatically larger than
+      // sourceDurationMs. Threshold: >50% longer AND >10 s more.
+      // Everything else (imported clips with unknown duration, FFmpeg
+      // frame-rounding on split clips) should use the actual file duration.
+      const isWrongFile =
+        sourceDurationMs > 0 &&
+        wsDur > sourceDurationMs * 1.5 &&
+        wsDur - sourceDurationMs > 10_000;
+
+      if (isWrongFile) {
+        setAudioDurationMismatch(true);
+        // Keep effectiveDurMsRef at sourceDurationMs so the stop-guard still
+        // caps playback at the expected boundary.
+      } else {
+        // Use the actual file duration: handles imported clips (sourceDurationMs
+        // === 0) and minor FFmpeg frame-rounding on freshly-split clips.
         effectiveDurMsRef.current = wsDur;
         setDetectedDurationMs(wsDur);
-        // Persist to DB so subsequent page loads have a real sourceDurationMs.
-        fetch(`/api/clips/${clipId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sourceDurationMs: wsDur }),
-        }).catch(() => {/* non-fatal */});
-      } else {
-        const tolerance = Math.max(2000, sourceDurationMs * 0.1);
-        if (Math.abs(wsDur - sourceDurationMs) > tolerance) {
-          setAudioDurationMismatch(true);
+        // Persist back to DB if the value meaningfully differs from what was stored.
+        if (sourceDurationMs === 0 || Math.abs(wsDur - sourceDurationMs) > 200) {
+          fetch(`/api/clips/${clipId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sourceDurationMs: wsDur }),
+          }).catch(() => {/* non-fatal */});
         }
       }
     });
