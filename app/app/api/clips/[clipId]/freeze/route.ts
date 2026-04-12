@@ -16,7 +16,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getCreatorTokens, uploadDriveFile } from "@/lib/google";
+import { getCreatorTokens, uploadDriveFile, getDriveFileMeta } from "@/lib/google";
 import { renderAudioWithCuts, downloadToTmp, getTmpOutputPath } from "@/lib/render";
 import { apiError, apiOk } from "@/lib/utils";
 import { promises as fs } from "fs";
@@ -113,8 +113,12 @@ export async function POST(
       clip.sourceDurationMs ?? 0,
     );
 
-    // Read rendered buffer and upload to Drive
+    // Read rendered buffer and sanity-check before uploading
     const outputBuffer = await fs.readFile(outputPath);
+    if (outputBuffer.length < 512) {
+      throw new Error(`FFmpeg produced empty render (${outputBuffer.length} bytes)`);
+    }
+
     const outputFileName = buildFinalFileName(clip.name, finalName);
 
     const finalDriveFileId = await uploadDriveFile(
@@ -124,6 +128,12 @@ export async function POST(
       "audio/aac",
       outputBuffer,
     );
+
+    // Verify Drive actually stored the bytes
+    const meta = await getDriveFileMeta(accessToken, finalDriveFileId);
+    if (meta.size === 0) {
+      throw new Error("Drive upload produced an empty file — re-try freeze");
+    }
 
     // Render succeeded — now freeze
     await prisma.clip.update({

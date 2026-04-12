@@ -15,7 +15,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getCreatorTokens, uploadDriveFile } from "@/lib/google";
+import { getCreatorTokens, uploadDriveFile, getDriveFileMeta } from "@/lib/google";
 import { renderAudioWithCuts, downloadToTmp, getTmpOutputPath } from "@/lib/render";
 import { apiError, apiOk } from "@/lib/utils";
 import { promises as fs } from "fs";
@@ -113,16 +113,38 @@ export async function POST(
       ),
     ]);
 
-    // Read rendered buffers and upload to Drive in parallel
+    // Read rendered buffers and sanity-check before uploading.
+    // An empty output means FFmpeg silently produced nothing — fail fast
+    // rather than storing a corrupt/empty Drive file.
     const [bufA, bufB] = await Promise.all([
       fs.readFile(outputPathA),
       fs.readFile(outputPathB),
     ]);
 
+    if (bufA.length < 512) {
+      throw new Error(`FFmpeg produced empty Part A (${bufA.length} bytes) — split aborted`);
+    }
+    if (bufB.length < 512) {
+      throw new Error(`FFmpeg produced empty Part B (${bufB.length} bytes) — split aborted`);
+    }
+
     const [driveFileIdA, driveFileIdB] = await Promise.all([
       uploadDriveFile(accessToken, driveFolderId, `${sanitize(nameA)} - source.aac`, "audio/aac", bufA),
       uploadDriveFile(accessToken, driveFolderId, `${sanitize(nameB)} - source.aac`, "audio/aac", bufB),
     ]);
+
+    // Verify Drive actually stored the bytes — a size of 0 means the upload silently failed.
+    const [metaA, metaB] = await Promise.all([
+      getDriveFileMeta(accessToken, driveFileIdA),
+      getDriveFileMeta(accessToken, driveFileIdB),
+    ]);
+
+    if (metaA.size === 0) {
+      throw new Error("Drive upload for Part A produced an empty file — re-try");
+    }
+    if (metaB.size === 0) {
+      throw new Error("Drive upload for Part B produced an empty file — re-try");
+    }
 
     // Create both Postgres clip records (v1 has no cut marks — the trimmed file IS the raw)
     const [clipA, clipB] = await prisma.$transaction([

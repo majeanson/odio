@@ -38,6 +38,7 @@ export function WaveformPlayer({
 
   const [wsState, setWsState] = useState<"loading" | "ready" | "error">("loading");
   const [audioErrorStatus, setAudioErrorStatus] = useState<number | null>(null);
+  const [audioDurationMismatch, setAudioDurationMismatch] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [retryKey, setRetryKey] = useState(0);
@@ -86,7 +87,14 @@ export function WaveformPlayer({
     });
 
     wsRef.current = ws;
-    ws.on("ready", () => setWsState("ready"));
+    ws.on("ready", () => {
+      setWsState("ready");
+      const wsDur = ws.getDuration() * 1000;
+      const tolerance = Math.max(2000, sourceDurationMs * 0.1);
+      if (Math.abs(wsDur - sourceDurationMs) > tolerance) {
+        setAudioDurationMismatch(true);
+      }
+    });
     ws.on("error", () => {
       // Probe the audio URL to get the real HTTP status so we can show
       // the right message (auth error vs. file missing vs. server error).
@@ -143,6 +151,17 @@ export function WaveformPlayer({
 
   return (
     <div className="rounded-2xl bg-surface overflow-hidden">
+      {/* Audio file mismatch warning */}
+      {audioDurationMismatch && (
+        <div className="px-5 pt-4 pb-0">
+          <div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3">
+            <p className="text-xs font-semibold text-danger">Audio file has wrong duration</p>
+            <p className="mt-0.5 text-xs text-muted leading-snug">
+              Re-split the original clip to create a clean file.
+            </p>
+          </div>
+        </div>
+      )}
       {/* Clock */}
       <div className="px-5 pt-5 flex items-baseline justify-between gap-4">
         <span className="font-mono text-3xl font-semibold text-primary tabular-nums leading-none tracking-tight">

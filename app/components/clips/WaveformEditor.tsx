@@ -93,6 +93,9 @@ export function WaveformEditor({
   // State
   const [wsState, setWsState] = useState<"loading" | "ready" | "error">("loading");
   const [audioErrorStatus, setAudioErrorStatus] = useState<number | null>(null);
+  // true when the audio file's detected duration differs >10% from the DB value —
+  // indicates the Drive file has stale/wrong content (e.g. from a pre-fix split upload).
+  const [audioDurationMismatch, setAudioDurationMismatch] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [retryKey, setRetryKey] = useState(0);
@@ -168,7 +171,20 @@ export function WaveformEditor({
     });
 
     wsRef.current = ws;
-    ws.on("ready", () => setWsState("ready"));
+    ws.on("ready", () => {
+      setWsState("ready");
+      // Detect when the Drive file's actual duration differs from what the DB says.
+      // A split clip whose Drive file has stale content will report the ORIGINAL clip's
+      // duration — warn the user so they know to re-split rather than draw wrong cuts.
+      const wsDur = ws.getDuration() * 1000; // ms
+      const tolerance = Math.max(2000, sourceDurationMs * 0.1); // 10% or 2s, whichever bigger
+      if (Math.abs(wsDur - sourceDurationMs) > tolerance) {
+        setAudioDurationMismatch(true);
+        console.warn(
+          `[WaveformEditor] Audio duration mismatch: Drive=${wsDur.toFixed(0)}ms, DB=${sourceDurationMs}ms`,
+        );
+      }
+    });
     ws.on("error", () => {
       fetch(`/api/audio/${clipId}`, { method: "HEAD" })
         .then((r) => setAudioErrorStatus(r.status))
@@ -387,6 +403,18 @@ export function WaveformEditor({
           </div>
           <button onClick={resumeDraft} className="shrink-0 text-sm font-semibold text-accent">Resume</button>
           <button onClick={() => { clearDraft(clipId); setHasDraft(false); }} className="shrink-0 text-sm text-muted">Dismiss</button>
+        </div>
+      )}
+
+      {/* Audio duration mismatch warning */}
+      {audioDurationMismatch && (
+        <div className="rounded-2xl border border-danger/30 bg-danger/10 px-5 py-4">
+          <p className="text-sm font-semibold text-danger">Audio file has wrong duration</p>
+          <p className="mt-1 text-sm text-muted leading-snug">
+            The waveform shows more audio than this clip should contain. This happens when a
+            split clip was created before a storage fix. Cuts are clamped to the correct
+            duration, but re-splitting the original clip will produce a clean file.
+          </p>
         </div>
       )}
 
