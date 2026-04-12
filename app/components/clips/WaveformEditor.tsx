@@ -184,13 +184,19 @@ export function WaveformEditor({
     });
     ws.on("timeupdate", (time: number) => {
       const ms = time * 1000;
-      setCurrentTimeMs(ms);
+      setCurrentTimeMs(Math.min(ms, sourceDurationMs));
       // Only skip cut-preview during active playback — not during seeks while paused.
       if (!ws.isPlaying()) return;
+      // Stop if playback reaches the DB-recorded clip boundary (Drive file may be longer)
+      if (ms >= sourceDurationMs) {
+        ws.pause();
+        ws.setTime(0);
+        return;
+      }
       const hit = cutMarksRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
       if (hit && wsRef.current) {
         const targetSec = hit.endMs / 1000;
-        if (targetSec >= ws.getDuration() - 0.3) {
+        if (targetSec >= sourceDurationMs / 1000 - 0.3) {
           ws.pause();
           ws.setTime(hit.startMs / 1000);
         } else {
@@ -212,11 +218,16 @@ export function WaveformEditor({
 
   // ── Drag-to-create overlay ────────────────────────────────────────────────
 
+  // Use sourceDurationMs as the authoritative clip length for all position maths.
+  // ws.getDuration() can return the wrong value if the Drive file has stale/wrong
+  // content (e.g. from a pre-fix split upload). The DB value is always correct.
+  const clipDurationSec = sourceDurationMs / 1000;
+
   function handleDragStart(e: React.PointerEvent<HTMLDivElement>) {
     if (!wsRef.current) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     const rect = e.currentTarget.getBoundingClientRect();
-    const sec = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * wsRef.current.getDuration();
+    const sec = Math.max(0, Math.min(clipDurationSec, (e.clientX - rect.left) / rect.width * clipDurationSec));
     dragStateRef.current = { startX: e.clientX, startSec: sec, region: null };
   }
 
@@ -226,7 +237,7 @@ export function WaveformEditor({
     if (Math.abs(e.clientX - drag.startX) < 8) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
-    const sec = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * wsRef.current.getDuration();
+    const sec = Math.max(0, Math.min(clipDurationSec, (e.clientX - rect.left) / rect.width * clipDurationSec));
     const [start, end] = [Math.min(drag.startSec, sec), Math.max(drag.startSec, sec)];
 
     if (drag.region) {
@@ -243,10 +254,14 @@ export function WaveformEditor({
     dragStateRef.current = null;
 
     if (Math.abs(e.clientX - drag.startX) < 8) {
-      // Tap — seek
+      // Tap — seek (clamped to actual clip duration so we never seek past the end)
       if (drag.region) drag.region.remove();
       const rect = e.currentTarget.getBoundingClientRect();
-      wsRef.current.seekTo(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)));
+      const fraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const wsDur = wsRef.current.getDuration();
+      // If ws duration is longer than sourceDurationMs, clamp the seek position
+      const targetSec = fraction * clipDurationSec;
+      wsRef.current.setTime(Math.min(targetSec, wsDur));
     } else if (drag.region) {
       const { start, end } = drag.region;
       drag.region.remove();
@@ -291,12 +306,11 @@ export function WaveformEditor({
   // ── Trim shortcut ─────────────────────────────────────────────────────────
 
   function enterTrimMode() {
-    const dur = wsRef.current?.getDuration();
-    if (!dur) return;
-    const t = Math.min(5, dur * 0.1);
+    if (!sourceDurationMs) return;
+    const t = Math.min(5, clipDurationSec * 0.1);
     loadCutsIntoEditor([
       { startMs: 0, endMs: Math.round(t * 1000) },
-      { startMs: Math.round((dur - t) * 1000), endMs: Math.round(dur * 1000) },
+      { startMs: Math.round((clipDurationSec - t) * 1000), endMs: sourceDurationMs },
     ]);
   }
 
@@ -304,7 +318,8 @@ export function WaveformEditor({
 
   function enterSplitMode() {
     setSplitMode(true);
-    setSplitMs(currentTimeMs > 0 ? Math.round(currentTimeMs) : Math.round(sourceDurationMs / 2));
+    const pos = Math.min(Math.round(currentTimeMs), sourceDurationMs - 1);
+    setSplitMs(pos > 0 ? pos : Math.round(sourceDurationMs / 2));
   }
 
   async function handleSplit() {
@@ -327,10 +342,19 @@ export function WaveformEditor({
     setSubmitting(true);
     setSubmitError(null);
     try {
+      // Clamp any stale draft cuts that exceed the clip's actual duration (e.g. from
+      // a split clip whose Drive file had wrong content before the upload fix).
+      const validCuts = cutMarks
+        .map(({ startMs, endMs, regionId }) => ({
+          startMs: Math.max(0, Math.min(startMs, sourceDurationMs)),
+          endMs: Math.max(0, Math.min(endMs, sourceDurationMs)),
+          regionId,
+        }))
+        .filter(({ startMs, endMs }) => endMs > startMs);
       const res = await fetch(`/api/clips/${clipId}/versions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cutMarks: cutMarks.map(({ startMs, endMs }) => ({ startMs, endMs })), description: description.trim() || undefined }),
+        body: JSON.stringify({ cutMarks: validCuts.map(({ startMs, endMs }) => ({ startMs, endMs })), description: description.trim() || undefined }),
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})); setSubmitError(b.error ?? "Failed"); setSubmitting(false); return; }
       const v = await res.json();

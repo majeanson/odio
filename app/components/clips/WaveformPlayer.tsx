@@ -107,17 +107,23 @@ export function WaveformPlayer({
       const ms = time * 1000;
       // Always track position — currentTimeMsRef is used by the play button
       // to re-seek before playback (fixes click-while-paused sync gap).
-      currentTimeMsRef.current = ms;
-      setCurrentTimeMs(ms);
+      currentTimeMsRef.current = Math.min(ms, sourceDurationMs);
+      setCurrentTimeMs(Math.min(ms, sourceDurationMs));
       // Only skip cuts during active playback — never during seeks while paused
       // (which would cause position 0 after finish-reset to jump to a cut's endMs).
       if (!ws.isPlaying()) return;
+      // Stop if the Drive file is longer than sourceDurationMs (e.g. stale split upload)
+      if (ms >= sourceDurationMs) {
+        ws.pause();
+        ws.setTime(0);
+        return;
+      }
       const hit = activeCutsRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
       if (hit && wsRef.current) {
         const targetSec = hit.endMs / 1000;
         // Seeking to the very end of a streamed file can silently fail if the
         // final bytes aren't buffered yet. Detect end-cuts and stop cleanly.
-        if (targetSec >= ws.getDuration() - 0.3) {
+        if (targetSec >= sourceDurationMs / 1000 - 0.3) {
           ws.pause();
           ws.setTime(hit.startMs / 1000);
         } else {
