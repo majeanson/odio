@@ -90,9 +90,19 @@ export function WaveformPlayer({
     ws.on("ready", () => {
       setWsState("ready");
       const wsDur = ws.getDuration() * 1000;
-      const tolerance = Math.max(2000, sourceDurationMs * 0.1);
-      if (Math.abs(wsDur - sourceDurationMs) > tolerance) {
-        setAudioDurationMismatch(true);
+      if (sourceDurationMs === 0) {
+        // Duration unknown (imported clip) — persist the real value so subsequent
+        // loads have a valid sourceDurationMs and cuts can be clamped correctly.
+        fetch(`/api/clips/${clipId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sourceDurationMs: wsDur }),
+        }).catch(() => {/* non-fatal */});
+      } else {
+        const tolerance = Math.max(2000, sourceDurationMs * 0.1);
+        if (Math.abs(wsDur - sourceDurationMs) > tolerance) {
+          setAudioDurationMismatch(true);
+        }
       }
     });
     ws.on("error", () => {

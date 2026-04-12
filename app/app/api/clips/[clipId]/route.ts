@@ -64,9 +64,9 @@ export async function PATCH(
   if (!membership) return apiError("Forbidden", 403);
 
   const body = await req.json().catch(() => null);
-  const { name, stage, generatePublicToken, removePublicToken } = body ?? {};
+  const { name, stage, generatePublicToken, removePublicToken, sourceDurationMs } = body ?? {};
 
-  if (!name && !stage && generatePublicToken == null && removePublicToken == null) {
+  if (!name && !stage && generatePublicToken == null && removePublicToken == null && sourceDurationMs == null) {
     return apiError("Nothing to update");
   }
 
@@ -87,6 +87,9 @@ export async function PATCH(
       ...(stage ? { stage } : {}),
       ...(generatePublicToken ? { publicToken: crypto.randomUUID() } : {}),
       ...(removePublicToken ? { publicToken: null } : {}),
+      // sourceDurationMs is null for imported clips — written back by the player
+      // after WaveSurfer detects the real duration on first load.
+      ...(sourceDurationMs != null ? { sourceDurationMs: Math.round(sourceDurationMs) } : {}),
     },
   });
 

@@ -173,16 +173,26 @@ export function WaveformEditor({
     wsRef.current = ws;
     ws.on("ready", () => {
       setWsState("ready");
-      // Detect when the Drive file's actual duration differs from what the DB says.
-      // A split clip whose Drive file has stale content will report the ORIGINAL clip's
-      // duration — warn the user so they know to re-split rather than draw wrong cuts.
       const wsDur = ws.getDuration() * 1000; // ms
-      const tolerance = Math.max(2000, sourceDurationMs * 0.1); // 10% or 2s, whichever bigger
-      if (Math.abs(wsDur - sourceDurationMs) > tolerance) {
-        setAudioDurationMismatch(true);
-        console.warn(
-          `[WaveformEditor] Audio duration mismatch: Drive=${wsDur.toFixed(0)}ms, DB=${sourceDurationMs}ms`,
-        );
+      if (sourceDurationMs === 0) {
+        // Duration unknown (imported clip) — persist the real value so subsequent
+        // loads have a valid sourceDurationMs and cuts can be clamped correctly.
+        fetch(`/api/clips/${clipId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sourceDurationMs: wsDur }),
+        }).catch(() => {/* non-fatal */});
+      } else {
+        // Detect when the Drive file's actual duration differs from what the DB says.
+        // A split clip whose Drive file has stale content will report the ORIGINAL clip's
+        // duration — warn the user so they know to re-split rather than draw wrong cuts.
+        const tolerance = Math.max(2000, sourceDurationMs * 0.1); // 10% or 2s, whichever bigger
+        if (Math.abs(wsDur - sourceDurationMs) > tolerance) {
+          setAudioDurationMismatch(true);
+          console.warn(
+            `[WaveformEditor] Audio duration mismatch: Drive=${wsDur.toFixed(0)}ms, DB=${sourceDurationMs}ms`,
+          );
+        }
       }
     });
     ws.on("error", () => {
