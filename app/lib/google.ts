@@ -252,7 +252,11 @@ export async function getDriveFileStream(
 }
 
 /**
- * Upload a file buffer to Drive using multipart upload.
+ * Upload a file buffer to Drive using a raw multipart/related upload.
+ * Uses fetch directly (not the googleapis SDK) so Content-Length is set
+ * precisely — the SDK passes a Readable stream to axios which can't compute
+ * Content-Length, causing Drive to receive a malformed body and discard content
+ * while still returning a file ID.
  * Used for the FFmpeg-rendered frozen clip.
  * Returns the Drive file ID.
  */
@@ -263,25 +267,40 @@ export async function uploadDriveFile(
   mimeType: string,
   buffer: Buffer,
 ): Promise<string> {
-  const drive = getDriveClient(accessToken);
+  const boundary = `odio_boundary_${Date.now()}`;
 
-  const { Readable } = await import("stream");
-  const readable = Readable.from(buffer);
+  const metadataJson = JSON.stringify({ name: fileName, parents: [folderId] });
 
-  const res = await drive.files.create({
-    requestBody: {
-      name: fileName,
-      parents: [folderId],
+  // Build the multipart/related body as a single Buffer so Content-Length is exact
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`),
+    Buffer.from(metadataJson),
+    Buffer.from(`\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`),
+    buffer,
+    Buffer.from(`\r\n--${boundary}--`),
+  ]);
+
+  const res = await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": `multipart/related; boundary=${boundary}`,
+        "Content-Length": String(body.length),
+      },
+      body,
     },
-    media: {
-      mimeType,
-      body: readable,
-    },
-    fields: "id",
-  });
+  );
 
-  if (!res.data.id) throw new Error("Drive upload did not return a file ID");
-  return res.data.id;
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Drive upload failed: ${res.status} ${text}`);
+  }
+
+  const data = await res.json() as { id?: string };
+  if (!data.id) throw new Error("Drive upload did not return a file ID");
+  return data.id;
 }
 
 /**
