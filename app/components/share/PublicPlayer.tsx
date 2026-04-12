@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { formatDuration } from "@/lib/utils";
+import { AudioBars } from "@/components/ui/AudioBars";
 import { STAMP_COLORS, STAMP_EMOJI } from "@/types";
 import type { StampType } from "@/types";
 
@@ -65,7 +66,7 @@ export function PublicPlayer({ token, sourceDurationMs, stamps }: PublicPlayerPr
 
         {wsState === "loading" && (
           <div className="flex items-center justify-center h-20">
-            <span className="size-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+            <AudioBars className="size-5 text-accent" />
           </div>
         )}
         {wsState === "error" && (

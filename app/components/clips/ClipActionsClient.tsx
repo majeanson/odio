@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
+import { AudioBars } from "@/components/ui/AudioBars";
 import type { ClipVersion, BandRole } from "@/types";
 
 interface ClipActionsClientProps {
@@ -205,7 +206,7 @@ export function ClipActionsClient({
           sub={isRecorder ? "Tap to unfreeze and re-edit" : "Final render locked"}
           right={
             unfreezing
-              ? <span className="size-4 rounded-full border-2 border-muted border-t-transparent animate-spin shrink-0" />
+              ? <AudioBars className="size-4 text-muted" />
               : isRecorder
                 ? <span className="shrink-0 text-sm text-muted">Unfreeze</span>
                 : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4 text-success shrink-0" aria-hidden><polyline points="20 6 9 17 4 12" /></svg>
@@ -227,7 +228,7 @@ export function ClipActionsClient({
           sub={publicToken ? `${window?.location?.origin ?? ""}/share/${publicToken}`.substring(0, 40) + "…" : "Generate a public link for anyone to listen"}
           right={
             sharingLoading
-              ? <span className="size-4 rounded-full border-2 border-muted border-t-transparent animate-spin shrink-0" />
+              ? <AudioBars className="size-4 text-muted" />
               : publicToken
                 ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4 text-muted shrink-0" aria-hidden><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
                 : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4 text-muted shrink-0" aria-hidden><polyline points="9 18 15 12 9 6" /></svg>
@@ -253,7 +254,7 @@ export function ClipActionsClient({
       {transcodeStatus === "PENDING" && (
         <div className="flex items-center gap-4 rounded-2xl bg-surface px-5 py-4">
           {iconBox("bg-elevated text-secondary",
-            <span className="size-5 rounded-full border-2 border-secondary border-t-transparent animate-spin" />
+            <AudioBars className="size-5 text-secondary" />
           )}
           <div>
             <p className="text-base font-medium text-primary">Processing…</p>

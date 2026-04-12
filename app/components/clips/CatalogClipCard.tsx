@@ -12,6 +12,7 @@
 
 import { useRouter } from "next/navigation";
 import { formatDuration } from "@/lib/utils";
+import { AudioBars } from "@/components/ui/AudioBars";
 import type { CatalogClip } from "@/app/api/bands/[bandId]/catalog/route";
 
 interface CatalogClipCardProps {
@@ -183,10 +184,7 @@ export function CatalogClipCard({ clip, bandId }: CatalogClipCardProps) {
             <span className="text-xs text-muted">{clip.versionCount}v</span>
           )}
           {clip.transcodeStatus === "PENDING" && (
-            <span
-              className="size-3.5 rounded-full border-2 border-muted border-t-transparent animate-spin"
-              aria-label="Processing"
-            />
+            <AudioBars className="size-3.5 text-muted" />
           )}
         </div>
       </div>

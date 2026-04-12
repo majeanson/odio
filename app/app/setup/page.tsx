@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { AudioBars } from "@/components/ui/AudioBars";
 
 type Step = "name" | "creating" | "done";
 
@@ -95,7 +96,7 @@ export default function SetupPage() {
 
         {step === "creating" && (
           <div className="flex flex-col items-center gap-4 py-12">
-            <span className="size-10 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+            <AudioBars className="size-10 text-accent" />
             <p className="text-base text-secondary">Setting up your band…</p>
           </div>
         )}

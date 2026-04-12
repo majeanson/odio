@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { formatDuration } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
+import { AudioBars } from "@/components/ui/AudioBars";
 import type { Clip } from "@/types";
 
 interface ClipCardProps {
@@ -131,10 +132,7 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
         {/* Right side — state indicator + "···" menu button */}
         <div className="flex items-center gap-2 shrink-0">
           {clip.transcodeStatus === "PENDING" ? (
-            <span
-              className="size-5 rounded-full border-2 border-muted border-t-transparent animate-spin"
-              aria-label="Processing"
-            />
+            <AudioBars className="size-5 text-muted" />
           ) : clip.frozen ? (
             <svg
               viewBox="0 0 24 24"

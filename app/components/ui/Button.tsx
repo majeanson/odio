@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { AudioBars } from "./AudioBars";
 import type { ButtonHTMLAttributes } from "react";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
@@ -86,7 +87,7 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <span className="size-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+        <AudioBars className="size-5" />
       ) : (
         children
       )}

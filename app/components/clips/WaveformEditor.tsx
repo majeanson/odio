@@ -19,6 +19,7 @@ import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.js";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
+import { AudioBars } from "@/components/ui/AudioBars";
 import {
   formatPosition,
   formatDuration,
@@ -488,7 +489,7 @@ export function WaveformEditor({
 
           {wsState === "loading" && (
             <div className="h-[88px] flex items-center justify-center">
-              <span className="size-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+              <AudioBars className="size-5 text-accent" />
             </div>
           )}
           {wsState === "error" && (

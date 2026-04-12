@@ -9,6 +9,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { AudioBars } from "@/components/ui/AudioBars";
 import { Badge } from "@/components/ui/Badge";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import type { BandMember } from "@/types";
@@ -279,7 +280,7 @@ export function BandSettingsClient({
 
           {storageLoading ? (
             <div className="flex items-center gap-2">
-              <span className="size-3.5 rounded-full border-2 border-secondary border-t-transparent animate-spin" />
+              <AudioBars className="size-3.5 text-secondary" />
               <span className="text-xs text-muted">Loading storage info…</span>
             </div>
           ) : storage ? (

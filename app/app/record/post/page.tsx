@@ -17,6 +17,7 @@ import {
 import { usePendingUploadsStore } from "@/store/pendingUploadsStore";
 import { formatDuration, generateClipName } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { AudioBars } from "@/components/ui/AudioBars";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { STAMP_EMOJI } from "@/types";
 import type { PendingUpload, StampType } from "@/types";
@@ -383,7 +384,7 @@ function PostRecordScreen() {
       >
         <div className="flex items-center gap-2">
           {status === "uploading" && (
-            <span className="size-3 rounded-full border-2 border-current border-t-transparent animate-spin flex-shrink-0" />
+            <AudioBars className="size-3" />
           )}
           {isDone && (
             <svg

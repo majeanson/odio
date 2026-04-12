@@ -38,6 +38,12 @@
   --tab-bar-height: 80px; /* extra tall — thumb-pressable in the dark */
 }
 
+/* Audio bar animation — used by AudioBars component instead of circular spinners */
+@keyframes odio-bars {
+  0%, 100% { transform: scaleY(0.18); }
+  50%       { transform: scaleY(1); }
+}
+
 /* Base */
 
 html {

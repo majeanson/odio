@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.js";
 import { formatPosition, formatDuration, calcResultDuration } from "@/lib/utils";
+import { AudioBars } from "@/components/ui/AudioBars";
 import { STAMP_COLORS, STAMP_EMOJI } from "@/types";
 import type { Stamp } from "@/types";
 
@@ -212,7 +213,7 @@ export function WaveformPlayer({
         <div ref={containerRef} className="w-full" />
         {wsState === "loading" && (
           <div className="h-[88px] flex items-center justify-center">
-            <span className="size-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+            <AudioBars className="size-5 text-accent" />
           </div>
         )}
         {wsState === "error" && (

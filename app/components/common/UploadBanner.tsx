@@ -10,6 +10,7 @@
 
 import { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { AudioBars } from "@/components/ui/AudioBars";
 import type { PendingUpload } from "@/types";
 
 interface UploadBannerProps {
@@ -106,7 +107,7 @@ export function UploadBanner({ uploads, onRetry, onDiscard, onSaveToDevice }: Up
     >
       <div className="flex items-center gap-2 px-4 py-2 text-sm">
         {variant === "uploading" && (
-          <span className="size-3 rounded-full border-2 border-current border-t-transparent animate-spin flex-shrink-0" />
+          <AudioBars className="size-3" />
         )}
         {variant === "paused" && (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-3.5 flex-shrink-0" aria-hidden>
