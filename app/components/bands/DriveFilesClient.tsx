@@ -55,7 +55,13 @@ export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }:
 
   // Import state
   const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<{ unimported: UnimportedFile[]; total: number; tracked: number } | null>(null);
+  const [scanResult, setScanResult] = useState<{
+    unimported: UnimportedFile[];
+    total: number;
+    tracked: number;
+    needsReauth: boolean;
+    creatorIsCurrentUser: boolean;
+  } | null>(null);
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
   const [importedSessionId, setImportedSessionId] = useState<string | null>(null);
@@ -133,7 +139,13 @@ export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }:
     try {
       const res = await fetch(`/api/bands/${bandId}/drive/scan`);
       if (!res.ok) throw new Error("Scan failed");
-      const data = await res.json() as { unimported: UnimportedFile[]; total: number; tracked: number };
+      const data = await res.json() as {
+        unimported: UnimportedFile[];
+        total: number;
+        tracked: number;
+        needsReauth: boolean;
+        creatorIsCurrentUser: boolean;
+      };
       setScanResult(data);
     } finally {
       setScanning(false);
@@ -264,7 +276,7 @@ export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }:
           )}
         </div>
         <p className="text-sm text-secondary">
-          Scan the Drive folder for audio files that aren&apos;t tracked in Odio yet — useful if recordings were lost from the database.
+          Scan the Drive folder for audio files not yet tracked in Odio — pick up recordings you copied in manually from outside the app.
         </p>
 
         {importedSessionId && (
@@ -289,7 +301,26 @@ export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }:
           {scanning ? "Scanning Drive…" : "Scan for unimported files"}
         </Button>
 
-        {scanResult && (
+        {scanResult?.needsReauth && (
+          <div className="rounded-xl bg-accent/10 px-4 py-3 space-y-2">
+            <p className="text-sm font-medium text-accent">Drive access upgrade needed</p>
+            <p className="text-sm text-secondary">
+              {scanResult.creatorIsCurrentUser
+                ? "Odio needs an extra Drive permission to see files you copied in manually. Sign out and sign back in — Google will ask you to approve it."
+                : "The band creator needs to sign out and sign back in so Odio can access files they copied into the Drive folder manually."}
+            </p>
+            {scanResult.creatorIsCurrentUser && (
+              <a
+                href="/api/auth/signout"
+                className="inline-block rounded-lg px-4 py-2 text-sm font-medium bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
+              >
+                Sign out to reconnect
+              </a>
+            )}
+          </div>
+        )}
+
+        {scanResult && !scanResult.needsReauth && (
           <>
             {scanResult.unimported.length === 0 ? (
               <p className="text-sm text-muted text-center py-1">

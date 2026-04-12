@@ -32,7 +32,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-sm text-muted">
-          Odio only accesses files it creates in your Drive.
+          Odio accesses your Google Drive to store and read band recordings.
         </p>
       </div>
     </div>

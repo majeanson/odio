@@ -1,7 +1,8 @@
 // GET /api/bands/[bandId]/drive/scan
 // Lists audio files in the band's Drive folder that have no Clip record.
-// Only files created by Odio are visible (drive.file scope limitation).
-// Used by the Drive management page to surface orphaned recordings.
+// Requires the band creator to have granted drive.readonly scope (in addition
+// to drive.file). Without it, only Odio-created files are visible.
+// Used by the Drive management page to import manually-copied recordings.
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -26,6 +27,29 @@ export async function GET(
   }
 
   const { createdBy, driveFolderId } = membership.band;
+
+  // Check whether the creator's stored token has the full drive scope.
+  // drive.file + drive.readonly is NOT sufficient — Google's files.list API
+  // still filters to app-created files only when drive.file is present, even
+  // if drive.readonly is also in the token. Full drive scope is required to
+  // list files the user copied into the folder manually from outside Odio.
+  const creatorAccount = await prisma.account.findFirst({
+    where: { user: { email: createdBy }, provider: "google" },
+    select: { scope: true },
+  });
+  const creatorIsCurrentUser = createdBy === session.user.email;
+  // Use exact set membership — "drive.file" also contains "drive" as substring
+  const grantedScopes = new Set((creatorAccount?.scope ?? "").split(" "));
+  const FULL_DRIVE = "https://www.googleapis.com/auth/drive";
+  if (!grantedScopes.has(FULL_DRIVE)) {
+    return apiOk({
+      unimported: [],
+      total: 0,
+      tracked: 0,
+      needsReauth: true,
+      creatorIsCurrentUser,
+    });
+  }
 
   // Collect all Drive file IDs already tracked in the DB for this band
   const existingClips = await prisma.clip.findMany({
@@ -54,13 +78,22 @@ export async function GET(
 
   let driveFiles: DriveFile[] = [];
   try {
+    // List all non-trashed files in the folder. Filter mimeType client-side
+    // rather than in the Drive query so we also catch M4A files that Drive
+    // sometimes labels as video/mp4 or application/octet-stream.
     const res = await drive.files.list({
-      q: `'${driveFolderId}' in parents and trashed=false and mimeType contains 'audio/'`,
+      q: `'${driveFolderId}' in parents and trashed=false`,
       fields: "files(id,name,size,mimeType,createdTime)",
       spaces: "drive",
       pageSize: 200,
     });
-    driveFiles = res.data.files ?? [];
+    const AUDIO_EXTENSIONS = /\.(aac|m4a|mp3|ogg|opus|webm|wav|flac|mp4)$/i;
+    const AUDIO_MIME = /^audio\//;
+    driveFiles = (res.data.files ?? []).filter(
+      (f) =>
+        (f.mimeType && (AUDIO_MIME.test(f.mimeType) || f.mimeType === "video/mp4"))
+        || (f.name && AUDIO_EXTENSIONS.test(f.name)),
+    );
   } catch {
     return apiError("Drive scan failed", 503);
   }
@@ -81,5 +114,7 @@ export async function GET(
     unimported,
     total: driveFiles.length,
     tracked: trackedIds.size,
+    needsReauth: false,
+    creatorIsCurrentUser,
   });
 }

@@ -20,8 +20,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             "openid",
             "email",
             "profile",
-            // drive.file: access only to files Odio creates in the user's Drive
-            "https://www.googleapis.com/auth/drive.file",
+            // drive: full read/write to all Drive files.
+            // drive.file alone restricts files.list to app-created files only —
+            // that filter persists even when drive.readonly is also present.
+            // drive scope is required to list and stream files the user copied
+            // into the band folder manually from outside Odio.
+            "https://www.googleapis.com/auth/drive",
           ].join(" "),
           access_type: "offline",  // needed to receive a refresh_token
           prompt: "consent",       // forces refresh_token on every consent
