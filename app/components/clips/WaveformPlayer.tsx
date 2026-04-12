@@ -42,6 +42,15 @@ export function WaveformPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [retryKey, setRetryKey] = useState(0);
+  // Tracks the real audio duration. Starts as the DB value; updated from
+  // WaveSurfer on first load when sourceDurationMs is 0 (imported clips).
+  const [detectedDurationMs, setDetectedDurationMs] = useState(0);
+  // Ref keeps the effective duration accessible inside stale WaveSurfer closures
+  // without requiring the effect to re-run. Set synchronously in the ready handler
+  // so timeupdate sees the real value before the first play tick.
+  const effectiveDurMsRef = useRef(sourceDurationMs);
+  const effectiveDurationMs = sourceDurationMs || detectedDurationMs;
+  effectiveDurMsRef.current = effectiveDurationMs;
 
   // Keep ref in sync so the timeupdate handler (stale closure) sees current cuts
   useEffect(() => {
@@ -91,8 +100,12 @@ export function WaveformPlayer({
       setWsState("ready");
       const wsDur = ws.getDuration() * 1000;
       if (sourceDurationMs === 0) {
-        // Duration unknown (imported clip) — persist the real value so subsequent
-        // loads have a valid sourceDurationMs and cuts can be clamped correctly.
+        // Duration unknown (imported clip). Set the ref synchronously so the
+        // very first timeupdate tick already has the right value — don't wait
+        // for the React state re-render that setDetectedDurationMs triggers.
+        effectiveDurMsRef.current = wsDur;
+        setDetectedDurationMs(wsDur);
+        // Persist to DB so subsequent page loads have a real sourceDurationMs.
         fetch(`/api/clips/${clipId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -123,15 +136,17 @@ export function WaveformPlayer({
     });
     ws.on("timeupdate", (time: number) => {
       const ms = time * 1000;
+      const effDur = effectiveDurMsRef.current;
       // Always track position — currentTimeMsRef is used by the play button
       // to re-seek before playback (fixes click-while-paused sync gap).
-      currentTimeMsRef.current = Math.min(ms, sourceDurationMs);
-      setCurrentTimeMs(Math.min(ms, sourceDurationMs));
+      currentTimeMsRef.current = effDur > 0 ? Math.min(ms, effDur) : ms;
+      setCurrentTimeMs(effDur > 0 ? Math.min(ms, effDur) : ms);
       // Only skip cuts during active playback — never during seeks while paused
       // (which would cause position 0 after finish-reset to jump to a cut's endMs).
       if (!ws.isPlaying()) return;
-      // Stop if the Drive file is longer than sourceDurationMs (e.g. stale split upload)
-      if (ms >= sourceDurationMs) {
+      // Stop if the Drive file is longer than the clip duration (e.g. stale split upload).
+      // Guard effDur > 0 so imported clips with unknown duration play to natural finish.
+      if (effDur > 0 && ms >= effDur) {
         ws.pause();
         ws.setTime(0);
         return;
@@ -141,7 +156,7 @@ export function WaveformPlayer({
         const targetSec = hit.endMs / 1000;
         // Seeking to the very end of a streamed file can silently fail if the
         // final bytes aren't buffered yet. Detect end-cuts and stop cleanly.
-        if (targetSec >= sourceDurationMs / 1000 - 0.3) {
+        if (effDur > 0 && targetSec >= effDur / 1000 - 0.3) {
           ws.pause();
           ws.setTime(hit.startMs / 1000);
         } else {
@@ -157,7 +172,7 @@ export function WaveformPlayer({
   }, [clipId, retryKey]);
 
   const virtualDurationMs =
-    activeCuts.length > 0 ? calcResultDuration(sourceDurationMs, activeCuts) : sourceDurationMs;
+    activeCuts.length > 0 ? calcResultDuration(effectiveDurationMs, activeCuts) : effectiveDurationMs;
 
   return (
     <div className="rounded-2xl bg-surface overflow-hidden">

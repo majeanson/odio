@@ -99,6 +99,12 @@ export function WaveformEditor({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [retryKey, setRetryKey] = useState(0);
+  // Tracks the real audio duration. Starts as the DB value; updated from
+  // WaveSurfer on first load when sourceDurationMs is 0 (imported clips).
+  const [detectedDurationMs, setDetectedDurationMs] = useState(0);
+  const effectiveDurMsRef = useRef(sourceDurationMs);
+  const effectiveDurationMs = sourceDurationMs || detectedDurationMs;
+  effectiveDurMsRef.current = effectiveDurationMs;
   const [cutMarks, setCutMarks] = useState<CutMark[]>([]);
   const [hasDraft, setHasDraft] = useState(false);
   const [submitSheetOpen, setSubmitSheetOpen] = useState(false);
@@ -175,8 +181,12 @@ export function WaveformEditor({
       setWsState("ready");
       const wsDur = ws.getDuration() * 1000; // ms
       if (sourceDurationMs === 0) {
-        // Duration unknown (imported clip) — persist the real value so subsequent
-        // loads have a valid sourceDurationMs and cuts can be clamped correctly.
+        // Duration unknown (imported clip). Set the ref synchronously so the
+        // very first timeupdate tick already has the right value, and update
+        // state so render-time drag/cut math uses the real duration too.
+        effectiveDurMsRef.current = wsDur;
+        setDetectedDurationMs(wsDur);
+        // Persist to DB so subsequent page loads have a real sourceDurationMs.
         fetch(`/api/clips/${clipId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -210,11 +220,13 @@ export function WaveformEditor({
     });
     ws.on("timeupdate", (time: number) => {
       const ms = time * 1000;
-      setCurrentTimeMs(Math.min(ms, sourceDurationMs));
+      const effDur = effectiveDurMsRef.current;
+      setCurrentTimeMs(effDur > 0 ? Math.min(ms, effDur) : ms);
       // Only skip cut-preview during active playback — not during seeks while paused.
       if (!ws.isPlaying()) return;
-      // Stop if playback reaches the DB-recorded clip boundary (Drive file may be longer)
-      if (ms >= sourceDurationMs) {
+      // Stop if playback reaches the clip boundary (Drive file may be longer).
+      // Guard effDur > 0 so imported clips with unknown duration play to natural finish.
+      if (effDur > 0 && ms >= effDur) {
         ws.pause();
         ws.setTime(0);
         return;
@@ -222,7 +234,7 @@ export function WaveformEditor({
       const hit = cutMarksRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
       if (hit && wsRef.current) {
         const targetSec = hit.endMs / 1000;
-        if (targetSec >= sourceDurationMs / 1000 - 0.3) {
+        if (effDur > 0 && targetSec >= effDur / 1000 - 0.3) {
           ws.pause();
           ws.setTime(hit.startMs / 1000);
         } else {
@@ -244,10 +256,11 @@ export function WaveformEditor({
 
   // ── Drag-to-create overlay ────────────────────────────────────────────────
 
-  // Use sourceDurationMs as the authoritative clip length for all position maths.
+  // Use effectiveDurationMs as the authoritative clip length for all position maths.
   // ws.getDuration() can return the wrong value if the Drive file has stale/wrong
-  // content (e.g. from a pre-fix split upload). The DB value is always correct.
-  const clipDurationSec = sourceDurationMs / 1000;
+  // content (e.g. from a pre-fix split upload). For imported clips with unknown
+  // duration, effectiveDurationMs is updated from WaveSurfer's ready event.
+  const clipDurationSec = effectiveDurationMs / 1000;
 
   function handleDragStart(e: React.PointerEvent<HTMLDivElement>) {
     if (!wsRef.current) return;
@@ -285,7 +298,7 @@ export function WaveformEditor({
       const rect = e.currentTarget.getBoundingClientRect();
       const fraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
       const wsDur = wsRef.current.getDuration();
-      // If ws duration is longer than sourceDurationMs, clamp the seek position
+      // If ws duration is longer than effectiveDurationMs, clamp the seek position
       const targetSec = fraction * clipDurationSec;
       wsRef.current.setTime(Math.min(targetSec, wsDur));
     } else if (drag.region) {
@@ -332,11 +345,11 @@ export function WaveformEditor({
   // ── Trim shortcut ─────────────────────────────────────────────────────────
 
   function enterTrimMode() {
-    if (!sourceDurationMs) return;
+    if (!effectiveDurationMs) return;
     const t = Math.min(5, clipDurationSec * 0.1);
     loadCutsIntoEditor([
       { startMs: 0, endMs: Math.round(t * 1000) },
-      { startMs: Math.round((clipDurationSec - t) * 1000), endMs: sourceDurationMs },
+      { startMs: Math.round((clipDurationSec - t) * 1000), endMs: effectiveDurationMs },
     ]);
   }
 
@@ -344,8 +357,8 @@ export function WaveformEditor({
 
   function enterSplitMode() {
     setSplitMode(true);
-    const pos = Math.min(Math.round(currentTimeMs), sourceDurationMs - 1);
-    setSplitMs(pos > 0 ? pos : Math.round(sourceDurationMs / 2));
+    const pos = Math.min(Math.round(currentTimeMs), effectiveDurationMs - 1);
+    setSplitMs(pos > 0 ? pos : Math.round(effectiveDurationMs / 2));
   }
 
   async function handleSplit() {
@@ -372,8 +385,8 @@ export function WaveformEditor({
       // a split clip whose Drive file had wrong content before the upload fix).
       const validCuts = cutMarks
         .map(({ startMs, endMs, regionId }) => ({
-          startMs: Math.max(0, Math.min(startMs, sourceDurationMs)),
-          endMs: Math.max(0, Math.min(endMs, sourceDurationMs)),
+          startMs: Math.max(0, Math.min(startMs, effectiveDurationMs)),
+          endMs: Math.max(0, Math.min(endMs, effectiveDurationMs)),
           regionId,
         }))
         .filter(({ startMs, endMs }) => endMs > startMs);
@@ -396,8 +409,8 @@ export function WaveformEditor({
 
   // ── Derived ───────────────────────────────────────────────────────────────
 
-  const resultDurationMs = calcResultDuration(sourceDurationMs, cutMarks.map(({ startMs, endMs }) => ({ startMs, endMs })));
-  const splitLinePercent = sourceDurationMs > 0 ? Math.min(99, Math.max(1, (splitMs / sourceDurationMs) * 100)) : 50;
+  const resultDurationMs = calcResultDuration(effectiveDurationMs, cutMarks.map(({ startMs, endMs }) => ({ startMs, endMs })));
+  const splitLinePercent = effectiveDurationMs > 0 ? Math.min(99, Math.max(1, (splitMs / effectiveDurationMs) * 100)) : 50;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -437,8 +450,8 @@ export function WaveformEditor({
           </span>
           <span className="font-mono text-sm text-muted tabular-nums">
             {cutMarks.length > 0
-              ? formatDurationDiff(sourceDurationMs, cutMarks.map(({ startMs, endMs }) => ({ startMs, endMs })))
-              : formatPosition(sourceDurationMs)}
+              ? formatDurationDiff(effectiveDurationMs, cutMarks.map(({ startMs, endMs }) => ({ startMs, endMs })))
+              : formatPosition(effectiveDurationMs)}
           </span>
         </div>
 
@@ -646,7 +659,7 @@ export function WaveformEditor({
           <div className="flex gap-2 flex-wrap">
             {versions.map((v) => {
               const cuts = Array.isArray(v.cutMarks) ? (v.cutMarks as Array<{startMs:number;endMs:number}>) : [];
-              const dur = v.resultDurationMs ?? (cuts.length === 0 ? sourceDurationMs : null);
+              const dur = v.resultDurationMs ?? (cuts.length === 0 ? effectiveDurationMs : null);
               const canPrune = v.versionNumber > 1 && v.id !== frozenVersionId;
               return (
                 <button
@@ -673,7 +686,7 @@ export function WaveformEditor({
           <div className="rounded-2xl bg-elevated px-5 py-4">
             <p className="text-base text-secondary">
               {cutMarks.length} cut{cutMarks.length !== 1 ? "s" : ""} ·{" "}
-              <span className="font-mono">{formatDurationDiff(sourceDurationMs, cutMarks.map(({ startMs, endMs }) => ({ startMs, endMs })))}</span>
+              <span className="font-mono">{formatDurationDiff(effectiveDurationMs, cutMarks.map(({ startMs, endMs }) => ({ startMs, endMs })))}</span>
             </p>
           </div>
           <div className="space-y-1">
@@ -706,7 +719,7 @@ export function WaveformEditor({
             <div className="rounded-2xl bg-elevated px-5 py-4 flex items-center gap-4">
               <span className="text-sm font-semibold text-secondary w-14 shrink-0">Part B</span>
               <span className="font-mono text-base text-primary">{formatPosition(splitMs)} →</span>
-              <span className="font-mono text-sm text-muted ml-auto">{formatDuration(sourceDurationMs - splitMs)}</span>
+              <span className="font-mono text-sm text-muted ml-auto">{formatDuration(effectiveDurationMs - splitMs)}</span>
             </div>
           </div>
           <p className="text-sm text-muted">
