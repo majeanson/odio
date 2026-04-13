@@ -2,8 +2,9 @@
 
 // Pure waveform player — single responsibility: play audio.
 // No editing, no version management, no cut creation.
-// Receives activeCuts from parent; visualises them (blue) and skips them during playback.
-// Click-to-seek works because enableDragSelection is never called.
+// Receives activeCuts from parent; masks them (near-opaque black overlay) so
+// only the playable portion of the waveform is visible.
+// Click-to-seek into a cut region snaps the cursor to the nearest valid boundary.
 // Used on: clip detail page, share page.
 
 import { useEffect, useRef, useState } from "react";
@@ -58,7 +59,11 @@ export function WaveformPlayer({
     activeCutsRef.current = activeCuts;
   }, [activeCuts]);
 
-  // Re-draw regions when cuts change or waveform first becomes ready
+  // Re-draw regions when cuts change or waveform first becomes ready.
+  // Cut regions use a near-opaque black overlay so the waveform appears to
+  // "end" at the cut boundary — only the playable portion is visible.
+  // pointer-events:none lets WaveSurfer's native click-to-seek fire through;
+  // the timeupdate handler corrects any seek that lands inside a cut.
   useEffect(() => {
     if (wsState !== "ready" || !regionsRef.current) return;
     regionsRef.current.clearRegions();
@@ -66,12 +71,10 @@ export function WaveformPlayer({
       const region = regionsRef.current!.addRegion({
         start: m.startMs / 1000,
         end: m.endMs / 1000,
-        color: "rgba(59, 130, 246, 0.18)",
+        color: "rgba(8, 8, 8, 0.88)",
         drag: false,
         resize: false,
       });
-      // Display-only overlay — must not intercept pointer events so
-      // WaveSurfer's native click-to-seek still fires underneath.
       if (region.element) region.element.style.pointerEvents = "none";
     });
   }, [activeCuts, wsState]);
@@ -152,27 +155,47 @@ export function WaveformPlayer({
       // to re-seek before playback (fixes click-while-paused sync gap).
       currentTimeMsRef.current = effDur > 0 ? Math.min(ms, effDur) : ms;
       setCurrentTimeMs(effDur > 0 ? Math.min(ms, effDur) : ms);
-      // Only skip cuts during active playback — never during seeks while paused
-      // (which would cause position 0 after finish-reset to jump to a cut's endMs).
-      if (!ws.isPlaying()) return;
-      // Stop if the Drive file is longer than the clip duration (e.g. stale split upload).
-      // Guard effDur > 0 so imported clips with unknown duration play to natural finish.
-      if (effDur > 0 && ms >= effDur) {
+
+      const playing = ws.isPlaying();
+
+      // Stop guard: Drive file is longer than clip duration (stale split upload).
+      // Guard effDur > 0 so imported clips with unknown duration play to natural end.
+      if (playing && effDur > 0 && ms >= effDur) {
         ws.pause();
         ws.setTime(0);
         return;
       }
+
+      // Clamp a paused click-seek to effectiveDuration.
+      // Happens when the user clicks past the real end of a split clip
+      // (the source file has audio there but this version doesn't).
+      if (!playing && effDur > 0 && ms > effDur) {
+        ws.setTime(effDur / 1000);
+        return;
+      }
+
       const hit = activeCutsRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
-      if (hit && wsRef.current) {
-        const targetSec = hit.endMs / 1000;
-        // Seeking to the very end of a streamed file can silently fail if the
-        // final bytes aren't buffered yet. Detect end-cuts and stop cleanly.
-        if (effDur > 0 && targetSec >= effDur / 1000 - 0.3) {
+      if (!hit) return;
+
+      const targetSec = hit.endMs / 1000;
+      // An "end-cut" reaches the effective end of the clip — seeking to it
+      // can silently fail on streamed files. Treat it as a hard stop instead.
+      const isEndCut = effDur > 0 && targetSec >= effDur / 1000 - 0.3;
+
+      if (playing) {
+        // During playback: skip forward over cut, or stop cleanly at end.
+        if (isEndCut) {
           ws.pause();
           ws.setTime(hit.startMs / 1000);
         } else {
           ws.setTime(targetSec);
         }
+      } else {
+        // During a click-seek (paused): snap cursor to the nearest valid boundary
+        // so the user doesn't land inside a dead zone.
+        // End-cut  → go to cut start (= last playable position in this version)
+        // Mid-cut  → go to cut end   (= first playable position after the gap)
+        ws.setTime(isEndCut ? hit.startMs / 1000 : targetSec);
       }
     });
 
