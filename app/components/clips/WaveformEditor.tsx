@@ -478,12 +478,22 @@ export function WaveformEditor({
               />
             )}
 
-            {/* Split position line */}
+            {/* Split position marker — cyan so it's distinct from the amber playback cursor */}
             {splitMode && wsState === "ready" && (
               <div
-                className="pointer-events-none absolute top-0 bottom-0 w-0.5 bg-amber-400/80"
-                style={{ left: `${splitLinePercent}%` }}
-              />
+                className="pointer-events-none absolute top-0 bottom-0 z-10 w-[2px] -translate-x-1/2"
+                style={{
+                  left: `${splitLinePercent}%`,
+                  background: "#22d3ee",
+                  boxShadow: "0 0 8px 3px rgba(34,211,238,0.35)",
+                }}
+              >
+                {/* Diamond head — anchors the marker visually at the top */}
+                <div
+                  className="absolute -top-0.5 left-1/2 -translate-x-1/2 size-3 rotate-45"
+                  style={{ background: "#22d3ee" }}
+                />
+              </div>
             )}
           </div>
 
@@ -555,7 +565,11 @@ export function WaveformEditor({
           </button>
           {splitMode && (
             <button onClick={() => setSplitMs(Math.round(currentTimeMs))}
-              className="rounded-full bg-amber-400/20 px-4 py-2.5 text-sm font-semibold text-amber-400 hover:bg-amber-400/30 transition-colors">
+              className="rounded-full px-4 py-2.5 text-sm font-semibold transition-colors"
+              style={{ background: "rgba(34,211,238,0.15)", color: "#22d3ee" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(34,211,238,0.25)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(34,211,238,0.15)")}
+            >
               Mark here
             </button>
           )}
