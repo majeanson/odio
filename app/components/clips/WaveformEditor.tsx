@@ -117,6 +117,10 @@ export function WaveformEditor({
   const scrollContainerRef = useRef<HTMLElement | null>(null);
   // Pixels-per-second at zoom 1× (= container width / clip duration). Set on "ready".
   const basePxPerSecRef = useRef(0);
+  // Tracks cursor position outside React state so the play button can re-seek
+  // right before play() — fixes WaveSurfer's click-while-paused sync gap where
+  // the visual cursor moves but audio element's currentTime can lag behind.
+  const currentTimeMsRef = useRef(0);
 
   // Playback + waveform state
   const [wsState, setWsState] = useState<"loading" | "ready" | "error">("loading");
@@ -327,7 +331,9 @@ export function WaveformEditor({
     ws.on("timeupdate", (time: number) => {
       const ms = time * 1000;
       const effDur = effectiveDurMsRef.current;
-      setCurrentTimeMs(effDur > 0 ? Math.min(ms, effDur) : ms);
+      const clamped = effDur > 0 ? Math.min(ms, effDur) : ms;
+      currentTimeMsRef.current = clamped;
+      setCurrentTimeMs(clamped);
       if (!ws.isPlaying()) return;
       if (effDur > 0 && ms >= effDur) { ws.pause(); ws.setTime(0); return; }
       const hit = cutMarksRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
@@ -542,11 +548,16 @@ export function WaveformEditor({
     if (!drag || !wsRef.current) return;
     dragStateRef.current = null;
 
+    const seekTo = (clientX: number) => {
+      const sec = Math.min(clientXToSec(clientX), wsRef.current!.getDuration());
+      currentTimeMsRef.current = sec * 1000;
+      wsRef.current!.setTime(sec);
+    };
+
     if (drag.mode === "resize") {
-      // If it was just a tap on the edge (no movement), seek there too.
+      // Tap on edge (no movement) → treat as a seek to that position.
       if (Math.abs(e.clientX - drag.startX) < 6 && Math.abs(e.clientY - drag.startY) < 6) {
-        const sec = clientXToSec(e.clientX);
-        wsRef.current.setTime(Math.min(sec, wsRef.current.getDuration()));
+        seekTo(e.clientX);
       }
       return;
     }
@@ -556,8 +567,7 @@ export function WaveformEditor({
     // Tap (< 8px movement) → seek
     if (Math.abs(e.clientX - drag.startX) < 8) {
       if (drag.region) drag.region.remove();
-      const sec = clientXToSec(e.clientX);
-      wsRef.current.setTime(Math.min(sec, wsRef.current.getDuration()));
+      seekTo(e.clientX);
       return;
     }
 
@@ -951,7 +961,19 @@ export function WaveformEditor({
         {/* Play + mark-here */}
         <div className="pb-5 pt-2 flex items-center justify-center gap-5">
           <button
-            onClick={() => wsRef.current?.playPause()}
+            onClick={() => {
+              const ws = wsRef.current;
+              if (!ws) return;
+              if (ws.isPlaying()) {
+                ws.pause();
+              } else {
+                // Re-seek to tracked position before playing — fixes WaveSurfer's
+                // click-while-paused gap where the visual cursor moves but the
+                // audio element's currentTime can lag behind.
+                ws.setTime(currentTimeMsRef.current / 1000);
+                ws.play();
+              }
+            }}
             disabled={wsState !== "ready"}
             aria-label={isPlaying ? "Pause" : "Play"}
             className="flex h-20 w-20 items-center justify-center rounded-full bg-accent shadow-[0_4px_0_0_#78350f] transition-[transform,box-shadow] duration-75 active:translate-y-[4px] active:shadow-none disabled:opacity-40 disabled:shadow-none"
