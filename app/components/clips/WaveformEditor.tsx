@@ -186,20 +186,32 @@ export function WaveformEditor({
     return Math.max(0, Math.min(clipDurationSec, (relX / totalWidth) * clipDurationSec));
   }
 
-  // Returns the cut regionId + edge if the pointer is within EDGE_GRAB_PX of a cut boundary.
+  // Returns the cut regionId + edge if the pointer is within the grab zone of a cut boundary.
+  //
+  // The grab zone is capped at half the cut's visible pixel width so the two edges of a
+  // single cut can never overlap — their zones always stay distinct. If the cut is so
+  // narrow that even a 4px half-zone is impossible (< 8px wide), the cut is effectively
+  // invisible at the current zoom level and we skip it entirely so the user can freely
+  // drag-to-create over that area instead of being stuck in resize mode.
   function findEdgeAt(clientX: number): { regionId: string; edge: "start" | "end" } | null {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect || effectiveDurationMs === 0) return null;
     const sc = scrollContainerRef.current;
     const scrollLeft = sc?.scrollLeft ?? 0;
     const totalWidth = sc?.scrollWidth ?? rect.width;
-    const visibleX = clientX - rect.left; // position within the visible container
+    const visibleX = clientX - rect.left;
 
     for (const cm of cutMarksRef.current) {
-      const startVisiblePx = (cm.startMs / effectiveDurationMs) * totalWidth - scrollLeft;
-      const endVisiblePx   = (cm.endMs   / effectiveDurationMs) * totalWidth - scrollLeft;
-      if (Math.abs(visibleX - startVisiblePx) <= EDGE_GRAB_PX) return { regionId: cm.regionId, edge: "start" };
-      if (Math.abs(visibleX - endVisiblePx)   <= EDGE_GRAB_PX) return { regionId: cm.regionId, edge: "end"   };
+      const startPx = (cm.startMs / effectiveDurationMs) * totalWidth - scrollLeft;
+      const endPx   = (cm.endMs   / effectiveDurationMs) * totalWidth - scrollLeft;
+      const cutWidthPx = endPx - startPx;
+
+      // Shrink grab zone if cut is narrow so the two edges stay non-overlapping.
+      const halfZone = Math.min(EDGE_GRAB_PX, cutWidthPx / 2);
+      if (halfZone < 4) continue; // cut is too thin at this zoom — skip, allow draw-over
+
+      if (Math.abs(visibleX - startPx) <= halfZone) return { regionId: cm.regionId, edge: "start" };
+      if (Math.abs(visibleX - endPx)   <= halfZone) return { regionId: cm.regionId, edge: "end"   };
     }
     return null;
   }
