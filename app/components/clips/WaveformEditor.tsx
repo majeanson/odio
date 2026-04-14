@@ -186,13 +186,12 @@ export function WaveformEditor({
     return Math.max(0, Math.min(clipDurationSec, (relX / totalWidth) * clipDurationSec));
   }
 
-  // Returns the cut regionId + edge if the pointer is within the grab zone of a cut boundary.
+  // Returns the cut regionId + edge closest to the pointer, within EDGE_GRAB_PX.
   //
-  // The grab zone is capped at half the cut's visible pixel width so the two edges of a
-  // single cut can never overlap — their zones always stay distinct. If the cut is so
-  // narrow that even a 4px half-zone is impossible (< 8px wide), the cut is effectively
-  // invisible at the current zoom level and we skip it entirely so the user can freely
-  // drag-to-create over that area instead of being stuck in resize mode.
+  // Uses nearest-edge-wins across all cuts and both edges, so a thin cut (e.g. a
+  // 3px-wide trim at the start of a long clip) always resolves to the correct edge
+  // instead of start winning by first-match. If no edge is within EDGE_GRAB_PX the
+  // overlay falls through to create/pan mode.
   function findEdgeAt(clientX: number): { regionId: string; edge: "start" | "end" } | null {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect || effectiveDurationMs === 0) return null;
@@ -201,19 +200,24 @@ export function WaveformEditor({
     const totalWidth = sc?.scrollWidth ?? rect.width;
     const visibleX = clientX - rect.left;
 
+    let best: { regionId: string; edge: "start" | "end"; dist: number } | null = null;
+
     for (const cm of cutMarksRef.current) {
       const startPx = (cm.startMs / effectiveDurationMs) * totalWidth - scrollLeft;
       const endPx   = (cm.endMs   / effectiveDurationMs) * totalWidth - scrollLeft;
-      const cutWidthPx = endPx - startPx;
 
-      // Shrink grab zone if cut is narrow so the two edges stay non-overlapping.
-      const halfZone = Math.min(EDGE_GRAB_PX, cutWidthPx / 2);
-      if (halfZone < 4) continue; // cut is too thin at this zoom — skip, allow draw-over
+      const ds = Math.abs(visibleX - startPx);
+      const de = Math.abs(visibleX - endPx);
 
-      if (Math.abs(visibleX - startPx) <= halfZone) return { regionId: cm.regionId, edge: "start" };
-      if (Math.abs(visibleX - endPx)   <= halfZone) return { regionId: cm.regionId, edge: "end"   };
+      if (ds <= EDGE_GRAB_PX && (!best || ds < best.dist)) {
+        best = { regionId: cm.regionId, edge: "start", dist: ds };
+      }
+      if (de <= EDGE_GRAB_PX && (!best || de < best.dist)) {
+        best = { regionId: cm.regionId, edge: "end", dist: de };
+      }
     }
-    return null;
+
+    return best ? { regionId: best.regionId, edge: best.edge } : null;
   }
 
   // ── Region helpers ────────────────────────────────────────────────────────
