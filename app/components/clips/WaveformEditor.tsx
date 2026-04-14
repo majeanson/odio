@@ -752,36 +752,64 @@ export function WaveformEditor({
               />
             )}
 
-            {/* Cut edge grab-zone indicators — visual only, pointer-events:none.
-                Show as tall colored bars at each cut boundary so the user can see
-                where the 48px drag target is. Clipped to visible container range. */}
+            {/* Cut edge handles — interactive drag targets for resizing cut boundaries.
+                Each handle is a 48px-wide touch target centered on the edge line.
+                They sit above the overlay (z-20) and capture the pointer on pointerdown
+                so subsequent move/up events go directly to the handle regardless of
+                where the finger travels. stopPropagation prevents the overlay from
+                also starting a new drag. handleDragMove/End are reused since they
+                don't depend on e.currentTarget. */}
             {wsState === "ready" && !splitMode && cutMarks.map((cm) => {
               const sPx = cutEdgePx(cm.startMs);
               const ePx = cutEdgePx(cm.endMs);
+              const HANDLE_W = 48; // px, minimum recommended touch target
+              const HALF = HANDLE_W / 2;
+
+              const makeHandleDown = (regionId: string, edge: "start" | "end") =>
+                (e: React.PointerEvent<HTMLDivElement>) => {
+                  e.stopPropagation(); // don't let the overlay also fire
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  dragStateRef.current = {
+                    startX: e.clientX, startY: e.clientY,
+                    startSec: clientXToSec(e.clientX),
+                    region: null, mode: "resize",
+                    resizeRegionId: regionId, resizeEdge: edge,
+                    panScrollStart: 0,
+                  };
+                };
+
               return (
                 <Fragment key={cm.regionId}>
-                  {sPx > -EDGE_GRAB_PX && sPx < containerWidthPx + EDGE_GRAB_PX && (
+                  {sPx > -HALF && sPx < containerWidthPx + HALF && (
                     <div
-                      className="pointer-events-none absolute top-0 bottom-0 z-10 flex items-center justify-center"
-                      style={{ left: sPx - EDGE_GRAB_PX, width: EDGE_GRAB_PX * 2 }}
+                      className="absolute top-0 bottom-0 z-20 touch-none select-none cursor-ew-resize flex items-center justify-center"
+                      style={{ left: sPx - HALF, width: HANDLE_W }}
+                      onPointerDown={makeHandleDown(cm.regionId, "start")}
+                      onPointerMove={handleDragMove}
+                      onPointerUp={handleDragEnd}
+                      onPointerCancel={handleDragEnd}
                     >
-                      {/* Thin line */}
-                      <div className="absolute inset-y-0 w-0.5 bg-danger/70" style={{ left: EDGE_GRAB_PX - 1 }} />
+                      {/* Thin edge line */}
+                      <div className="absolute inset-y-0 w-0.5 bg-danger/70" style={{ left: HALF - 1 }} />
                       {/* Grip pill */}
-                      <div className="absolute flex flex-col gap-0.5 items-center" style={{ left: EDGE_GRAB_PX - 6, top: "50%", transform: "translateY(-50%)" }}>
+                      <div className="absolute flex flex-col gap-0.5 items-center" style={{ left: HALF - 6, top: "50%", transform: "translateY(-50%)" }}>
                         <div className="w-1.5 h-1 rounded-full bg-danger/80" />
                         <div className="w-1.5 h-1 rounded-full bg-danger/80" />
                         <div className="w-1.5 h-1 rounded-full bg-danger/80" />
                       </div>
                     </div>
                   )}
-                  {ePx > -EDGE_GRAB_PX && ePx < containerWidthPx + EDGE_GRAB_PX && (
+                  {ePx > -HALF && ePx < containerWidthPx + HALF && (
                     <div
-                      className="pointer-events-none absolute top-0 bottom-0 z-10 flex items-center justify-center"
-                      style={{ left: ePx - EDGE_GRAB_PX, width: EDGE_GRAB_PX * 2 }}
+                      className="absolute top-0 bottom-0 z-20 touch-none select-none cursor-ew-resize flex items-center justify-center"
+                      style={{ left: ePx - HALF, width: HANDLE_W }}
+                      onPointerDown={makeHandleDown(cm.regionId, "end")}
+                      onPointerMove={handleDragMove}
+                      onPointerUp={handleDragEnd}
+                      onPointerCancel={handleDragEnd}
                     >
-                      <div className="absolute inset-y-0 w-0.5 bg-danger/70" style={{ left: EDGE_GRAB_PX - 1 }} />
-                      <div className="absolute flex flex-col gap-0.5 items-center" style={{ left: EDGE_GRAB_PX - 6, top: "50%", transform: "translateY(-50%)" }}>
+                      <div className="absolute inset-y-0 w-0.5 bg-danger/70" style={{ left: HALF - 1 }} />
+                      <div className="absolute flex flex-col gap-0.5 items-center" style={{ left: HALF - 6, top: "50%", transform: "translateY(-50%)" }}>
                         <div className="w-1.5 h-1 rounded-full bg-danger/80" />
                         <div className="w-1.5 h-1 rounded-full bg-danger/80" />
                         <div className="w-1.5 h-1 rounded-full bg-danger/80" />
