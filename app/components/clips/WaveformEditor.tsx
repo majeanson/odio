@@ -175,36 +175,44 @@ export function WaveformEditor({
 
   const clipDurationSec = effectiveDurationMs / 1000;
 
+  // Derive waveform position metrics without touching the shadow DOM.
+  //
+  // WaveSurfer renders inside a shadow root, so sc.scrollWidth can be stale
+  // right after ws.zoom() until the browser layout pass completes.
+  // Deriving totalWidth mathematically is always correct.
+  // ws.getScroll() reads scrollContainer.scrollLeft via the official API.
+  function getWaveMetrics(): { rect: DOMRect; scrollLeft: number; totalWidth: number } | null {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    const scrollLeft = wsRef.current?.getScroll() ?? 0;
+    // basePxPerSec * zoomLevel * clipDurationSec = containerWidth * zoomLevel
+    const totalWidth = basePxPerSecRef.current > 0
+      ? basePxPerSecRef.current * zoomLevel * clipDurationSec
+      : rect.width;
+    return { rect, scrollLeft, totalWidth };
+  }
+
   // Convert a client X coordinate to audio seconds, accounting for zoom + scroll.
   function clientXToSec(clientX: number): number {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return 0;
-    const sc = scrollContainerRef.current;
-    const scrollLeft = sc?.scrollLeft ?? 0;
-    const totalWidth = sc?.scrollWidth ?? rect.width;
-    const relX = (clientX - rect.left) + scrollLeft;
-    return Math.max(0, Math.min(clipDurationSec, (relX / totalWidth) * clipDurationSec));
+    const m = getWaveMetrics();
+    if (!m) return 0;
+    const relX = (clientX - m.rect.left) + m.scrollLeft;
+    return Math.max(0, Math.min(clipDurationSec, (relX / m.totalWidth) * clipDurationSec));
   }
 
   // Returns the cut regionId + edge closest to the pointer, within EDGE_GRAB_PX.
-  //
-  // Uses nearest-edge-wins across all cuts and both edges, so a thin cut (e.g. a
-  // 3px-wide trim at the start of a long clip) always resolves to the correct edge
-  // instead of start winning by first-match. If no edge is within EDGE_GRAB_PX the
-  // overlay falls through to create/pan mode.
+  // Uses nearest-edge-wins across all cuts so a thin trim at the start of a long
+  // clip always resolves to the correct edge instead of "start" winning by first-match.
   function findEdgeAt(clientX: number): { regionId: string; edge: "start" | "end" } | null {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect || effectiveDurationMs === 0) return null;
-    const sc = scrollContainerRef.current;
-    const scrollLeft = sc?.scrollLeft ?? 0;
-    const totalWidth = sc?.scrollWidth ?? rect.width;
-    const visibleX = clientX - rect.left;
+    const m = getWaveMetrics();
+    if (!m || effectiveDurationMs === 0) return null;
+    const visibleX = clientX - m.rect.left;
 
     let best: { regionId: string; edge: "start" | "end"; dist: number } | null = null;
 
     for (const cm of cutMarksRef.current) {
-      const startPx = (cm.startMs / effectiveDurationMs) * totalWidth - scrollLeft;
-      const endPx   = (cm.endMs   / effectiveDurationMs) * totalWidth - scrollLeft;
+      const startPx = (cm.startMs / effectiveDurationMs) * m.totalWidth - m.scrollLeft;
+      const endPx   = (cm.endMs   / effectiveDurationMs) * m.totalWidth - m.scrollLeft;
 
       const ds = Math.abs(visibleX - startPx);
       const de = Math.abs(visibleX - endPx);
@@ -239,6 +247,9 @@ export function WaveformEditor({
       const r = addEditRegion(m.startMs / 1000, m.endMs / 1000);
       return { startMs: m.startMs, endMs: m.endMs, regionId: r?.id ?? "" };
     });
+    // Sync ref immediately so drag handlers see the new cuts without waiting
+    // for the useEffect that syncs cutMarksRef after the next render cycle.
+    cutMarksRef.current = next;
     setCutMarks(next);
   }
 
@@ -468,15 +479,19 @@ export function WaveformEditor({
         if (drag.resizeEdge === "start") {
           const clampedMs = Math.max(0, Math.min(Math.round(region.end * 1000) - 50, ms));
           region.setOptions({ start: clampedMs / 1000 });
-          setCutMarks((prev) => prev.map((cm) =>
+          const next = cutMarksRef.current.map((cm) =>
             cm.regionId === drag.resizeRegionId ? { ...cm, startMs: clampedMs } : cm,
-          ));
+          );
+          cutMarksRef.current = next;
+          setCutMarks(next);
         } else {
           const clampedMs = Math.min(effectiveDurMsRef.current, Math.max(Math.round(region.start * 1000) + 50, ms));
           region.setOptions({ end: clampedMs / 1000 });
-          setCutMarks((prev) => prev.map((cm) =>
+          const next = cutMarksRef.current.map((cm) =>
             cm.regionId === drag.resizeRegionId ? { ...cm, endMs: clampedMs } : cm,
-          ));
+          );
+          cutMarksRef.current = next;
+          setCutMarks(next);
         }
       }
       return;
@@ -594,7 +609,8 @@ export function WaveformEditor({
 
   function enterTrimMode() {
     if (!effectiveDurationMs) return;
-    const t = Math.min(5, clipDurationSec * 0.1);
+    // 20% of clip length per side — large enough to grab comfortably at 1× zoom.
+    const t = clipDurationSec * 0.2;
     loadCutsIntoEditor([
       { startMs: 0, endMs: Math.round(t * 1000) },
       { startMs: Math.round((clipDurationSec - t) * 1000), endMs: effectiveDurationMs },
