@@ -241,6 +241,15 @@ export function WaveformEditor({
       color: "rgba(239, 68, 68, 0.3)",
       drag: false, resize: false, // we manage interaction ourselves
     }) as unknown as WsRegion;
+    // Disable pointer events on the region's shadow DOM element so our overlay
+    // receives all touches. WaveSurfer hard-codes pointerEvents:"all" in initElement(),
+    // which causes the shadow DOM region element to intercept taps in the middle of
+    // the red band before the overlay can see them. Without this, "tap inside cut"
+    // detection never fires because the shadow DOM eats the pointerdown.
+    // The element is created synchronously in the Region constructor, so it exists
+    // immediately when addRegion returns (virtualAppend only handles DOM insertion).
+    const el = (region as unknown as { element?: HTMLElement }).element;
+    if (el) el.style.pointerEvents = "none";
     return region;
   }
 
