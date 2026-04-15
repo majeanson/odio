@@ -42,8 +42,9 @@ export function CollaborationSection({
   canEditStage = false,
   scope,
 }: CollaborationSectionProps) {
-  const { votes, castVote, isCasting } = useVotes(clipId, initialVotes);
-  const { comments, addComment, isAdding, editComment, isEditing, deleteComment } = useComments(clipId, initialComments);
+  const { votes, castVote, isCasting, voteError } = useVotes(clipId, initialVotes);
+  const { comments, addComment, isAdding, addError, editComment, isEditing, editError, deleteComment, deleteError } = useComments(clipId, initialComments);
+  const commentError = addError || editError || deleteError;
   const { stage, changeStage } = useStage(clipId, initialStage);
 
   const voteVersion =
@@ -57,14 +58,19 @@ export function CollaborationSection({
   return (
     <div className="flex flex-col gap-6">
       {showVote && voteVersion && (
-        <VotePanel
-          version={voteVersion}
-          votes={votes}
-          currentUserEmail={currentUserEmail}
-          memberCount={memberCount}
-          isCasting={isCasting}
-          onVote={castVote}
-        />
+        <>
+          <VotePanel
+            version={voteVersion}
+            votes={votes}
+            currentUserEmail={currentUserEmail}
+            memberCount={memberCount}
+            isCasting={isCasting}
+            onVote={castVote}
+          />
+          {voteError && (
+            <p className="text-sm text-danger px-1">Vote failed — tap again to retry</p>
+          )}
+        </>
       )}
 
       {showVote && (
@@ -85,6 +91,9 @@ export function CollaborationSection({
             Comments {comments.length > 0 && `(${comments.length})`}
           </p>
           <CommentComposer onSubmit={addComment} isPending={isAdding} />
+          {commentError && (
+            <p className="text-sm text-danger px-1 mb-3">Action failed — please try again</p>
+          )}
           <CommentThread
             comments={comments}
             currentUserEmail={currentUserEmail}

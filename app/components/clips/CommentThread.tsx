@@ -5,6 +5,8 @@
 
 import { useState } from "react";
 import { formatRelativeTime } from "@/lib/utils";
+import { BottomSheet } from "@/components/ui/BottomSheet";
+import { Button } from "@/components/ui/Button";
 import type { Comment } from "@/types";
 
 interface CommentThreadProps {
@@ -18,6 +20,7 @@ interface CommentThreadProps {
 export function CommentThread({ comments, currentUserEmail, isEditing, onEdit, onDelete }: CommentThreadProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   function startEdit(comment: Comment) {
     setEditText(comment.text);
@@ -36,6 +39,7 @@ export function CommentThread({ comments, currentUserEmail, isEditing, onEdit, o
   }
 
   return (
+    <>
     <ul className="space-y-2">
       {comments.map((comment) => {
         const isOwn = comment.userEmail === currentUserEmail;
@@ -88,7 +92,7 @@ export function CommentThread({ comments, currentUserEmail, isEditing, onEdit, o
                     </svg>
                   </button>
                   <button
-                    onClick={() => onDelete(comment.id)}
+                    onClick={() => setPendingDeleteId(comment.id)}
                     className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:text-danger hover:bg-elevated transition-colors"
                     aria-label="Delete comment"
                   >
@@ -103,5 +107,26 @@ export function CommentThread({ comments, currentUserEmail, isEditing, onEdit, o
         );
       })}
     </ul>
+
+    <BottomSheet
+      open={pendingDeleteId !== null}
+      onClose={() => setPendingDeleteId(null)}
+      title="Delete comment?"
+    >
+      <div className="space-y-3">
+        <p className="text-sm text-secondary">This cannot be undone.</p>
+        <Button
+          onClick={() => { onDelete(pendingDeleteId!); setPendingDeleteId(null); }}
+          variant="danger"
+          fullWidth
+        >
+          Delete
+        </Button>
+        <Button onClick={() => setPendingDeleteId(null)} variant="ghost" fullWidth>
+          Cancel
+        </Button>
+      </div>
+    </BottomSheet>
+    </>
   );
 }

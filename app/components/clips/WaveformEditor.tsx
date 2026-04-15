@@ -122,6 +122,7 @@ export function WaveformEditor({
   const [versions, setVersions] = useState<ClipVersion[]>(initialVersions);
   const [splitMode, setSplitMode] = useState(false);
   const [splitMs, setSplitMs] = useState(0);
+  const [isSplitting, setIsSplitting] = useState(false);
   const [submitSheetOpen, setSubmitSheetOpen] = useState(false);
   const [splitSheetOpen, setSplitSheetOpen] = useState(false);
 
@@ -271,17 +272,22 @@ export function WaveformEditor({
   }
 
   async function doSplit(): Promise<void> {
-    const res = await fetch(`/api/clips/${clipId}/split`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ splitMs }),
-    });
-    if (!res.ok) {
-      const b = await res.json().catch(() => ({}));
-      throw new Error(b.error ?? "Split failed");
+    setIsSplitting(true);
+    try {
+      const res = await fetch(`/api/clips/${clipId}/split`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ splitMs }),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({}));
+        throw new Error(b.error ?? "Split failed");
+      }
+      setSplitMode(false);
+      router.push(sessionHref);
+    } finally {
+      setIsSplitting(false);
     }
-    setSplitMode(false);
-    router.push(sessionHref);
   }
 
   // ── Load from a previous version ───────────────────────────────────────────────
@@ -444,6 +450,7 @@ export function WaveformEditor({
             onMarkHere={() => setSplitMs(Math.round(ws.currentTimeMs))}
             onConfirm={() => setSplitSheetOpen(true)}
             onCancel={() => setSplitMode(false)}
+            isSplitting={isSplitting}
           />
         )}
       </div>

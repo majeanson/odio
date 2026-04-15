@@ -22,11 +22,13 @@ export interface WaveformSplitterProps {
   /** Called when the user confirms the split — shows the confirm sheet. */
   onConfirm: () => void;
   onCancel: () => void;
+  /** True while the split request is in-flight — prevents double submission. */
+  isSplitting?: boolean;
 }
 
 export function WaveformSplitter({
   splitMs, effectiveDurationMs, isPlaying, wsState,
-  onTogglePlay, onMarkHere, onConfirm, onCancel,
+  onTogglePlay, onMarkHere, onConfirm, onCancel, isSplitting = false,
 }: WaveformSplitterProps) {
   const partAMs = splitMs;
   const partBMs = effectiveDurationMs - splitMs;
@@ -89,10 +91,10 @@ export function WaveformSplitter({
       <div className="px-5 pb-5 flex gap-2">
         <button
           onClick={onConfirm}
-          disabled={wsState !== "ready" || splitMs <= 0 || splitMs >= effectiveDurationMs}
+          disabled={wsState !== "ready" || splitMs <= 0 || splitMs >= effectiveDurationMs || isSplitting}
           className="flex-1 rounded-2xl bg-cyan-500/20 px-4 py-3.5 text-sm font-semibold text-cyan-300 disabled:opacity-30 active:scale-[0.98] transition-all"
         >
-          Split here
+          {isSplitting ? "Splitting…" : "Split here"}
         </button>
         <button
           onClick={onCancel}

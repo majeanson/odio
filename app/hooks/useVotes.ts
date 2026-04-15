@@ -16,15 +16,20 @@ export function useVotes(clipId: string, initialVotes: Vote[]) {
     refetchInterval: 5_000,
   });
 
-  const { mutate: castVote, isPending: isCasting } = useMutation({
-    mutationFn: ({ versionId, value }: { versionId: string; value: VoteValue }) =>
-      fetch(`/api/clips/${clipId}/votes`, {
+  const { mutate: castVote, isPending: isCasting, isError: voteError } = useMutation({
+    mutationFn: async ({ versionId, value }: { versionId: string; value: VoteValue }) => {
+      const r = await fetch(`/api/clips/${clipId}/votes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ versionId, value }),
-      }).then((r) => r.json()),
+      });
+      if (!r.ok) throw new Error("Failed to save vote");
+      return r.json();
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["votes", clipId] }),
+    // Resync on failure so stale optimistic state is never shown
+    onError: () => qc.invalidateQueries({ queryKey: ["votes", clipId] }),
   });
 
-  return { votes, castVote, isCasting };
+  return { votes, castVote, isCasting, voteError };
 }

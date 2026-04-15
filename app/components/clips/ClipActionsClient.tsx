@@ -55,6 +55,7 @@ export function ClipActionsClient({
   const [unfreezing, setUnfreezing] = useState(false);
   const [cleaningUp, setCleaningUp] = useState(false);
   const [sharingLoading, setSharingLoading] = useState(false);
+  const [sharingError, setSharingError] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
   const isRecorder = currentUserRole === "RECORDER";
@@ -99,6 +100,7 @@ export function ClipActionsClient({
 
   async function toggleShare() {
     setSharingLoading(true);
+    setSharingError(false);
     const body = publicToken ? { removePublicToken: true } : { generatePublicToken: true };
     const res = await fetch(`/api/clips/${clipId}`, {
       method: "PATCH",
@@ -108,6 +110,8 @@ export function ClipActionsClient({
     if (res.ok) {
       const updated = await res.json();
       setPublicToken(updated.publicToken ?? null);
+    } else {
+      setSharingError(true);
     }
     setSharingLoading(false);
   }
@@ -199,21 +203,26 @@ export function ClipActionsClient({
 
       {/* Share link */}
       {isFrozen && (
-        <ActionRow
-          onClick={publicToken ? copyLink : toggleShare}
-          icon={iconBox("bg-elevated text-secondary", shareIcon)}
-          label={publicToken ? (linkCopied ? "Copied!" : "Copy share link") : "Enable public share"}
-          sub={
-            publicToken
-              ? `${window?.location?.origin ?? ""}/share/${publicToken}`.substring(0, 40) + "…"
-              : "Generate a public link for anyone to listen"
-          }
-          right={
-            sharingLoading
-              ? <AudioBars className="size-4 text-muted" />
-              : publicToken ? copyIcon : undefined
-          }
-        />
+        <>
+          <ActionRow
+            onClick={publicToken ? copyLink : toggleShare}
+            icon={iconBox("bg-elevated text-secondary", shareIcon)}
+            label={publicToken ? (linkCopied ? "Copied!" : "Copy share link") : "Enable public share"}
+            sub={
+              publicToken
+                ? `${window?.location?.origin ?? ""}/share/${publicToken}`.substring(0, 40) + "…"
+                : "Generate a public link for anyone to listen"
+            }
+            right={
+              sharingLoading
+                ? <AudioBars className="size-4 text-muted" />
+                : publicToken ? copyIcon : undefined
+            }
+          />
+          {sharingError && (
+            <p className="text-sm text-danger px-1">Share link failed — tap again to retry</p>
+          )}
+        </>
       )}
 
       {/* Post-freeze cleanup */}

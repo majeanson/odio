@@ -18,31 +18,42 @@ export function useComments(clipId: string, initialComments: Comment[]) {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["comments", clipId] });
 
-  const { mutate: addComment, isPending: isAdding } = useMutation({
-    mutationFn: (text: string) =>
-      fetch(`/api/clips/${clipId}/comments`, {
+  const { mutate: addComment, isPending: isAdding, isError: addError } = useMutation({
+    mutationFn: async (text: string) => {
+      const r = await fetch(`/api/clips/${clipId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
-      }).then((r) => r.json()),
+      });
+      if (!r.ok) throw new Error("Failed to post comment");
+      return r.json();
+    },
     onSuccess: invalidate,
+    onError: invalidate,
   });
 
-  const { mutate: editComment, isPending: isEditing } = useMutation({
-    mutationFn: ({ commentId, text }: { commentId: string; text: string }) =>
-      fetch(`/api/clips/${clipId}/comments/${commentId}`, {
+  const { mutate: editComment, isPending: isEditing, isError: editError } = useMutation({
+    mutationFn: async ({ commentId, text }: { commentId: string; text: string }) => {
+      const r = await fetch(`/api/clips/${clipId}/comments/${commentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
-      }).then((r) => r.json()),
+      });
+      if (!r.ok) throw new Error("Failed to save edit");
+      return r.json();
+    },
     onSuccess: invalidate,
+    onError: invalidate,
   });
 
-  const { mutate: deleteComment } = useMutation({
-    mutationFn: (commentId: string) =>
-      fetch(`/api/clips/${clipId}/comments/${commentId}`, { method: "DELETE" }),
+  const { mutate: deleteComment, isError: deleteError } = useMutation({
+    mutationFn: async (commentId: string) => {
+      const r = await fetch(`/api/clips/${clipId}/comments/${commentId}`, { method: "DELETE" });
+      if (!r.ok) throw new Error("Failed to delete comment");
+    },
     onSuccess: invalidate,
+    onError: invalidate,
   });
 
-  return { comments, addComment, isAdding, editComment, isEditing, deleteComment };
+  return { comments, addComment, isAdding, addError, editComment, isEditing, editError, deleteComment, deleteError };
 }
