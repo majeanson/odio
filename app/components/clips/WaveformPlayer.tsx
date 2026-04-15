@@ -1,15 +1,15 @@
 "use client";
-
-// Pure waveform player — single responsibility: play audio.
+// WaveformPlayer — read-only audio player with cut masking.
+// Single responsibility: play a clip version, showing masked cut regions.
+//
+// Cuts are rendered as near-opaque black bands (hiding the cut waveform).
+// Click-to-seek snaps around cuts so the cursor never lands in a dead zone.
 // No editing, no version management, no cut creation.
-// Receives activeCuts from parent; masks them (near-opaque black overlay) so
-// only the playable portion of the waveform is visible.
-// Click-to-seek into a cut region snaps the cursor to the nearest valid boundary.
-// Used on: clip detail page, share page.
+// Used on: clip detail page.
 
-import { useEffect, useRef, useState } from "react";
-import WaveSurfer from "wavesurfer.js";
-import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.js";
+import { useRef, useEffect } from "react";
+import { useWaveSurfer } from "./useWaveSurfer";
+import { WaveformCanvas } from "./WaveformCanvas";
 import { formatPosition, formatDuration, calcResultDuration } from "@/lib/utils";
 import { AudioBars } from "@/components/ui/AudioBars";
 import { STAMP_COLORS, STAMP_EMOJI } from "@/types";
@@ -28,190 +28,60 @@ export function WaveformPlayer({
   activeCuts = [],
   stamps = [],
 }: WaveformPlayerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const wsRef = useRef<WaveSurfer | null>(null);
-  const regionsRef = useRef<ReturnType<typeof RegionsPlugin.create> | null>(null);
-  const activeCutsRef = useRef(activeCuts);
-  // Tracks the current position outside of React state so the play button handler
-  // is never stale. Updated by every timeupdate (both playback and click-to-seek).
-  // Used to re-seek right before play() — fixes WaveSurfer's click-while-paused
-  // sync gap where the visual cursor moves but the audio element's currentTime lags.
-  const currentTimeMsRef = useRef(0);
+  // Keep a ref to activeCuts so the timeupdate handler (cut-skipping) and the
+  // pointer handler (seek-snap) always see the latest value without re-subscribing.
+  const cutsRef = useRef(activeCuts);
+  useEffect(() => { cutsRef.current = activeCuts; }, [activeCuts]);
 
-  const [wsState, setWsState] = useState<"loading" | "ready" | "error">("loading");
-  const [audioErrorStatus, setAudioErrorStatus] = useState<number | null>(null);
-  const [audioDurationMismatch, setAudioDurationMismatch] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTimeMs, setCurrentTimeMs] = useState(0);
-  const [retryKey, setRetryKey] = useState(0);
-  // Tracks the real audio duration. Starts as the DB value; updated from
-  // WaveSurfer on first load when sourceDurationMs is 0 (imported clips).
-  const [detectedDurationMs, setDetectedDurationMs] = useState(0);
-  // Ref keeps the effective duration accessible inside stale WaveSurfer closures
-  // without requiring the effect to re-run. Set synchronously in the ready handler
-  // so timeupdate sees the real value before the first play tick.
-  const effectiveDurMsRef = useRef(sourceDurationMs);
-  const effectiveDurationMs = sourceDurationMs || detectedDurationMs;
-  effectiveDurMsRef.current = effectiveDurationMs;
+  const ws = useWaveSurfer({
+    url: `/api/audio/${clipId}`,
+    sourceDurationMs,
+    cutMarksRef: cutsRef,
+    patchDurationUrl: `/api/clips/${clipId}`,
+  });
 
-  // Keep ref in sync so the timeupdate handler (stale closure) sees current cuts
-  useEffect(() => {
-    activeCutsRef.current = activeCuts;
-  }, [activeCuts]);
+  const containerWidthPx = ws.containerRef.current?.clientWidth ?? 300;
 
-  // Re-draw regions when cuts change or waveform first becomes ready.
-  // Cut regions use a near-opaque black overlay so the waveform appears to
-  // "end" at the cut boundary — only the playable portion is visible.
-  // pointer-events:none lets WaveSurfer's native click-to-seek fire through;
-  // the timeupdate handler corrects any seek that lands inside a cut.
-  useEffect(() => {
-    if (wsState !== "ready" || !regionsRef.current) return;
-    regionsRef.current.clearRegions();
-    activeCuts.forEach((m) => {
-      const region = regionsRef.current!.addRegion({
-        start: m.startMs / 1000,
-        end: m.endMs / 1000,
-        color: "rgba(8, 8, 8, 0.88)",
-        drag: false,
-        resize: false,
-      });
-      if (region.element) region.element.style.pointerEvents = "none";
-    });
-  }, [activeCuts, wsState]);
+  // ── Click-to-seek with cut snapping ────────────────────────────────────────
+  // Converts a pointer-up position to seconds, then snaps to the nearest valid
+  // boundary if the tap lands inside a masked cut region.
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-    setWsState("loading");
-    setCurrentTimeMs(0);
-    const regions = RegionsPlugin.create();
-    regionsRef.current = regions;
+  function seekAtPointer(e: React.PointerEvent<HTMLDivElement>) {
+    const rect = ws.containerRef.current?.getBoundingClientRect();
+    if (!rect || ws.effectiveDurationMs === 0) return;
+    const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const ms = frac * ws.effectiveDurationMs;
 
-    const ws = WaveSurfer.create({
-      container: containerRef.current,
-      url: `/api/audio/${clipId}`,
-      waveColor: "#3f3f46",
-      progressColor: "#f59e0b",
-      cursorColor: "#f59e0b",
-      cursorWidth: 2,
-      height: 88,
-      normalize: true,
-      interact: true, // click-to-seek — works because no enableDragSelection overlay
-      plugins: [regions],
-    });
+    const hit = cutsRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
+    if (hit) {
+      // Snap to whichever boundary is closer
+      const nearStart = Math.abs(ms - hit.startMs) < Math.abs(ms - hit.endMs);
+      ws.seek(nearStart ? hit.startMs / 1000 : hit.endMs / 1000);
+    } else {
+      ws.seek(ms / 1000);
+    }
+  }
 
-    wsRef.current = ws;
-    ws.on("ready", () => {
-      setWsState("ready");
-      const wsDur = ws.getDuration() * 1000;
-      // A stale upload (Drive file contains the wrong audio — e.g. the full
-      // original before a split) produces wsDur dramatically larger than
-      // sourceDurationMs. Threshold: >50% longer AND >10 s more.
-      // Everything else (imported clips with unknown duration, FFmpeg
-      // frame-rounding on split clips) should use the actual file duration.
-      const isWrongFile =
-        sourceDurationMs > 0 &&
-        wsDur > sourceDurationMs * 1.5 &&
-        wsDur - sourceDurationMs > 10_000;
+  const pointerHandlers = {
+    onPointerDown: (_e: React.PointerEvent<HTMLDivElement>) => {},
+    onPointerMove: (_e: React.PointerEvent<HTMLDivElement>) => {},
+    onPointerUp: seekAtPointer,
+    onPointerCancel: (_e: React.PointerEvent<HTMLDivElement>) => {},
+  };
 
-      if (isWrongFile) {
-        setAudioDurationMismatch(true);
-        // Keep effectiveDurMsRef at sourceDurationMs so the stop-guard still
-        // caps playback at the expected boundary.
-      } else {
-        // Use the actual file duration: handles imported clips (sourceDurationMs
-        // === 0) and minor FFmpeg frame-rounding on freshly-split clips.
-        effectiveDurMsRef.current = wsDur;
-        setDetectedDurationMs(wsDur);
-        // Persist back to DB if the value meaningfully differs from what was stored.
-        if (sourceDurationMs === 0 || Math.abs(wsDur - sourceDurationMs) > 200) {
-          fetch(`/api/clips/${clipId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sourceDurationMs: wsDur }),
-          }).catch(() => {/* non-fatal */});
-        }
-      }
-    });
-    ws.on("error", () => {
-      // Probe the audio URL to get the real HTTP status so we can show
-      // the right message (auth error vs. file missing vs. server error).
-      fetch(`/api/audio/${clipId}`, { method: "HEAD" })
-        .then((r) => setAudioErrorStatus(r.status))
-        .catch(() => setAudioErrorStatus(null))
-        .finally(() => setWsState("error"));
-    });
-    ws.on("play", () => setIsPlaying(true));
-    ws.on("pause", () => setIsPlaying(false));
-    ws.on("finish", () => {
-      setIsPlaying(false);
-      // Reset cursor to the beginning so the waveform looks clean at rest
-      // rather than leaving an amber line pinned at the right edge.
-      ws.setTime(0);
-    });
-    ws.on("timeupdate", (time: number) => {
-      const ms = time * 1000;
-      const effDur = effectiveDurMsRef.current;
-      // Always track position — currentTimeMsRef is used by the play button
-      // to re-seek before playback (fixes click-while-paused sync gap).
-      currentTimeMsRef.current = effDur > 0 ? Math.min(ms, effDur) : ms;
-      setCurrentTimeMs(effDur > 0 ? Math.min(ms, effDur) : ms);
-
-      const playing = ws.isPlaying();
-
-      // Stop guard: Drive file is longer than clip duration (stale split upload).
-      // Guard effDur > 0 so imported clips with unknown duration play to natural end.
-      if (playing && effDur > 0 && ms >= effDur) {
-        ws.pause();
-        ws.setTime(0);
-        return;
-      }
-
-      // Clamp a paused click-seek to effectiveDuration.
-      // Happens when the user clicks past the real end of a split clip
-      // (the source file has audio there but this version doesn't).
-      if (!playing && effDur > 0 && ms > effDur) {
-        ws.setTime(effDur / 1000);
-        return;
-      }
-
-      const hit = activeCutsRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
-      if (!hit) return;
-
-      const targetSec = hit.endMs / 1000;
-      // An "end-cut" reaches the effective end of the clip — seeking to it
-      // can silently fail on streamed files. Treat it as a hard stop instead.
-      const isEndCut = effDur > 0 && targetSec >= effDur / 1000 - 0.3;
-
-      if (playing) {
-        // During playback: skip forward over cut, or stop cleanly at end.
-        if (isEndCut) {
-          ws.pause();
-          ws.setTime(hit.startMs / 1000);
-        } else {
-          ws.setTime(targetSec);
-        }
-      } else {
-        // During a click-seek (paused): snap cursor to the nearest valid boundary
-        // so the user doesn't land inside a dead zone.
-        // End-cut  → go to cut start (= last playable position in this version)
-        // Mid-cut  → go to cut end   (= first playable position after the gap)
-        ws.setTime(isEndCut ? hit.startMs / 1000 : targetSec);
-      }
-    });
-
-    return () => {
-      ws.destroy();
-      wsRef.current = null;
-    };
-  }, [clipId, retryKey]);
-
-  const virtualDurationMs =
-    activeCuts.length > 0 ? calcResultDuration(effectiveDurationMs, activeCuts) : effectiveDurationMs;
+  // ── Derived ────────────────────────────────────────────────────────────────
+  const { wsState, isPlaying, currentTimeMs, effectiveDurationMs } = ws;
+  const virtualDurationMs = activeCuts.length > 0
+    ? calcResultDuration(effectiveDurationMs, activeCuts)
+    : effectiveDurationMs;
+  // Stable cut mark ids for WaveformCanvas keys
+  const canvasCuts = activeCuts.map((c, i) => ({ id: `cut-${i}`, ...c }));
 
   return (
     <div className="rounded-2xl bg-surface overflow-hidden">
-      {/* Audio file mismatch warning */}
-      {audioDurationMismatch && (
+
+      {/* Audio duration mismatch warning */}
+      {ws.audioDurationMismatch && (
         <div className="px-5 pt-4 pb-0">
           <div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3">
             <p className="text-xs font-semibold text-danger">Audio file has wrong duration</p>
@@ -221,6 +91,7 @@ export function WaveformPlayer({
           </div>
         </div>
       )}
+
       {/* Clock */}
       <div className="px-5 pt-5 flex items-baseline justify-between gap-4">
         <span className="font-mono text-3xl font-semibold text-primary tabular-nums leading-none tracking-tight">
@@ -231,42 +102,24 @@ export function WaveformPlayer({
         </span>
       </div>
 
-      {/* Waveform */}
-      <div className="px-5 pt-3 pb-1">
-        <div ref={containerRef} className="w-full" />
-        {wsState === "loading" && (
-          <div className="h-[88px] flex items-center justify-center">
-            <AudioBars className="size-5 text-accent" />
-          </div>
-        )}
-        {wsState === "error" && (
-          <div className="h-[88px] flex flex-col items-center justify-center gap-3">
-            <p className="text-sm text-muted text-center leading-snug">
-              {audioErrorStatus === 404
-                ? "Audio not yet available — upload may still be processing"
-                : audioErrorStatus === 401 || audioErrorStatus === 503
-                  ? "Drive connection needs renewal"
-                  : "Audio unavailable"}
-            </p>
-            <div className="flex items-center gap-3">
-              {(audioErrorStatus === 401 || audioErrorStatus === 503) && (
-                <a
-                  href="/login"
-                  className="icon-sm rounded-xl bg-accent px-3.5 py-1.5 text-xs font-bold text-[#080808]"
-                >
-                  Reconnect Drive
-                </a>
-              )}
-              <button
-                onClick={() => { setAudioErrorStatus(null); setRetryKey((k) => k + 1); }}
-                className="icon-sm text-xs text-muted underline underline-offset-2"
-              >
-                Try again
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Waveform + overlays */}
+      <WaveformCanvas
+        containerRef={ws.containerRef}
+        wsState={wsState}
+        audioErrorStatus={ws.audioErrorStatus}
+        onRetry={ws.retry}
+        variant="player"
+        cutMarks={canvasCuts}
+        previewCut={null}
+        effectiveDurationMs={effectiveDurationMs}
+        waveScrollLeft={0}
+        waveTotalWidth={containerWidthPx}
+        containerWidthPx={containerWidthPx}
+        splitMode={false}
+        splitLinePercent={0}
+        pointerHandlers={pointerHandlers}
+        cursorStyle="pointer"
+      />
 
       {/* Stamps */}
       {stamps.length > 0 && wsState === "ready" && (
@@ -274,12 +127,7 @@ export function WaveformPlayer({
           {stamps.map((stamp) => (
             <button
               key={stamp.id}
-              onClick={() => {
-              // Update ref synchronously so the play button doesn't re-seek
-              // to the old position if pressed immediately after a stamp click.
-              currentTimeMsRef.current = stamp.timestampMs;
-              wsRef.current?.setTime(stamp.timestampMs / 1000);
-            }}
+              onClick={() => ws.seek(stamp.timestampMs / 1000)}
               aria-label={`Jump to ${formatDuration(stamp.timestampMs)}`}
               className="icon-sm flex-shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs active:scale-95 transition-transform"
               style={{
@@ -294,23 +142,17 @@ export function WaveformPlayer({
         </div>
       )}
 
+      {/* Loading overlay (shown while waveform is rendering) */}
+      {wsState === "loading" && (
+        <div className="mx-5 mb-1 h-[100px] flex items-center justify-center -mt-[100px] pointer-events-none">
+          <AudioBars className="size-5 text-accent" />
+        </div>
+      )}
+
       {/* Play button */}
       <div className="pb-6 pt-2 flex justify-center">
         <button
-          onClick={() => {
-            const ws = wsRef.current;
-            if (!ws) return;
-            if (ws.isPlaying()) {
-              ws.pause();
-            } else {
-              // Re-seek to the tracked cursor position before playing.
-              // WaveSurfer's click-while-paused updates the visual cursor via
-              // timeupdate but the audio element's currentTime can lag behind —
-              // this guarantees play always starts where the cursor is.
-              ws.setTime(currentTimeMsRef.current / 1000);
-              ws.play();
-            }
-          }}
+          onClick={ws.togglePlay}
           disabled={wsState !== "ready"}
           aria-label={isPlaying ? "Pause" : "Play"}
           className="flex h-20 w-20 items-center justify-center rounded-full bg-accent shadow-[0_4px_0_0_#78350f] transition-[transform,box-shadow] duration-75 active:translate-y-[4px] active:shadow-none disabled:opacity-40 disabled:shadow-none"

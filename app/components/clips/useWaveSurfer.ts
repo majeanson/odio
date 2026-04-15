@@ -2,14 +2,19 @@
 // useWaveSurfer — manages WaveSurfer lifecycle.
 // Single responsibility: audio playback + waveform rendering.
 //
+// Used by all three waveform variants:
+//   WaveformPlayer   — read-only player with cut masking
+//   WaveformEditor   — trim editor (create/resize cuts)
+//   WaveformSplitter — split point selector
+//   PublicPlayer     — public share page player
+//
 // Key design decisions:
-//   - interact:false — all pointer events are handled externally via an overlay div
-//   - Seek-in-flight guard: after ws.setTime(), mobile browsers can fire a timeupdate
-//     with the OLD currentTime before the audio element updates. We track the seek
-//     target and ignore stale events until the audio catches up.
-//   - Re-seek on play(): before ws.play(), we call ws.setTime(currentTimeMsRef.current)
-//     to guarantee audio plays from the tracked cursor position, not wherever the
-//     audio element's internal currentTime happens to be.
+//   - interact:false — all pointer events handled externally via an overlay div
+//   - Seek-in-flight guard: after ws.setTime(), mobile browsers can fire a
+//     timeupdate with the OLD currentTime before the audio element updates.
+//     We track the seek target and ignore stale events until audio catches up.
+//   - Re-seek on play(): before ws.play(), we call ws.setTime(currentTimeMsRef)
+//     so audio always starts from the tracked cursor position on mobile.
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import WaveSurfer from "wavesurfer.js";
@@ -20,10 +25,19 @@ export interface CutBoundary {
 }
 
 export interface UseWaveSurferOptions {
-  clipId: string;
+  /** Full audio URL (e.g. /api/audio/${clipId} or /api/audio/public/${token}) */
+  url: string;
   sourceDurationMs: number;
-  /** Kept in sync by the coordinator. Read inside WaveSurfer's timeupdate to skip cuts. */
-  cutMarksRef: React.MutableRefObject<CutBoundary[]>;
+  /**
+   * Read by the timeupdate handler to skip over cut regions during playback.
+   * Optional — if omitted, no cut-skipping happens (suitable for plain players).
+   */
+  cutMarksRef?: React.MutableRefObject<CutBoundary[]>;
+  /**
+   * If provided, PATCH this URL when the detected file duration differs from
+   * sourceDurationMs by more than 200ms (handles imported clips + FFmpeg rounding).
+   */
+  patchDurationUrl?: string;
 }
 
 export interface UseWaveSurferReturn {
@@ -51,9 +65,10 @@ export interface UseWaveSurferReturn {
 }
 
 export function useWaveSurfer({
-  clipId,
+  url,
   sourceDurationMs,
   cutMarksRef,
+  patchDurationUrl,
 }: UseWaveSurferOptions): UseWaveSurferReturn {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<WaveSurfer | null>(null);
@@ -61,9 +76,12 @@ export function useWaveSurfer({
   const basePxPerSecRef = useRef(0);
   const effectiveDurMsRef = useRef(sourceDurationMs);
   const currentTimeMsRef = useRef(0);
-  // Seek-in-flight guard: set to the target ms when seek() is called.
-  // timeupdate events that are more than 500ms from this target are ignored
-  // (they're stale pre-seek events from the previous position).
+  // Internal empty ref used when cutMarksRef is not provided (no cut-skipping).
+  const emptyCutsRef = useRef<CutBoundary[]>([]);
+  const activeCutsRef = cutMarksRef ?? emptyCutsRef;
+  // Seek-in-flight guard: after ws.setTime(), mobile browsers (Safari) can fire
+  // a timeupdate with the OLD currentTime. We store the target and ignore events
+  // that are more than 500ms away until the audio element catches up.
   const seekTargetMsRef = useRef<number | null>(null);
 
   const [wsState, setWsState] = useState<"loading" | "ready" | "error">("loading");
@@ -93,14 +111,14 @@ export function useWaveSurfer({
 
     const ws = WaveSurfer.create({
       container: containerRef.current,
-      url: `/api/audio/${clipId}`,
+      url,
       waveColor: "#3f3f46",
       progressColor: "#f59e0b",
       cursorColor: "#f59e0b",
       cursorWidth: 2,
       height: 100,
       normalize: true,
-      interact: false, // all pointer events are managed by WaveformCanvas overlay
+      interact: false, // all pointer events managed externally via an overlay div
     });
 
     wsRef.current = ws;
@@ -118,8 +136,8 @@ export function useWaveSurfer({
       } else {
         effectiveDurMsRef.current = wsDur;
         setDetectedDurationMs(wsDur);
-        if (sourceDurationMs === 0 || Math.abs(wsDur - sourceDurationMs) > 200) {
-          fetch(`/api/clips/${clipId}`, {
+        if (patchDurationUrl && (sourceDurationMs === 0 || Math.abs(wsDur - sourceDurationMs) > 200)) {
+          fetch(patchDurationUrl, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ sourceDurationMs: wsDur }),
@@ -131,16 +149,13 @@ export function useWaveSurfer({
       const dur = ws.getDuration();
       if (dur > 0) basePxPerSecRef.current = containerWidth / dur;
 
-      // scrollContainer = wrapper.parentElement inside WaveSurfer's shadow DOM.
-      // This is the element that receives the native "scroll" event and whose
-      // scrollLeft we read for zoom/pan position math.
       const sc = (ws.getWrapper() as HTMLElement)?.parentElement ?? null;
       scrollContainerRef.current = sc;
       if (sc) setWaveTotalWidth(sc.scrollWidth);
     });
 
     ws.on("error", () => {
-      fetch(`/api/audio/${clipId}`, { method: "HEAD" })
+      fetch(url, { method: "HEAD" })
         .then((r) => setAudioErrorStatus(r.status))
         .catch(() => setAudioErrorStatus(null))
         .finally(() => setWsState("error"));
@@ -159,12 +174,10 @@ export function useWaveSurfer({
       const ms = time * 1000;
       const effDur = effectiveDurMsRef.current;
 
-      // Seek-in-flight guard: ignore stale pre-seek timeupdate events.
-      // Mobile browsers (Safari) can fire timeupdate with the OLD currentTime
-      // immediately after ws.setTime(), before the audio element updates.
+      // Seek-in-flight guard: ignore stale pre-seek timeupdates.
       if (seekTargetMsRef.current !== null) {
-        if (Math.abs(ms - seekTargetMsRef.current) > 500) return; // stale — ignore
-        seekTargetMsRef.current = null; // caught up to seek target — resume normal tracking
+        if (Math.abs(ms - seekTargetMsRef.current) > 500) return;
+        seekTargetMsRef.current = null;
       }
 
       const clamped = effDur > 0 ? Math.min(ms, effDur) : ms;
@@ -173,7 +186,7 @@ export function useWaveSurfer({
 
       if (!ws.isPlaying()) return;
 
-      // Hard stop at effective duration (guard against stale Drive uploads)
+      // Hard stop at effective duration (stale Drive upload guard)
       if (effDur > 0 && ms >= effDur) {
         ws.pause();
         ws.setTime(0);
@@ -182,8 +195,8 @@ export function useWaveSurfer({
         return;
       }
 
-      // Skip over cut regions during playback
-      const hit = cutMarksRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
+      // Skip over cut regions during playback (only if cutMarksRef was provided)
+      const hit = activeCutsRef.current.find((cm) => ms >= cm.startMs && ms < cm.endMs);
       if (hit) {
         const targetSec = hit.endMs / 1000;
         const isEndCut = effDur > 0 && targetSec >= effDur / 1000 - 0.3;
@@ -196,8 +209,6 @@ export function useWaveSurfer({
       }
     });
 
-    // WaveSurfer emits "scroll" whenever its scrollContainer's native scroll
-    // event fires — including when we programmatically set sc.scrollLeft during pan.
     ws.on("scroll", () => {
       const sc = scrollContainerRef.current;
       if (sc) setWaveScrollLeft(sc.scrollLeft);
@@ -207,14 +218,13 @@ export function useWaveSurfer({
       ws.destroy();
       wsRef.current = null;
     };
-  }, [clipId, retryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [url, retryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const seek = useCallback((sec: number) => {
     const ws = wsRef.current;
     if (!ws) return;
     const clamped = Math.min(sec, ws.getDuration());
     const ms = clamped * 1000;
-    // Set the guard BEFORE calling setTime so it's active when timeupdate fires.
     seekTargetMsRef.current = ms;
     currentTimeMsRef.current = ms;
     setCurrentTimeMs(ms);
@@ -227,10 +237,8 @@ export function useWaveSurfer({
     if (ws.isPlaying()) {
       ws.pause();
     } else {
-      // Re-seek to the tracked cursor position before playing.
-      // Guarantees audio starts from where the visual cursor is, not from
-      // wherever the audio element's internal currentTime happens to be
-      // (which can lag on mobile after a click-to-seek).
+      // Re-seek before playing to guarantee audio starts where the cursor is.
+      // Necessary on mobile where audio element currentTime can lag after seek.
       ws.setTime(currentTimeMsRef.current / 1000);
       ws.play();
     }
@@ -238,7 +246,6 @@ export function useWaveSurfer({
 
   const applyZoom = useCallback((pxPerSec: number) => {
     wsRef.current?.zoom(pxPerSec);
-    // Read scrollWidth after WaveSurfer redraws at the new zoom level.
     requestAnimationFrame(() => {
       const sc = scrollContainerRef.current;
       if (sc) {

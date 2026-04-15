@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useWaveSurfer } from "./useWaveSurfer";
 import { useCutInteraction } from "./useCutInteraction";
 import { WaveformCanvas } from "./WaveformCanvas";
+import { WaveformSplitter } from "./WaveformSplitter";
 import { CutList } from "./CutList";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
@@ -104,7 +105,12 @@ export function WaveformEditor({
   useEffect(() => { zoomLevelRef.current = zoomLevel; }, [zoomLevel]);
 
   // ── WaveSurfer ───────────────────────────────────────────────────────────────
-  const ws = useWaveSurfer({ clipId, sourceDurationMs, cutMarksRef });
+  const ws = useWaveSurfer({
+    url: `/api/audio/${clipId}`,
+    sourceDurationMs,
+    cutMarksRef,
+    patchDurationUrl: `/api/clips/${clipId}`,
+  });
 
   // ── Draft ─────────────────────────────────────────────────────────────────────
   const [hasDraft, setHasDraft] = useState(false);
@@ -266,6 +272,8 @@ export function WaveformEditor({
   // ── Split ──────────────────────────────────────────────────────────────────────
 
   function enterSplitMode() {
+    // Reset zoom to 1× so the full waveform is visible when choosing the split point.
+    applyZoomLevel(1);
     setSplitMode(true);
     const pos = Math.min(Math.round(ws.currentTimeMs), ws.effectiveDurationMs - 1);
     setSplitMs(pos > 0 ? pos : Math.round(ws.effectiveDurationMs / 2));
@@ -406,7 +414,19 @@ export function WaveformEditor({
         </div>
       )}
 
-      {/* ── Player card ── */}
+      {/* ── Split mode — WaveformSplitter takes over the entire player card ── */}
+      {splitMode && (
+        <WaveformSplitter
+          ws={ws}
+          splitMs={splitMs}
+          onChangeSplitMs={setSplitMs}
+          onCancel={() => { setSplitMode(false); setSplitError(null); }}
+          onConfirm={() => setSplitSheetOpen(true)}
+        />
+      )}
+
+      {/* ── Trim mode — player card with waveform editor ── */}
+      {!splitMode && (
       <div className="rounded-2xl bg-surface overflow-hidden">
 
         {/* Clock — current position / total (or result) duration */}
@@ -433,8 +453,8 @@ export function WaveformEditor({
           waveScrollLeft={ws.waveScrollLeft}
           waveTotalWidth={ws.waveTotalWidth}
           containerWidthPx={containerWidthPx}
-          splitMode={splitMode}
-          splitLinePercent={splitLinePercent}
+          splitMode={false}
+          splitLinePercent={0}
           pointerHandlers={pointerHandlers}
           cursorStyle={cursorStyle}
         />
@@ -490,7 +510,7 @@ export function WaveformEditor({
               </>
             )}
 
-            {zoomLevel > 1 && !splitMode && (
+            {zoomLevel > 1 && (
               <span className="text-[10px] text-muted/50 ml-auto leading-tight text-right">
                 drag to pan
               </span>
@@ -516,8 +536,8 @@ export function WaveformEditor({
           </div>
         )}
 
-        {/* ── Play button + split Mark here ── */}
-        <div className="pb-5 pt-2 flex items-center justify-center gap-5">
+        {/* ── Play button ── */}
+        <div className="pb-5 pt-2 flex items-center justify-center">
           <button
             onClick={ws.togglePlay}
             disabled={wsState !== "ready"}
@@ -535,20 +555,11 @@ export function WaveformEditor({
               </svg>
             )}
           </button>
-
-          {splitMode && (
-            <button
-              onClick={() => setSplitMs(Math.round(currentTimeMs))}
-              className="rounded-full px-4 py-2.5 text-sm font-semibold transition-colors"
-              style={{ background: "rgba(34,211,238,0.15)", color: "#22d3ee" }}
-            >
-              Mark here
-            </button>
-          )}
         </div>
       </div>
+      )}
 
-      {/* ── Tool buttons ── */}
+      {/* ── Tool buttons (trim mode only) ── */}
       {wsState === "ready" && !splitMode && (
         <div className="grid grid-cols-3 gap-2">
           <button
@@ -589,30 +600,8 @@ export function WaveformEditor({
         </div>
       )}
 
-      {/* ── Split panel ── */}
-      {splitMode && wsState === "ready" && (
-        <div className="rounded-2xl bg-surface px-5 py-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-base font-semibold text-primary">Split song</p>
-            <span className="font-mono text-sm text-amber-400">{formatPosition(splitMs)}</span>
-          </div>
-          <div className="flex gap-3 text-sm text-muted font-mono flex-wrap">
-            <span>A: 0:00:00 – {formatPosition(splitMs)}</span>
-            <span className="text-muted/40">·</span>
-            <span>B: {formatPosition(splitMs)} →</span>
-          </div>
-          <p className="text-xs text-muted">Play to the split point, tap Mark here, then confirm.</p>
-          <div className="flex gap-2">
-            <Button onClick={() => setSplitSheetOpen(true)} fullWidth size="lg">Split here</Button>
-            <Button onClick={() => { setSplitMode(false); setSplitError(null); }} variant="ghost" fullWidth>
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Cut list — expandable rows with nudge controls ── */}
-      <CutList
+      {/* ── Cut list — expandable rows with nudge controls (trim mode only) ── */}
+      {!splitMode && <CutList
         cutMarks={cutMarks}
         expandedCutId={expandedCutId}
         resultDurationMs={resultDurationMs}
@@ -621,7 +610,7 @@ export function WaveformEditor({
         onNudge={nudgeCut}
         onJumpToStart={(cm) => ws.seek(cm.startMs / 1000)}
         onZoomToCut={zoomToCut}
-      />
+      />}
 
       {/* ── Submit edit button ── */}
       {wsState === "ready" && !splitMode && (

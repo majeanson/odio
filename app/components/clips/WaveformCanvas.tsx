@@ -24,6 +24,14 @@ export interface WaveformCanvasProps {
   audioErrorStatus: number | null;
   onRetry: () => void;
 
+  /**
+   * "edit"   (default) — red highlight bands + edge grip handles + preview cut.
+   *                      Used by WaveformEditor (trim mode).
+   * "player"           — dark masking bands (near-opaque) + no edge handles.
+   *                      Used by WaveformPlayer and PublicPlayer.
+   */
+  variant?: "edit" | "player";
+
   // Cut band visualization
   cutMarks: CanvasCutMark[];
   previewCut: { startMs: number; endMs: number } | null;
@@ -36,7 +44,7 @@ export interface WaveformCanvasProps {
   splitMode: boolean;
   splitLinePercent: number;
 
-  // Overlay interaction — all pointer events forwarded from useCutInteraction
+  // Overlay interaction — all pointer events forwarded from the caller's hook
   pointerHandlers: {
     onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
     onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => void;
@@ -48,10 +56,12 @@ export interface WaveformCanvasProps {
 
 export function WaveformCanvas({
   containerRef, wsState, audioErrorStatus, onRetry,
+  variant = "edit",
   cutMarks, previewCut, effectiveDurationMs, waveScrollLeft, waveTotalWidth, containerWidthPx,
   splitMode, splitLinePercent,
   pointerHandlers, cursorStyle,
 }: WaveformCanvasProps) {
+  const isPlayer = variant === "player";
   // Convert audio milliseconds to visible pixels on the canvas.
   // Accounts for scroll offset so bands move with the waveform during zoom/pan.
   function edgePx(ms: number): number {
@@ -68,8 +78,10 @@ export function WaveformCanvas({
             itself doesn't handle any pointer events — the overlay div below does. */}
         <div ref={containerRef} className="w-full" />
 
-        {/* Cut bands — opaque red overlay showing cut regions.
-            pointer-events:none so all touches fall through to the drag overlay. */}
+        {/* Cut bands — overlay showing cut/muted regions.
+            "edit"   variant: semi-transparent red (highlights region to cut)
+            "player" variant: near-opaque dark (masks the region as unplayable)
+            pointer-events:none so all touches fall through to the overlay div. */}
         {wsState === "ready" && !splitMode && (
           <>
             {cutMarks.map((cm) => {
@@ -83,15 +95,15 @@ export function WaveformCanvas({
                   style={{
                     left: Math.max(0, sPx),
                     width: Math.min(containerWidthPx, ePx) - Math.max(0, sPx),
-                    background: "rgba(239,68,68,0.28)",
+                    background: isPlayer ? "rgba(8,8,8,0.88)" : "rgba(239,68,68,0.28)",
                     zIndex: 5,
                   }}
                 />
               );
             })}
 
-            {/* Preview band — lighter red, shown while dragging to create a new cut */}
-            {previewCut && (() => {
+            {/* Preview band — lighter red, shown while dragging to create a new cut (edit only) */}
+            {!isPlayer && previewCut && (() => {
               const sPx = edgePx(previewCut.startMs);
               const ePx = edgePx(previewCut.endMs);
               if (ePx <= 0 || sPx >= containerWidthPx) return null;
@@ -124,10 +136,10 @@ export function WaveformCanvas({
           />
         )}
 
-        {/* Cut edge visual indicators — a vertical line + grip dots at each boundary.
-            Purely decorative (pointer-events:none). The drag overlay above handles
-            the actual grab zone. z-30 renders them on top of everything for visibility. */}
-        {wsState === "ready" && !splitMode && cutMarks.map((cm) => {
+        {/* Cut edge visual indicators — vertical line + grip dots at each boundary.
+            Only rendered in edit variant (player has no editable edges).
+            Purely decorative (pointer-events:none). z-30 renders them on top. */}
+        {wsState === "ready" && !splitMode && !isPlayer && cutMarks.map((cm) => {
           const sPx = edgePx(cm.startMs);
           const ePx = edgePx(cm.endMs);
           return (
