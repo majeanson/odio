@@ -531,32 +531,45 @@ export function WaveformEditor({
     }
   }
 
+  // Seek to a pre-computed seconds value (already validated at pointerdown time).
+  function seekToSec(sec: number) {
+    if (!wsRef.current) return;
+    const clamped = Math.min(sec, wsRef.current.getDuration());
+    currentTimeMsRef.current = clamped * 1000;
+    wsRef.current.setTime(clamped);
+  }
+
+  function handleDragCancel() {
+    // pointercancel: browser took over the gesture (scroll, pinch, etc.).
+    // Never seek on cancel — clientX is 0 or stale, which would send the
+    // cursor to position 0 and cause play to skip over leading cut regions.
+    dragStateRef.current = null;
+    setPreviewCut(null);
+  }
+
   function handleDragEnd(e: React.PointerEvent<HTMLDivElement>) {
     const drag = dragStateRef.current;
     if (!drag || !wsRef.current) return;
     dragStateRef.current = null;
     setPreviewCut(null);
 
-    const seekTo = (clientX: number) => {
-      const sec = Math.min(clientXToSec(clientX), wsRef.current!.getDuration());
-      currentTimeMsRef.current = sec * 1000;
-      wsRef.current!.setTime(sec);
-    };
-
     if (drag.mode === "resize") {
       // Tap directly on a cut edge (immediate resize mode, no real movement) → seek.
+      // Use startSec (captured at pointerdown) — more reliable than e.clientX at pointerup.
       if (Math.abs(e.clientX - drag.startX) < 8 && Math.abs(e.clientY - drag.startY) < 8) {
-        seekTo(e.clientX);
+        seekToSec(drag.startSec);
       }
       return;
     }
 
     if (drag.mode === "pan") return;
 
-    // Mode still "pending" means handleDragMove never saw enough movement to
-    // commit to "create" — this is a tap. Seek regardless of final coordinates.
+    // Mode still "pending" = no meaningful movement = tap.
+    // Seek to startSec (captured at pointerdown, not e.clientX at pointerup).
+    // On mobile, pointerup clientX can drift or arrive with wrong coords;
+    // startSec is always computed from the clean pointerdown position.
     if (drag.mode === "pending") {
-      seekTo(e.clientX);
+      seekToSec(drag.startSec);
       return;
     }
 
@@ -799,7 +812,7 @@ export function WaveformEditor({
                 onPointerDown={handleDragStart}
                 onPointerMove={handleDragMove}
                 onPointerUp={handleDragEnd}
-                onPointerCancel={handleDragEnd}
+                onPointerCancel={handleDragCancel}
               />
             )}
 
