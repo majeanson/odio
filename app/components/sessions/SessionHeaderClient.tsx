@@ -6,10 +6,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import QRCode from "react-qr-code";
 import { InlineEdit } from "@/components/ui/InlineEdit";
-import { BottomSheet } from "@/components/ui/BottomSheet";
-import { Button } from "@/components/ui/Button";
+import { SessionNotesSheet } from "./SessionNotesSheet";
+import { SessionQrSheet } from "./SessionQrSheet";
 
 interface SessionHeaderClientProps {
   bandId: string;
@@ -29,8 +28,6 @@ export function SessionHeaderClient({
   const [name, setName] = useState(initialName);
   const [notes, setNotes] = useState(initialNotes ?? "");
   const [notesSheetOpen, setNotesSheetOpen] = useState(false);
-  const [notesDraft, setNotesDraft] = useState("");
-  const [savingNotes, setSavingNotes] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [sessionUrl, setSessionUrl] = useState("");
 
@@ -39,14 +36,6 @@ export function SessionHeaderClient({
       `${window.location.origin}/bands/${bandId}/sessions/${sessionId}`,
     );
   }, [bandId, sessionId]);
-
-  async function patchSession(patch: { name?: string; notes?: string | null }) {
-    await fetch(`/api/bands/${bandId}/sessions/${sessionId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-  }
 
   async function handleRename(newName: string) {
     const optimistic = name;
@@ -59,18 +48,13 @@ export function SessionHeaderClient({
     if (!res.ok) setName(optimistic);
   }
 
-  function openNotesSheet() {
-    setNotesDraft(notes);
-    setNotesSheetOpen(true);
-  }
-
-  async function saveNotes() {
-    setSavingNotes(true);
-    const trimmed = notesDraft.trim();
-    await patchSession({ notes: trimmed || null });
+  async function handleSaveNotes(trimmed: string) {
+    await fetch(`/api/bands/${bandId}/sessions/${sessionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes: trimmed || null }),
+    });
     setNotes(trimmed);
-    setNotesSheetOpen(false);
-    setSavingNotes(false);
   }
 
   return (
@@ -117,7 +101,7 @@ export function SessionHeaderClient({
         <div className="flex items-center gap-2 shrink-0">
           {/* Notes button */}
           <button
-            onClick={openNotesSheet}
+            onClick={() => setNotesSheetOpen(true)}
             aria-label="Session notes"
             className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors ${
               notes
@@ -172,7 +156,7 @@ export function SessionHeaderClient({
       {/* Notes preview — shown when notes exist */}
       {notes && (
         <button
-          onClick={openNotesSheet}
+          onClick={() => setNotesSheetOpen(true)}
           className="mx-5 mb-3 rounded-2xl bg-surface px-5 py-3 text-left w-[calc(100%-2.5rem)]"
         >
           <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-1">Session notes</p>
@@ -180,59 +164,19 @@ export function SessionHeaderClient({
         </button>
       )}
 
-      {/* Notes sheet */}
-      <BottomSheet
+      <SessionNotesSheet
         open={notesSheetOpen}
         onClose={() => setNotesSheetOpen(false)}
-        title="Session notes"
-      >
-        <div className="space-y-3">
-          <textarea
-            autoFocus
-            value={notesDraft}
-            onChange={(e) => setNotesDraft(e.target.value)}
-            placeholder="What happened tonight? Key songs, gear, vibe…"
-            maxLength={2000}
-            rows={5}
-            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-primary placeholder:text-muted focus:border-accent focus:outline-none resize-none"
-          />
-          {canEdit ? (
-            <>
-              <Button onClick={saveNotes} disabled={savingNotes} fullWidth>
-                {savingNotes ? "Saving…" : "Save notes"}
-              </Button>
-              <Button onClick={() => setNotesSheetOpen(false)} variant="ghost" fullWidth>
-                Cancel
-              </Button>
-            </>
-          ) : (
-            <Button onClick={() => setNotesSheetOpen(false)} variant="ghost" fullWidth>
-              Close
-            </Button>
-          )}
-        </div>
-      </BottomSheet>
+        currentNotes={notes}
+        canEdit={canEdit}
+        onSave={handleSaveNotes}
+      />
 
-      {/* QR bottom sheet */}
-      <BottomSheet
+      <SessionQrSheet
         open={qrOpen}
         onClose={() => setQrOpen(false)}
-        title="Share session link"
-      >
-        <div className="flex flex-col items-center gap-4 py-4">
-          {sessionUrl && (
-            <div className="rounded-2xl bg-white p-4">
-              <QRCode value={sessionUrl} size={200} />
-            </div>
-          )}
-          <p className="text-center text-sm text-secondary">
-            Scan to open on another device or share with a bandmate
-          </p>
-          <p className="break-all font-mono text-xs text-muted text-center select-all">
-            {sessionUrl}
-          </p>
-        </div>
-      </BottomSheet>
+        sessionUrl={sessionUrl}
+      />
     </>
   );
 }

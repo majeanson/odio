@@ -214,7 +214,26 @@ export function useWaveSurfer({
       if (sc) setWaveScrollLeft(sc.scrollLeft);
     });
 
+    // ResizeObserver — recalculates basePxPerSecRef and waveTotalWidth when the
+    // container is resized (e.g. orientation change on mobile, panel resize on desktop).
+    // Without this, cut band positions and interaction coordinate math go stale after resize.
+    const ro = new ResizeObserver(() => {
+      if (!wsRef.current) return;
+      const dur = wsRef.current.getDuration();
+      const w = containerRef.current?.clientWidth ?? 0;
+      if (w > 0 && dur > 0) {
+        basePxPerSecRef.current = w / dur;
+      }
+      const sc = scrollContainerRef.current;
+      if (sc) {
+        setWaveTotalWidth(sc.scrollWidth);
+        setWaveScrollLeft(sc.scrollLeft);
+      }
+    });
+    if (containerRef.current) ro.observe(containerRef.current);
+
     return () => {
+      ro.disconnect();
       ws.destroy();
       wsRef.current = null;
     };

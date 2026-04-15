@@ -10,9 +10,9 @@
 import { useRef, useEffect } from "react";
 import { useWaveSurfer } from "./useWaveSurfer";
 import { WaveformCanvas } from "./WaveformCanvas";
-import { formatPosition, formatDuration, calcResultDuration } from "@/lib/utils";
-import { AudioBars } from "@/components/ui/AudioBars";
-import { STAMP_COLORS, STAMP_EMOJI } from "@/types";
+import { WaveformPlayButton } from "./WaveformPlayButton";
+import { StampJumpRow } from "./StampJumpRow";
+import { formatPosition, calcResultDuration } from "@/lib/utils";
 import type { Stamp } from "@/types";
 
 export interface WaveformPlayerProps {
@@ -121,53 +121,15 @@ export function WaveformPlayer({
         cursorStyle="pointer"
       />
 
-      {/* Stamps */}
-      {stamps.length > 0 && wsState === "ready" && (
-        <div className="px-5 pb-2 flex gap-2 overflow-x-auto">
-          {stamps.map((stamp) => (
-            <button
-              key={stamp.id}
-              onClick={() => ws.seek(stamp.timestampMs / 1000)}
-              aria-label={`Jump to ${formatDuration(stamp.timestampMs)}`}
-              className="icon-sm flex-shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs active:scale-95 transition-transform"
-              style={{
-                backgroundColor: `${STAMP_COLORS[stamp.type]}20`,
-                color: STAMP_COLORS[stamp.type],
-              }}
-            >
-              <span>{STAMP_EMOJI[stamp.type]}</span>
-              <span className="font-mono">{formatDuration(stamp.timestampMs)}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Loading overlay (shown while waveform is rendering) */}
-      {wsState === "loading" && (
-        <div className="mx-5 mb-1 h-[100px] flex items-center justify-center -mt-[100px] pointer-events-none">
-          <AudioBars className="size-5 text-accent" />
-        </div>
-      )}
+      <StampJumpRow stamps={stamps} wsState={wsState} onSeek={ws.seek} />
 
       {/* Play button */}
       <div className="pb-6 pt-2 flex justify-center">
-        <button
-          onClick={ws.togglePlay}
+        <WaveformPlayButton
+          isPlaying={isPlaying}
           disabled={wsState !== "ready"}
-          aria-label={isPlaying ? "Pause" : "Play"}
-          className="flex h-20 w-20 items-center justify-center rounded-full bg-accent shadow-[0_4px_0_0_#78350f] transition-[transform,box-shadow] duration-75 active:translate-y-[4px] active:shadow-none disabled:opacity-40 disabled:shadow-none"
-        >
-          {isPlaying ? (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="size-8" aria-hidden>
-              <rect x="6" y="4" width="4" height="16" rx="1" />
-              <rect x="14" y="4" width="4" height="16" rx="1" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="size-8" aria-hidden>
-              <polygon points="5,3 19,12 5,21" />
-            </svg>
-          )}
-        </button>
+          onClick={ws.togglePlay}
+        />
       </div>
     </div>
   );

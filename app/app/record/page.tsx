@@ -6,89 +6,14 @@
 // Mic picker shown when multiple audio inputs are detected.
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, Suspense, useRef, useEffect } from "react";
+import { useState, Suspense } from "react";
 import { useRecorder } from "@/hooks/useRecorder";
-import type { RefObject } from "react";
+import { LiveWaveform } from "@/components/recording/LiveWaveform";
+import { StampRow } from "@/components/recording/StampRow";
 import { DevicePicker } from "@/components/recording/DevicePicker";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { formatDuration } from "@/lib/utils";
-import type { StampType } from "@/types";
-import { STAMP_EMOJI, STAMP_COLORS } from "@/types";
-
-// Live oscilloscope drawn from the Web Audio AnalyserNode.
-// Reads time-domain data ~60fps and draws a waveform line on canvas.
-// Uses the element's CSS `color` so it inherits text-accent from the parent.
-function LiveWaveform({ analyserRef }: { analyserRef: RefObject<AnalyserNode | null> }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    function draw() {
-      const analyser = analyserRef.current;
-      if (!analyser || !canvas || !ctx) {
-        rafRef.current = requestAnimationFrame(draw);
-        return;
-      }
-
-      const data = new Uint8Array(analyser.fftSize);
-      analyser.getByteTimeDomainData(data);
-
-      const { width, height } = canvas;
-      ctx.clearRect(0, 0, width, height);
-
-      // Derive stroke color from the canvas element's computed color (text-accent)
-      const color = getComputedStyle(canvas).color;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.lineJoin = "round";
-      ctx.beginPath();
-
-      // Amplify: raw values are 0–255 centered at 128 (silence = 128).
-      // Without amplification, a quiet mic barely deviates and looks like
-      // a flat line. We boost the deviation from center by a gain factor
-      // so even moderate signal fills a good portion of the canvas height.
-      const GAIN = 6;
-      const sliceWidth = width / data.length;
-      let x = 0;
-      for (let i = 0; i < data.length; i++) {
-        const raw = (data[i] - 128) / 128;           // -1 to +1
-        const boosted = Math.max(-1, Math.min(1, raw * GAIN)); // clamp after gain
-        const y = height / 2 + boosted * (height / 2) * 0.88; // 88% = small margin
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        x += sliceWidth;
-      }
-      ctx.stroke();
-      rafRef.current = requestAnimationFrame(draw);
-    }
-
-    rafRef.current = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [analyserRef]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      width={800}
-      height={128}
-      className="w-full text-accent"
-      aria-hidden
-    />
-  );
-}
-
-// Stamp button config
-const STAMPS: { type: StampType; label: string }[] = [
-  { type: "FIRE",      label: "Fire" },
-  { type: "KEEP",      label: "Keep" },
-  { type: "UNCERTAIN", label: "Uncertain" },
-  { type: "IDEA",      label: "Idea" },
-];
 
 function RecordingScreen() {
   const searchParams = useSearchParams();
@@ -219,31 +144,7 @@ function RecordingScreen() {
       <div className="flex-1" />
 
       {/* Stamps row */}
-      {isRecording && (
-        <div className="flex justify-around mb-6 gap-2">
-          {STAMPS.map(({ type, label }) => (
-            <button
-              key={type}
-              onClick={() => addStamp(type)}
-              aria-label={`Stamp: ${label}`}
-              className="flex flex-1 flex-col items-center justify-center gap-1 h-24 rounded-2xl bg-surface text-4xl transition-transform active:scale-90"
-              style={{
-                boxShadow: `0 0 0 2px ${STAMP_COLORS[type]}50, 0 4px 0 0 ${STAMP_COLORS[type]}30`,
-              }}
-            >
-              <span>{STAMP_EMOJI[type]}</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted">{label}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Stamp count display */}
-      {isRecording && stamps.length > 0 && (
-        <p className="mb-4 text-center text-base text-muted">
-          {stamps.length} stamp{stamps.length !== 1 ? "s" : ""} recorded
-        </p>
-      )}
+      {isRecording && <StampRow onStamp={addStamp} count={stamps.length} />}
 
       {/* Add note button */}
       {isRecording && (

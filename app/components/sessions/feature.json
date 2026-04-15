@@ -18,7 +18,8 @@
   "problem": "A jam night produces 3-8 clips. Band members need to find, name, and navigate them easily. The recorder needs to delete mistakes. After many sessions, the band needs to track which songs are developed vs. still just ideas.",
   "analysis": "Sessions and clips stored in Postgres. A session auto-creates on first record of the night (date-based name). Each clip is one song — 5-30 min raw. Clips auto-named using a death metal word generator (adjective + noun pairs from curated lists, e.g. 'Putrid Descent', 'Severed Throne') — more memorable and distinguishable than 'Song 1 - 9:41pm'. Any band member can rename a clip via inline tap-to-edit on the clip name. ClipCard shows processing spinner when transcodeStatus=PENDING. Delete via '···' overflow button (replaces undiscoverable long-press). Session page bottom padding accounts for both tab bar height and device safe area inset.",
   "successCriteria": "- Session auto-created on first record of the night\n- Session name is editable inline by any member\n- Clip auto-named with a memorable death metal name (adjective + noun, e.g. 'Putrid Descent')\n- Any band member can rename a clip by tapping the clip name\n- ClipCard shows animated spinner while transcodeStatus is PENDING\n- Delete clip via '···' button → confirmation sheet → delete (RECORDER only)\n- Clip list shows: name, raw duration, version count, frozen lock, stage badge, processing spinner\n- Session has optional notes field (notes icon → bottom sheet editor)\n- Clip has song stage field: idea / sketch / developing / demo-ready (default: idea)\n- Last clip is never hidden behind the bottom tab bar\n- Storage indicator shows Drive quota used by this band's audio files",
-  "implementation": "1. app/(auth)/bands/[bandId]/sessions/[sessionId]/page.tsx: server component — loads session + clips via Prisma (includes latest version resultDurationMs for correct display on split children), renders SessionHeaderClient + ClipCard list. Uses pb-[calc(56px+env(safe-area-inset-bottom))] for correct clearance.\n2. components/sessions/SessionHeaderClient.tsx: client component — inline name edit, notes bottom sheet, QR code bottom sheet. Sticky with top offset from --upload-banner-h CSS variable.\n3. components/clips/ClipCard.tsx: clip list row — name (tap to edit inline), duration (latestResultDurationMs ?? sourceDurationMs so split children show correct virtual duration), version count, frozen lock, processing spinner. '···' button opens delete confirmation sheet. Long-press removed (undiscoverable pattern replaced by explicit button).\n4. app/api/clips/[clipId]/route.ts: GET clip, PATCH (name, stage, generatePublicToken, removePublicToken), DELETE (RECORDER only).\n5. lib/clipNames.ts: custom death metal adjective + noun word lists + generateDeathMetalName() using unique-names-generator.\n6. lib/utils.ts: generateClipName() delegates to generateDeathMetalName(). formatDuration() for M:SS display. formatPosition() for H:MM:SS clock display. calcResultDuration() for virtual cut preview.",
+  "implementation": "1. app/(auth)/bands/[bandId]/sessions/[sessionId]/page.tsx: server component — loads session + clips via Prisma (includes latest version resultDurationMs for correct display on split children), renders SessionHeaderClient + ClipCard list. Uses pb-[calc(56px+env(safe-area-inset-bottom))] for correct clearance.\n2. components/sessions/SessionHeaderClient.tsx: client component — inline name edit, notes bottom sheet, QR code bottom sheet. Sticky with top offset from --upload-banner-h CSS variable. Delegates to two extracted sub-components: SessionNotesSheet (owns draft+saving state, syncs to notes on open) and SessionQrSheet (renders QRCode in BottomSheet — pure UI, no state).\n3. components/clips/ClipCard.tsx: clip list row — name (tap to edit inline via useClipRename hook from hooks/useClipRename.ts), duration (latestResultDurationMs ?? sourceDurationMs so split children show correct virtual duration), version count, frozen lock, processing spinner. '···' button opens delete confirmation sheet. Long-press removed (undiscoverable pattern replaced by explicit button).
+   hooks/useClipRename.ts: encapsulates inline rename state (name, editingName, nameInput, saving), PATCH /api/clips/{clipId} call, and keyboard handlers (Enter → confirm, Escape → cancel).\n4. app/api/clips/[clipId]/route.ts: GET clip, PATCH (name, stage, generatePublicToken, removePublicToken), DELETE (RECORDER only).\n5. lib/clipNames.ts: custom death metal adjective + noun word lists + generateDeathMetalName() using unique-names-generator.\n6. lib/utils.ts: generateClipName() delegates to generateDeathMetalName(). formatDuration() for M:SS display. formatPosition() for H:MM:SS clock display. calcResultDuration() for virtual cut preview.",
   "decisions": [
     {
       "decision": "Death metal auto-names instead of 'Song N - time'",
@@ -51,6 +52,7 @@
     "Clip delete requires two steps: Postgres record deletion + Drive file deletion — if one fails, manual reconciliation may be needed"
   ],
   "componentFile": "components/clips/ClipCard.tsx",
+  "lastVerifiedDate": "2026-04-15",
   "userGuide": "Sessions appear in the band's session list sorted by date. Tap a session to see its clips. Tap the session name to rename it. Tap the notes icon to add session notes. Tap the QR icon to show a QR code bandmates can scan to join. Each clip card shows its auto-generated name, duration, version count, and current stage. Tap the clip name to rename it inline. Tap anywhere else on the card to open the clip detail. Tap '···' on a clip to delete it (Recorder-only — requires confirmation).",
   "statusHistory": [
     {
@@ -83,6 +85,15 @@
         "tags"
       ],
       "reason": "Death metal clip auto-names (lib/clipNames.ts), '···' overflow replaces long-press delete, processing spinner on ClipCard, session page padding fix for tab bar"
+    },
+    {
+      "date": "2026-04-15",
+      "author": "marc+claude",
+      "fields_changed": [
+        "implementation",
+        "lastVerifiedDate"
+      ],
+      "reason": "Documented extracted sub-components: SessionNotesSheet + SessionQrSheet extracted from SessionHeaderClient; useClipRename hook extracted from ClipCard."
     }
   ]
 }

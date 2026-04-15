@@ -22,9 +22,9 @@
     "stamps"
   ],
   "problem": "Band members need to trim dead air and setup noise from a recording — visually, in a browser, on a phone in a car or on a laptop at home — and preview the result before committing it as a new version. The clip detail page needs a pure playback experience that skips cuts during listen; the edit page needs a full-screen editor for creating cut regions.",
-  "analysis": "Two dedicated components with separate concerns:\n\n**WaveformPlayer** (clip detail page) — pure playback. Receives activeCuts from parent (ClipDetailClient). Visualises cuts as blue non-draggable regions (pointerEvents: none on regions so they don't block click-to-seek). Skip-cuts during playback via timeupdate handler. H:MM:SS clock + virtual duration display. Stamp chips are tappable <button> elements — each seeks to that timestamp. Big 64px play button.\n\n**WaveformEditor** (edit page, always edit mode) — cut creation only. Custom pointer overlay (absolute inset-0, touch-none) handles both tap-to-seek and drag-to-create-region via onPointerDown/Move/Up + setPointerCapture. Red draggable/resizable regions. Trim shortcut (pre-seeds start+end cuts). Clear All button. Split mode (mark a time position, confirm → creates Part B as new clip, navigates to session page). 'Start from' version pills pre-load a previous version's cuts. Submit → new version in Postgres, router.back(). Draft auto-saved to localStorage on every cut change; draft banner with Resume/Dismiss on reopen.\n\nAudio for both is served from /api/audio/[clipId] — a Next.js route that proxies Drive with Range request support, forwarding the user's stored token server-side. WaveSurfer interact: true enables click-to-seek in both components.",
-  "successCriteria": "- Waveform renders within 3 seconds of opening on a typical 10-min clip\n- Audio plays via Drive proxied URL — seeking supported via Range requests\n- Click-to-seek works — clicking anywhere on the waveform moves the playhead; play starts from that position\n- Stamp chips in WaveformPlayer are tappable <button> elements that seek to their timestamp\n- Cut regions in WaveformPlayer are blue overlays with pointerEvents:none — they display cuts but never block click-to-seek\n- Skip-cuts playback works in WaveformPlayer: entering a cut region during play immediately jumps to region end\n- Drag on the WaveformEditor waveform creates a red cut region\n- Tap (< 8px movement) in WaveformEditor seeks without creating a region\n- Trim button pre-seeds start cut + end cut from clip boundaries\n- Clear All button removes all cuts\n- Split: marks a time → creates Part B clip + v2 on original → navigates to session page showing both\n- 'Start from vN' pills load a previous version's cuts as starting point\n- Submit button always active — description optional\n- Draft auto-saved on every cut change; Resume/Dismiss banner shown on reopen after crash\n- Tab bar hidden during editing (edit page is near full-screen)\n- Virtual result duration updates in real time in WaveformEditor top bar",
-  "implementation": "1. components/clips/WaveformPlayer.tsx: pure player. Props: clipId, sourceDurationMs, activeCuts[], stamps[]. On init: WaveSurfer.create({ interact: true }). After addRegion(): region.element.style.pointerEvents = 'none' (display-only, does not block seek clicks). timeupdate handler skips cuts by calling ws.setTime(cut.endMs/1000). Stamp chips rendered as <button> elements that call ws.setTime(stamp.timestampMs/1000). 64px circular play/pause button.\n2. components/clips/WaveformEditor.tsx: edit-only component. Props: clipId, sourceDurationMs, frozenVersionId, initialVersions, stamps, sessionHref. Custom pointer overlay: absolute inset-0 div with touch-action:none + onPointerDown/Move/Up + setPointerCapture(pointerId). Tap (delta < 8px) → ws.seekTo(ratio); drag → regionsRef.addRegion(). No enableDragSelection() call. Trim button: addRegion({start:0, end:firstGapStart}) + addRegion({start:lastGapEnd, end:duration}). Clear All: removes all regions. Split: prompts for split time, calls POST /api/clips/[clipId]/split, navigates to sessionHref. 'Start from' pills in bottom sheet load version.cutMarks into state. localStorage key: odio:draft:{clipId}. Draft banner: Resume loads cuts, Dismiss clears localStorage. router.back() after version submit.\n3. app/api/audio/[clipId]/route.ts: proxies Drive audio with Range header forwarding. Fetches token from NextAuth accounts table for current user's bandId.\n4. lib/utils.ts: formatPosition(ms) → H:MM:SS always. formatDuration(ms) → M:SS. calcResultDuration(sourceDurationMs, cuts) → virtual result duration.",
+  "analysis": "Two dedicated components with separate concerns:\n\n**WaveformPlayer** (clip detail page) — pure playback. Receives activeCuts from parent (ClipDetailClient). Visualises cuts as near-opaque dark bands (pure CSS divs with pointer-events:none) — they display cuts but never block click-to-seek. Skip-cuts during playback via timeupdate handler inside useWaveSurfer. H:MM:SS clock + virtual duration display. Stamp chips rendered via StampJumpRow (tappable button per chip, seeks to timestamp on tap). WaveformPlayButton for play/pause.\n\n**WaveformEditor** (edit page, always edit mode) — cut creation, trimming, and split. WaveSurfer.create({ interact: false }) throughout — no built-in click/drag handling. All pointer events are captured by a single overlay div inside WaveformCanvas (absolute inset-0, touch-none, z-index 20). useCutInteraction handles the drag state machine for trim mode: tap (<8px movement delta) → seek; drag → create new cut region; drag within 24px of an existing cut boundary → resize that edge. useSplitInteraction handles split mode: tap → seek; drag → move split marker live. Cut bands are pure CSS divs rendered by WaveformCanvas — no WaveSurfer RegionsPlugin is used anywhere. WaveformEditor is a thin coordinator; all sub-features are in dedicated modules (see implementation).\n\nAudio for both is served from /api/audio/[clipId] — a Next.js route that proxies Drive with Range request support, forwarding the user's stored token server-side.",
+  "successCriteria": "- Waveform renders within 3 seconds of opening on a typical 10-min clip\n- Audio plays via Drive proxied URL — seeking supported via Range requests\n- Click-to-seek works — clicking anywhere on the waveform moves the playhead; play starts from that position\n- Stamp chips in WaveformPlayer are tappable <button> elements that seek to their timestamp\n- Cut regions in WaveformPlayer are dark overlays with pointer-events:none — they display cuts but never block click-to-seek\n- Skip-cuts playback works in WaveformPlayer: entering a cut region during play immediately jumps to region end\n- Drag on the WaveformEditor waveform creates a red cut region\n- Dragging within 24px of an existing cut edge resizes that edge (no remove-and-redraw needed)\n- Tap (< 8px movement) in WaveformEditor seeks without creating a region\n- Trim button pre-seeds start cut + end cut at 20% from each boundary\n- Clear All button removes all cuts\n- Split: marks a time → creates Part B clip + v2 on original → navigates to session page showing both\n- 'Start from vN' pills load a previous version's cuts as starting point\n- Submit button active when cuts exist — description optional\n- Draft auto-saved on every cut change; Resume/Dismiss banner shown on reopen after crash\n- Tab bar hidden during editing (edit page is near full-screen)\n- Virtual result duration updates in real time in WaveformEditor top bar",
+  "implementation": "1. components/clips/WaveformEditor.tsx: thin coordinator. Owns: cutMarks[] state + ref, zoom level + ref, submit/split async flows, sheet open states. Delegates all UI and interaction to the 15 sub-modules below. Architecture note: the waveform card is never conditionally unmounted — unmounting WaveSurfer's containerRef div at 0px breaks the canvas.\n2. components/clips/useWaveSurfer.ts: WaveSurfer 7.x lifecycle (create, load, destroy, retry). interact:false — no built-in click/drag. Exposes: containerRef, scrollContainerRef, basePxPerSecRef, effectiveDurMsRef, wsState, isPlaying, currentTimeMs, effectiveDurationMs, seek, togglePlay, applyZoom, retry, waveScrollLeft, waveTotalWidth, audioDurationMismatch, audioErrorStatus.\n3. components/clips/useCutInteraction.ts: pointer state machine for trim mode. Reads cutMarksRef + basePxPerSecRef for hit detection. Tap (<8px delta) → seek; drag start → create new cut; drag within 24px of a cut edge → resize that edge. setPointerCapture on pointerDown for mobile reliability. Returns { pointerHandlers, cursorStyle, previewCut }.\n4. components/clips/useSplitInteraction.ts: pointer state machine for split mode. Tap → seek; drag → call onSetSplitMs live. setPointerCapture pattern. Returns { pointerHandlers, cursorStyle }.\n5. components/clips/useCutDraft.ts: localStorage auto-save on every cutMarks change. Key: odio:draft:{clipId}. Reads on mount, clears on submit. Returns { hasDraft, resume, dismiss, clear }.\n6. components/clips/WaveformCanvas.tsx: pure presenter — no state, no WaveSurfer access. Renders: WaveSurfer mount div (interact:false), cut bands (CSS divs, pointer-events:none), preview cut band (during drag-create), edge grip indicators (24px hit zones as visual markers), drag overlay div (single div at z-20 that intercepts all pointer events), split marker (cyan vertical line with drag handle). variant='edit' uses red bands + edge handles; variant='player' uses dark masking bands with no handles.\n7. components/clips/WaveformSplitter.tsx: split mode controls panel — Part A duration / split marker time / Part B duration + Mark Here / Confirm / Cancel buttons.\n8. components/clips/WaveformZoomControls.tsx: zoom in/out buttons + visible-duration label. ZOOM_LEVELS = [1, 2, 4, 8, 16, 32, 64]x.\n9. components/clips/WaveformPlayButton.tsx: shared amber circular play/pause button (80px). Used by WaveformEditor, WaveformPlayer, PublicPlayer.\n10. components/clips/StampJumpRow.tsx: row of tappable stamp chips that seek to timestamp on tap. Used by WaveformEditor, WaveformPlayer, PublicPlayer. Accepts optional className for layout customisation.\n11. components/clips/EditorToolbar.tsx: Trim / Clear all / Split quick-action buttons. hasCuts prop enables/disables Clear all.\n12. components/clips/CutList.tsx: cut list rows with expand/collapse, nudge controls (±10ms, ±100ms), remove button, zoom-to-cut, jump-to-start. expandedCutId controlled externally by WaveformEditor.\n13. components/clips/DraftRestoreBanner.tsx: banner offering to resume a saved draft. Only shown when show=true (controlled by hasDraft && cutMarks.length === 0).\n14. components/clips/VersionStartPicker.tsx: 'Start from vN' shortcut buttons that load a version's cutMarks into the editor. Returns null when versions.length === 0.\n15. components/clips/SubmitVersionSheet.tsx: bottom sheet — description input + submit button. Owns description/submitting/error state. Parent passes onSubmit(description): Promise<void> that throws on error; sheet catches and displays error inline.\n16. components/clips/SplitConfirmSheet.tsx: bottom sheet — split confirmation with splitMs display. Owns splitting/error state. Parent passes onConfirm(): Promise<void> that throws on error.\n17. app/api/audio/[clipId]/route.ts: proxies Drive audio with Range header forwarding. Fetches band member's token from NextAuth accounts table.\n18. lib/utils.ts: formatPosition(ms) → H:MM:SS. formatDuration(ms) → M:SS. calcResultDuration(sourceDurationMs, cuts[]) → virtual result duration. formatDurationDiff(ms, cuts[]) → result duration string with diff indicator.",
   "decisions": [
     {
       "decision": "WaveformPlayer and WaveformEditor are separate components",
@@ -33,33 +33,41 @@
       "date": "2026-04-11"
     },
     {
-      "decision": "Custom pointer overlay for drag-to-create in editor (no enableDragSelection)",
-      "rationale": "WaveSurfer's enableDragSelection registers a permanent pointer overlay that consumes all pointer events — including click-to-seek. Once called, seeking by clicking is broken. A custom absolute-positioned overlay with onPointerDown/Move/Up + setPointerCapture handles both tap-to-seek (< 8px movement) and drag-to-create (>= 8px) without blocking WaveSurfer's own event handling on other elements.",
-      "recommendation": "In WaveformEditor: absolute inset-0 div with touch-action:none as overlay. tap → seekTo(); drag → addRegion(). No enableDragSelection() call anywhere.",
-      "date": "2026-04-11"
+      "decision": "interact:false + single overlay div for all pointer handling (no enableDragSelection)",
+      "rationale": "WaveSurfer's enableDragSelection registers a permanent pointer overlay that consumes all pointer events — including click-to-seek. Once called, seeking by clicking is broken. interact:false disables WaveSurfer's built-in event handling entirely. A single custom overlay div (absolute inset-0, touch-none, z-20) inside WaveformCanvas intercepts all pointer events and delegates to useCutInteraction (trim mode) or useSplitInteraction (split mode). Both hooks implement the tap-vs-drag state machine and setPointerCapture for mobile.",
+      "recommendation": "WaveSurfer({ interact: false }) for all instances. WaveformCanvas renders one overlay div that passes pointer events to the caller's hook via props. No enableDragSelection(), no RegionsPlugin.",
+      "date": "2026-04-15",
+      "alternativesConsidered": [
+        "interact:true + WaveSurfer's built-in seek — breaks once enableDragSelection is called",
+        "RegionsPlugin for cut visualization — adds DOM weight, region resize handles conflict with overlay"
+      ]
     },
     {
-      "decision": "pointerEvents:none on display-only regions in WaveformPlayer",
-      "rationale": "WaveSurfer RegionsPlugin renders region overlays as absolutely positioned divs above the waveform canvas in z-index. Without pointerEvents:none, clicking on a cut region (the blue overlay) is swallowed by the div before reaching WaveSurfer's click-to-seek handler. The cursor moves but the playhead doesn't update.",
-      "recommendation": "After addRegion() in WaveformPlayer, set region.element.style.pointerEvents = 'none'. This makes all regions display-only and lets all clicks pass through to WaveSurfer's seek handler.",
-      "date": "2026-04-11"
+      "decision": "Cut bands are pure CSS divs, not WaveSurfer regions",
+      "rationale": "WaveSurfer RegionsPlugin creates DOM nodes inside the waveform container that sit above the waveform canvas. These nodes intercept pointer events even with pointerEvents:none on individual regions because the RegionsPlugin wrapper div captures them first. Pure CSS absolute-positioned divs with pointer-events:none do not interfere with the overlay div at all, and their position can be computed from millisecond values without any WaveSurfer API calls.",
+      "recommendation": "WaveformCanvas computes left/width from (ms / effectiveDurationMs) * totalWidth - scrollLeft. No WaveSurfer region APIs used anywhere. Cut band positions update when waveScrollLeft or waveTotalWidth props change (scroll/zoom).",
+      "date": "2026-04-15",
+      "alternativesConsidered": [
+        "WaveSurfer RegionsPlugin — conflicts with custom overlay, harder to scroll-correct positions",
+        "Canvas overlay — requires repainting on every animation frame; CSS divs reflow only on prop change"
+      ]
     },
     {
-      "decision": "Stamp chips in WaveformPlayer are tappable buttons, not divs",
-      "rationale": "Divs are not keyboard-accessible and do not receive touch events reliably on all browsers. Using <button> elements with explicit onClick={() => ws.setTime(stamp.timestampMs/1000)} makes stamp chips proper interactive controls with correct accessibility semantics and reliable touch behavior.",
-      "recommendation": "Render stamp chips as <button> with aria-label='Jump to M:SS'. onClick calls ws.setTime(stamp.timestampMs/1000). Style with active:scale-95 for tap feedback.",
+      "decision": "Stamp chips in WaveformPlayer/WaveformEditor/PublicPlayer are tappable buttons via StampJumpRow",
+      "rationale": "Divs are not keyboard-accessible and do not receive touch events reliably on all browsers. Using <button> elements makes stamp chips proper interactive controls. StampJumpRow is a shared component used by all three players — one source of truth for chip styling and seek behavior.",
+      "recommendation": "StampJumpRow: renders chips as <button> with aria-label='Jump to M:SS'. onClick calls ws.seek(stamp.timestampMs/1000). Accepts className prop for layout flexibility across callers.",
       "date": "2026-04-11"
     },
     {
       "decision": "Split navigates to session page, not back to clip detail",
       "rationale": "After a split, two clips exist. router.back() would go back to the original clip's detail page — the user would not see Part B at all without manually navigating. router.push(sessionHref) lands on the session clip list where both Part A and Part B are visible and accessible.",
-      "recommendation": "WaveformEditor accepts sessionHref prop. After successful split API call: router.push(sessionHref).",
+      "recommendation": "WaveformEditor accepts sessionHref prop. After successful split API call: setSplitMode(false) → router.push(sessionHref).",
       "date": "2026-04-11"
     },
     {
       "decision": "Virtual cut preview via seek — no re-encode",
-      "rationale": "Re-encoding for preview requires server round-trip or WASM FFmpeg. WaveSurfer can seek to any position — skip cut regions during playback by intercepting timeupdate events. Zero server cost, instant response.",
-      "recommendation": "Intercept WaveSurfer 'timeupdate': if currentTime falls within a cut region, seek to region.endMs immediately.",
+      "rationale": "Re-encoding for preview requires server round-trip or WASM FFmpeg. WaveSurfer can seek to any position — skip cut regions during playback by intercepting timeupdate events in useWaveSurfer. Zero server cost, instant response.",
+      "recommendation": "useWaveSurfer timeupdate handler: if currentTime falls within a cut region (from cutMarksRef), seek to region.endMs/1000 immediately.",
       "date": "2026-04-10"
     },
     {
@@ -71,17 +79,18 @@
     {
       "decision": "localStorage for in-progress edit safety",
       "rationale": "Full offline sync adds complexity. The real risk is a browser crash mid-edit. localStorage persists cut marks across crashes. Key: odio:draft:{clipId}. Cleared on successful submit.",
-      "recommendation": "WaveformEditor writes cutMarks to localStorage on every change. Draft banner shown on reopen. Resume loads draft; Dismiss clears it.",
+      "recommendation": "useCutDraft writes cutMarks to localStorage on every state change. Pass raw state array (not a mapped copy) to useCutDraft to avoid triggering the effect on every render. DraftRestoreBanner shown on reopen when hasDraft && cutMarks.length === 0.",
       "date": "2026-04-10"
     }
   ],
   "knownLimitations": [
-    "Editor overlay blocks region resize handles on existing cuts — to adjust a cut, remove it and redraw",
     "Audio proxy route adds latency vs direct URL — mitigated by the server having fast egress to Google's CDN",
-    "If the clip's Drive file is unavailable (recorder revoked share, Drive outage), editor shows an error"
+    "If the clip's Drive file is unavailable (recorder revoked share, Drive outage), editor shows an error with Reconnect Drive option",
+    "Zoom level resets to 1x when entering split mode — by design, split mode always shows the full waveform for context"
   ],
   "componentFile": "components/clips/WaveformEditor.tsx",
-  "userGuide": "From a clip's detail page, the waveform player shows cuts as blue overlays. Tap any stamp chip to jump to that moment. Click-to-seek works anywhere on the waveform — even on cut overlays. Tap 'Edit cuts' to open the full-screen editor. In the editor: drag on the waveform to create a red cut region; tap Trim to pre-seed start/end cuts; tap Clear all to reset; tap Split to divide the song into two clips at a chosen time position. Tap 'Start from vN' to load a previous version's cuts as a starting point. Tap 'Submit edit' to save as a new version — description is optional. Draft cuts survive browser crashes and are recovered on reopen.",
+  "userGuide": "From a clip's detail page, the waveform player shows cuts as dark overlays. Tap any stamp chip to jump to that moment. Click-to-seek works anywhere on the waveform — even on cut overlays. Tap 'Edit cuts' to open the full-screen editor. In the editor: drag on the waveform to create a red cut region; drag the edge of an existing region to resize it; tap Trim to pre-seed start/end cuts; tap Clear all to reset; tap Split to divide the song into two clips at a chosen time position. Tap 'Start from vN' to load a previous version's cuts as a starting point. Tap 'Submit edit' to save as a new version — description is optional. Draft cuts survive browser crashes and are recovered on reopen.",
+  "lastVerifiedDate": "2026-04-15",
   "statusHistory": [
     {
       "from": "draft",
@@ -97,7 +106,7 @@
       "from": "frozen",
       "to": "active",
       "date": "2026-04-11",
-      "reason": "Major architectural redesign: WaveformPlayer (pure playback) split from WaveformEditor (pure edit). Custom pointer overlay replaces enableDragSelection. pointerEvents:none on display-only regions fixes click-to-seek. Stamp chips changed to tappable buttons. Split navigates to session page. Trim/Clear All/Split buttons added."
+      "reason": "Major architectural redesign: WaveformPlayer (pure playback) split from WaveformEditor (pure edit). Custom pointer overlay replaces enableDragSelection. CSS divs replace RegionsPlugin for cut visualization. Stamp chips changed to tappable buttons. Split navigates to session page. Trim/Clear All/Split buttons added."
     }
   ],
   "revisions": [
@@ -114,7 +123,19 @@
         "userGuide",
         "tags"
       ],
-      "reason": "Separated WaveformPlayer (pure playback, pointerEvents:none on regions, tappable stamp chips) from WaveformEditor (custom pointer overlay, no enableDragSelection, Trim/Clear/Split tools, localStorage draft banner, sessionHref for split navigation)."
+      "reason": "Separated WaveformPlayer (pure playback, CSS cut bands, tappable stamp chips) from WaveformEditor (custom pointer overlay, no enableDragSelection, Trim/Clear/Split tools, localStorage draft banner, sessionHref for split navigation)."
+    },
+    {
+      "date": "2026-04-15",
+      "author": "marc+claude",
+      "fields_changed": [
+        "analysis",
+        "implementation",
+        "decisions",
+        "knownLimitations",
+        "lastVerifiedDate"
+      ],
+      "reason": "Corrected stale architecture description: interact:false throughout (not true), RegionsPlugin removed (CSS divs only), full sub-component hierarchy documented (16 modules). Removed stale limitation about edge handles blocking — edge resize works via useCutInteraction. Added decisions for CSS-div cut bands and interact:false rationale."
     }
   ]
 }

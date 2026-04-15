@@ -44,12 +44,16 @@ export interface WaveformCanvasProps {
   splitMode: boolean;
   splitLinePercent: number;
 
+  // Split hover ghost — shown at this % when hovered in split mode.
+  splitHoverPercent?: number | null;
+
   // Overlay interaction — all pointer events forwarded from the caller's hook
   pointerHandlers: {
     onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
     onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => void;
     onPointerUp: (e: React.PointerEvent<HTMLDivElement>) => void;
     onPointerCancel: (e: React.PointerEvent<HTMLDivElement>) => void;
+    onPointerLeave?: (e: React.PointerEvent<HTMLDivElement>) => void;
   };
   cursorStyle: string;
 }
@@ -58,7 +62,7 @@ export function WaveformCanvas({
   containerRef, wsState, audioErrorStatus, onRetry,
   variant = "edit",
   cutMarks, previewCut, effectiveDurationMs, waveScrollLeft, waveTotalWidth, containerWidthPx,
-  splitMode, splitLinePercent,
+  splitMode, splitLinePercent, splitHoverPercent,
   pointerHandlers, cursorStyle,
 }: WaveformCanvasProps) {
   const isPlayer = variant === "player";
@@ -75,8 +79,9 @@ export function WaveformCanvas({
       <div className="relative">
 
         {/* WaveSurfer mounts its canvas here. interact:false means the canvas
-            itself doesn't handle any pointer events — the overlay div below does. */}
-        <div ref={containerRef} className="w-full" />
+            itself doesn't handle any pointer events — the overlay div below does.
+            Hidden in error state so the blank canvas doesn't show above the error message. */}
+        <div ref={containerRef} className={wsState === "error" ? "w-full hidden" : "w-full"} />
 
         {/* Cut bands — overlay showing cut/muted regions.
             "edit"   variant: semi-transparent red (highlights region to cut)
@@ -124,8 +129,10 @@ export function WaveformCanvas({
 
         {/* Drag overlay — single div that intercepts all pointer events.
             z-index 20 puts it above cut bands (z-5) but the edge indicators
-            are also pointer-events:none (z-30) so there's no capture conflict. */}
-        {wsState === "ready" && !splitMode && (
+            are also pointer-events:none (z-30) so there's no capture conflict.
+            Rendered in both edit and split modes so callers always get their
+            pointer handlers attached (WaveformSplitter needs this in split mode). */}
+        {wsState === "ready" && (
           <div
             className="absolute inset-0 touch-none select-none"
             style={{ cursor: cursorStyle, zIndex: 20 }}
@@ -133,6 +140,7 @@ export function WaveformCanvas({
             onPointerMove={pointerHandlers.onPointerMove}
             onPointerUp={pointerHandlers.onPointerUp}
             onPointerCancel={pointerHandlers.onPointerCancel}
+            onPointerLeave={pointerHandlers.onPointerLeave}
           />
         )}
 
@@ -180,7 +188,23 @@ export function WaveformCanvas({
           );
         })}
 
-        {/* Split position marker — cyan vertical line at the selected split point */}
+        {/* Split hover ghost — thin semi-transparent line showing where a tap would land.
+            Only shown when the pointer is hovering over the waveform without pressing.
+            pointer-events:none — the overlay div above captures all input. */}
+        {splitMode && wsState === "ready" && splitHoverPercent != null && (
+          <div
+            className="pointer-events-none absolute top-0 bottom-0 w-px -translate-x-1/2"
+            style={{
+              left: `${splitHoverPercent}%`,
+              background: "rgba(34,211,238,0.35)",
+              zIndex: 9,
+            }}
+          />
+        )}
+
+        {/* Split position marker — cyan vertical line at the selected split point.
+            The center grip handle (wide pill with grip bars) signals that the
+            line can be dragged. pointer-events:none — the overlay div captures all input. */}
         {splitMode && wsState === "ready" && (
           <div
             className="pointer-events-none absolute top-0 bottom-0 z-10 w-[2px] -translate-x-1/2"
@@ -190,10 +214,25 @@ export function WaveformCanvas({
               boxShadow: "0 0 8px 3px rgba(34,211,238,0.35)",
             }}
           >
+            {/* Top arrowhead */}
             <div
               className="absolute -top-0.5 left-1/2 -translate-x-1/2 size-3 rotate-45"
               style={{ background: "#22d3ee" }}
             />
+            {/* Center drag handle — wide pill with grip bars */}
+            <div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full flex flex-col items-center justify-center gap-[3px]"
+              style={{
+                width: 22,
+                height: 44,
+                background: "#22d3ee",
+                boxShadow: "0 0 0 2px rgba(34,211,238,0.25)",
+              }}
+            >
+              <div style={{ width: 8, height: 1.5, borderRadius: 1, background: "rgba(0,30,30,0.55)" }} />
+              <div style={{ width: 8, height: 1.5, borderRadius: 1, background: "rgba(0,30,30,0.55)" }} />
+              <div style={{ width: 8, height: 1.5, borderRadius: 1, background: "rgba(0,30,30,0.55)" }} />
+            </div>
           </div>
         )}
       </div>

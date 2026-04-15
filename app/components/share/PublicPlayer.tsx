@@ -7,8 +7,9 @@
 // No cuts, no editing, no version interaction. Stamps are display-only links.
 
 import { useWaveSurfer } from "@/components/clips/useWaveSurfer";
-import { formatDuration, formatPosition } from "@/lib/utils";
-import { STAMP_COLORS, STAMP_EMOJI } from "@/types";
+import { WaveformPlayButton } from "@/components/clips/WaveformPlayButton";
+import { StampJumpRow } from "@/components/clips/StampJumpRow";
+import { formatPosition } from "@/lib/utils";
 import type { StampType } from "@/types";
 
 interface PublicPlayerProps {
@@ -65,47 +66,21 @@ export function PublicPlayer({ token, sourceDurationMs, stamps }: PublicPlayerPr
           </div>
         )}
 
-        {/* Stamp markers */}
-        {stamps.length > 0 && wsState === "ready" && (
-          <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-            {stamps.map((stamp) => (
-              <button
-                key={stamp.id}
-                onClick={() => ws.seek(stamp.timestampMs / 1000)}
-                aria-label={`Jump to ${formatDuration(stamp.timestampMs)}`}
-                className="flex-shrink-0 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs active:scale-95 transition-transform"
-                style={{
-                  backgroundColor: `${STAMP_COLORS[stamp.type]}20`,
-                  color: STAMP_COLORS[stamp.type],
-                }}
-              >
-                <span>{STAMP_EMOJI[stamp.type]}</span>
-                <span className="font-mono">{formatDuration(stamp.timestampMs)}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        <StampJumpRow
+          stamps={stamps}
+          wsState={wsState}
+          onSeek={ws.seek}
+          className="mt-2 flex gap-2 overflow-x-auto pb-1"
+        />
       </div>
 
       {/* Playback controls */}
       <div className="flex items-center justify-center gap-6">
-        <button
-          onClick={ws.togglePlay}
+        <WaveformPlayButton
+          isPlaying={isPlaying}
           disabled={wsState !== "ready"}
-          aria-label={isPlaying ? "Pause" : "Play"}
-          className="flex h-20 w-20 items-center justify-center rounded-full bg-accent text-base shadow-[0_4px_0_0_#78350f] transition-[transform,box-shadow] duration-75 active:translate-y-[4px] active:shadow-none disabled:opacity-40 disabled:shadow-none"
-        >
-          {isPlaying ? (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="size-8" aria-hidden>
-              <rect x="6" y="4" width="4" height="16" rx="1" />
-              <rect x="14" y="4" width="4" height="16" rx="1" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="size-8" aria-hidden>
-              <polygon points="5,3 19,12 5,21" />
-            </svg>
-          )}
-        </button>
+          onClick={ws.togglePlay}
+        />
 
         {/* Download link */}
         <a

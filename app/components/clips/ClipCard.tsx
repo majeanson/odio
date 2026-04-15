@@ -8,6 +8,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useClipRename } from "@/hooks/useClipRename";
 import { formatDuration } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
@@ -23,38 +24,9 @@ interface ClipCardProps {
 
 export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCardProps) {
   const router = useRouter();
-  const [name, setName] = useState(clip.name);
-  const [editingName, setEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState(clip.name);
+  const rename = useClipRename(clip.id, clip.name);
   const [deleteSheetOpen, setDeleteSheetOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  async function saveName(newName: string) {
-    const trimmed = newName.trim();
-    if (!trimmed || trimmed === name) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/clips/${clip.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: trimmed }),
-      });
-      if (res.ok) setName(trimmed);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function handleNameBlur() {
-    saveName(nameInput);
-    setEditingName(false);
-  }
-
-  function handleNameKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") { saveName(nameInput); setEditingName(false); }
-    if (e.key === "Escape") { setNameInput(name); setEditingName(false); }
-  }
 
   async function handleDelete() {
     setDeleting(true);
@@ -71,7 +43,7 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
   }
 
   function handleCardClick() {
-    if (!editingName) {
+    if (!rename.editingName) {
       router.push(`/bands/${bandId}/sessions/${clip.sessionId}/clips/${clip.id}`);
     }
   }
@@ -84,15 +56,15 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
       >
         {/* Main content */}
         <div className="flex-1 min-w-0">
-          {/* Clip name */}
-          {editingName ? (
+          {/* Clip name — tap to rename inline */}
+          {rename.editingName ? (
             <input
               autoFocus
               type="text"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              onBlur={handleNameBlur}
-              onKeyDown={handleNameKeyDown}
+              value={rename.nameInput}
+              onChange={(e) => rename.setNameInput(e.target.value)}
+              onBlur={rename.confirmEdit}
+              onKeyDown={rename.handleKeyDown}
               maxLength={100}
               className="w-full bg-transparent font-display text-lg font-semibold text-primary focus:outline-none border-b border-accent pb-0.5"
               onClick={(e) => e.stopPropagation()}
@@ -100,14 +72,9 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
           ) : (
             <button
               className="text-left font-display text-lg font-semibold text-primary"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setNameInput(name);
-                setEditingName(true);
-              }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); rename.startEditing(); }}
             >
-              {saving ? <span className="opacity-60">{nameInput}</span> : name}
+              {rename.saving ? <span className="opacity-60">{rename.nameInput}</span> : rename.name}
             </button>
           )}
 
@@ -170,7 +137,7 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
       <BottomSheet
         open={deleteSheetOpen}
         onClose={() => setDeleteSheetOpen(false)}
-        title={`Delete "${name}"?`}
+        title={`Delete "${rename.name}"?`}
       >
         <div className="space-y-3">
           <p className="text-sm text-secondary">
