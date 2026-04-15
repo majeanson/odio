@@ -108,6 +108,7 @@ function PostRecordScreen() {
   }
 
   function handleDone() {
+    router.refresh();
     router.replace(resultSessionId
       ? `/bands/${bandId}/sessions/${resultSessionId}`
       : `/bands/${bandId}`
