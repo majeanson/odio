@@ -62,8 +62,14 @@ interface DragState {
   startY: number;
   startSec: number;
   mode: DragMode;
+  // Active resize target — only set once movement commits to "resize" mode.
   resizeCutId: string | null;
   resizeEdge: "start" | "end" | null;
+  // Deferred resize target — set when the pointer starts inside a cut band
+  // (not near an edge). Stays pending until movement crosses the threshold;
+  // if the pointer lifts with no movement it's treated as a seek, not resize.
+  deferredResizeCutId: string | null;
+  deferredResizeEdge: "start" | "end" | null;
   panScrollStart: number;
 }
 
@@ -419,39 +425,36 @@ export function WaveformEditor({
     const startSec = clientXToSec(e.clientX);
     const startMs  = startSec * 1000;
 
-    // 1. Check proximity to a cut edge (works at any zoom).
+    // 1. Check proximity to a cut edge (high-confidence intent → resize immediately).
     const edgeHit = findEdgeAt(e.clientX);
     if (edgeHit) {
       dragStateRef.current = {
         startX: e.clientX, startY: e.clientY, startSec,
         mode: "resize",
         resizeCutId: edgeHit.cutId, resizeEdge: edgeHit.edge,
+        deferredResizeCutId: null, deferredResizeEdge: null,
         panScrollStart: 0,
       };
       return;
     }
 
-    // 2. Tap landed INSIDE a cut region — resize the nearest edge.
-    // Primary mobile path: tap anywhere in the red band, not just the edge zone.
+    // 2. Pointer is inside a cut band but not near an edge.
+    // Stay "pending" and defer the resize target — if the pointer lifts without
+    // meaningful movement this is a tap (→ seek). Only commit to resize in
+    // handleDragMove once sufficient movement is detected.
     const hitCut = cutMarksRef.current.find(
       (cm) => startMs > cm.startMs && startMs < cm.endMs,
     );
-    if (hitCut) {
-      const edge: "start" | "end" =
-        (startMs - hitCut.startMs) < (hitCut.endMs - startMs) ? "start" : "end";
-      dragStateRef.current = {
-        startX: e.clientX, startY: e.clientY, startSec,
-        mode: "resize",
-        resizeCutId: hitCut.id, resizeEdge: edge,
-        panScrollStart: 0,
-      };
-      return;
-    }
+    const deferredEdge: "start" | "end" | null = hitCut
+      ? ((startMs - hitCut.startMs) < (hitCut.endMs - startMs) ? "start" : "end")
+      : null;
 
     dragStateRef.current = {
       startX: e.clientX, startY: e.clientY, startSec,
       mode: "pending",
       resizeCutId: null, resizeEdge: null,
+      deferredResizeCutId: hitCut?.id ?? null,
+      deferredResizeEdge: deferredEdge,
       panScrollStart: scrollContainerRef.current?.scrollLeft ?? 0,
     };
   }
@@ -493,8 +496,15 @@ export function WaveformEditor({
     // ── Determine mode if still pending ──────────────────────────────────
     if (drag.mode === "pending") {
       if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) return;
-      // Horizontal drag when zoomed in → pan the waveform.
-      if (zoomLevel > 1 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+      // Movement crossed threshold — commit to a mode.
+      if (drag.deferredResizeCutId && drag.deferredResizeEdge) {
+        // Pointer started inside a cut band: commit to resize that edge.
+        dragStateRef.current = {
+          ...drag, mode: "resize",
+          resizeCutId: drag.deferredResizeCutId, resizeEdge: drag.deferredResizeEdge,
+        };
+      } else if (zoomLevel > 1 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+        // Horizontal drag when zoomed → pan the waveform.
         dragStateRef.current = { ...drag, mode: "pan" };
       } else {
         dragStateRef.current = { ...drag, mode: "create" };
@@ -534,8 +544,8 @@ export function WaveformEditor({
     };
 
     if (drag.mode === "resize") {
-      // Tap on edge or inside cut (no real movement) → treat as a seek.
-      if (Math.abs(e.clientX - drag.startX) < 6 && Math.abs(e.clientY - drag.startY) < 6) {
+      // Tap directly on a cut edge (immediate resize mode, no real movement) → seek.
+      if (Math.abs(e.clientX - drag.startX) < 8 && Math.abs(e.clientY - drag.startY) < 8) {
         seekTo(e.clientX);
       }
       return;
