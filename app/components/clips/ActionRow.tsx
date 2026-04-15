@@ -13,7 +13,7 @@ interface ActionRowProps {
 }
 
 const chevronRight = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4 text-muted shrink-0" aria-hidden>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-5 text-muted shrink-0" aria-hidden>
     <polyline points="9 18 15 12 9 6" />
   </svg>
 );
@@ -30,7 +30,7 @@ export function ActionRow({ icon, label, sub, onClick, right, highlight }: Actio
       {icon}
       <div className="flex-1 min-w-0">
         <p className="text-lg font-semibold text-primary">{label}</p>
-        {sub && <p className="text-sm text-muted mt-0.5">{sub}</p>}
+        {sub && <p className="text-base text-muted mt-1">{sub}</p>}
       </div>
       {right !== undefined ? right : chevronRight}
     </>

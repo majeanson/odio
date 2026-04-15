@@ -1,7 +1,14 @@
 "use client";
-// ClipDetailClient — 3-tab coordinator: Versions | Vote | Chat.
+// ClipDetailClient — 2-tab coordinator: Edit | Team.
+//
+// Edit tab (default): actions first (edit/trim/split CTA), then version chain
+// newest-to-oldest (v3 → v2 → v1 "Original"), then lifecycle actions (freeze/share/cleanup).
+//
+// Team tab: vote + comments in one view. Secondary priority — relevant once the
+// clip is near-frozen or frozen, after the edit workflow is complete.
+//
 // WaveformPlayer is always visible above the tab bar so playback persists across tabs.
-// selectedVersionId is lifted so the player, vote panel, and stage all stay in sync.
+// selectedVersionId is lifted so the player, vote panel, and actions all stay in sync.
 
 import { useState } from "react";
 import Link from "next/link";
@@ -12,7 +19,7 @@ import { CollaborationSection } from "./CollaborationSection";
 import { VersionCard } from "./VersionCard";
 import type { ClipVersion, Stamp, Vote, Comment, ClipStage, BandRole } from "@/types";
 
-type TabId = "versions" | "vote" | "chat";
+type TabId = "edit" | "team";
 
 interface ClipDetailClientProps {
   clipId: string;
@@ -48,12 +55,16 @@ export function ClipDetailClient({
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
     () => versions.at(-1)?.id ?? null,
   );
-  const [tab, setTab] = useState<TabId>("versions");
+  const [tab, setTab] = useState<TabId>("edit");
 
   const selectedVersion = versions.find((v) => v.id === selectedVersionId) ?? null;
   const activeCuts = Array.isArray(selectedVersion?.cutMarks)
     ? (selectedVersion!.cutMarks as Array<{ startMs: number; endMs: number }>)
     : [];
+
+  // Newest first for display; original (v1) lands at the bottom.
+  // VersionCard already labels v1 "Original recording" when no description is set.
+  const versionsNewestFirst = [...versions].reverse();
 
   const sharedCollabProps = {
     clipId, memberCount, currentUserEmail, frozen, versions,
@@ -64,10 +75,9 @@ export function ClipDetailClient({
   } as const;
 
   const TABS = [
-    { id: "versions" as const, label: "Versions" },
-    { id: "vote"     as const, label: "Vote" },
-    { id: "chat"     as const, label: "Chat", badge: initialComments.length || undefined },
-  ] satisfies { id: TabId; label: string; badge?: number }[];
+    { id: "edit"  as const, label: "Edit" },
+    { id: "team"  as const, label: "Team" },
+  ] satisfies { id: TabId; label: string }[];
 
   return (
     <div className="flex flex-col md:max-w-3xl md:mx-auto">
@@ -79,48 +89,26 @@ export function ClipDetailClient({
 
       {/* Tab bar */}
       <div className="sticky z-20 flex bg-base border-b border-border" style={{ top: "calc(var(--upload-banner-h, 0px) + 72px)" }}>
-        {TABS.map(({ id, label, badge }) => (
+        {TABS.map(({ id, label }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
             className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 border-b-2 transition-colors",
-              "text-xs font-bold uppercase tracking-widest py-3",
+              "flex-1 flex items-center justify-center border-b-2 transition-colors",
+              "text-sm font-bold uppercase tracking-wide py-3",
               tab === id ? "text-primary border-accent" : "text-muted border-transparent",
             )}
           >
             {label}
-            {badge != null && (
-              <span className={cn(
-                "text-[10px] font-bold rounded-full px-1.5 py-0.5 leading-none",
-                tab === id ? "bg-accent/20 text-accent" : "bg-elevated text-muted",
-              )}>
-                {badge}
-              </span>
-            )}
           </button>
         ))}
       </div>
 
-      {/* Versions tab */}
-      {tab === "versions" && (
-        <div className="px-4 pt-6 pb-8 flex flex-col gap-4">
-          {versions.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              {versions.map((v) => (
-                <VersionCard
-                  key={v.id}
-                  version={v}
-                  isActive={v.id === selectedVersionId}
-                  sourceDurationMs={sourceDurationMs}
-                  onClick={() => setSelectedVersionId(v.id)}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted px-1">Recording not yet processed.</p>
-          )}
+      {/* Edit tab — actions first, then version chain newest→oldest, then lifecycle */}
+      {tab === "edit" && (
+        <div className="px-4 pt-6 pb-8 flex flex-col gap-3">
 
+          {/* Primary action — Edit cuts (only when editable) */}
           {canEdit && !frozen && (
             <Link
               href={editHref}
@@ -142,6 +130,22 @@ export function ClipDetailClient({
             </Link>
           )}
 
+          {/* Version chain — newest first, original at bottom */}
+          {versions.length > 0 ? (
+            versionsNewestFirst.map((v) => (
+              <VersionCard
+                key={v.id}
+                version={v}
+                isActive={v.id === selectedVersionId}
+                sourceDurationMs={sourceDurationMs}
+                onClick={() => setSelectedVersionId(v.id)}
+              />
+            ))
+          ) : (
+            <p className="text-sm text-muted px-1">Recording not yet processed.</p>
+          )}
+
+          {/* Lifecycle actions — freeze, share, cleanup */}
           {(canEdit || frozen) && (
             <ClipActionsClient
               clipId={clipId} clipName={clipName} frozen={frozen}
@@ -154,17 +158,30 @@ export function ClipDetailClient({
         </div>
       )}
 
-      {/* Vote tab */}
-      {tab === "vote" && (
-        <div className="px-4 pt-6 pb-8">
-          <CollaborationSection {...sharedCollabProps} scope="vote-stage" />
-        </div>
-      )}
-
-      {/* Chat tab */}
-      {tab === "chat" && (
-        <div className="px-4 pt-6 pb-8">
-          <CollaborationSection {...sharedCollabProps} scope="comments" />
+      {/* Team tab — vote + comments, post-edit collaboration */}
+      {tab === "team" && (
+        <div className="px-4 pt-6 pb-8 flex flex-col gap-4">
+          {/* Version context — surfaces which version is being voted on */}
+          {selectedVersion && (
+            <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-0.5">Voting on</p>
+                <p className="text-sm font-semibold text-primary">
+                  v{selectedVersion.versionNumber}
+                  {selectedVersion.description && (
+                    <span className="font-normal text-secondary"> — {selectedVersion.description}</span>
+                  )}
+                </p>
+              </div>
+              <button
+                onClick={() => setTab("edit")}
+                className="shrink-0 text-xs text-accent font-medium"
+              >
+                change
+              </button>
+            </div>
+          )}
+          <CollaborationSection {...sharedCollabProps} scope="full" />
         </div>
       )}
     </div>

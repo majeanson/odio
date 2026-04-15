@@ -36,20 +36,20 @@ export function WaveformSplitter({
       {/* Split position summary */}
       <div className="px-5 py-3 flex gap-4 text-sm font-mono">
         <div className="flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-0.5">Part A</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-0.5">Part A</p>
           <p className="text-primary">0:00:00 – {formatPosition(partAMs)}</p>
           <p className="text-xs text-muted">{formatPosition(partAMs)}</p>
         </div>
         <div className="w-px bg-white/10 self-stretch" />
         <div className="flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-0.5">Part B</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-0.5">Part B</p>
           <p className="text-primary">{formatPosition(splitMs)} →</p>
           <p className="text-xs text-muted">{formatPosition(partBMs)}</p>
         </div>
       </div>
 
       {/* Hint */}
-      <p className="text-center text-xs text-muted pb-3 px-5">
+      <p className="text-center text-sm text-muted pb-3 px-5">
         Tap the waveform to place the split marker · Play to preview
       </p>
 
@@ -78,7 +78,7 @@ export function WaveformSplitter({
         <button
           onClick={onMarkHere}
           disabled={wsState !== "ready"}
-          className="rounded-full px-4 py-2.5 text-sm font-semibold disabled:opacity-40 transition-colors"
+          className="rounded-full px-5 py-3 text-base font-semibold disabled:opacity-40 transition-colors"
           style={{ background: "rgba(34,211,238,0.15)", color: "#22d3ee" }}
         >
           Mark here

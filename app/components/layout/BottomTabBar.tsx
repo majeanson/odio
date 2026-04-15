@@ -194,7 +194,7 @@ export function BottomTabBar({
               <span className="relative">{tab.icon}</span>
 
               {/* Label */}
-              <span className="relative text-xs font-bold leading-none tracking-wide uppercase md:text-sm md:font-semibold md:normal-case md:tracking-normal">
+              <span className="relative text-sm font-bold leading-none tracking-wide uppercase md:text-sm md:font-semibold md:normal-case md:tracking-normal">
                 {tab.label}
               </span>
             </Link>
@@ -206,7 +206,7 @@ export function BottomTabBar({
       {isRecording && (
         <div className="hidden md:flex items-center gap-2 px-4 py-3 border-t border-border/50 shrink-0">
           <span className="size-2 rounded-full bg-danger animate-pulse shrink-0" />
-          <span className="text-xs font-semibold text-danger uppercase tracking-wider">Recording</span>
+          <span className="text-sm font-semibold text-danger">Recording</span>
         </div>
       )}
     </nav>

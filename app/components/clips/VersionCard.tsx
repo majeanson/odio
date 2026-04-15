@@ -44,7 +44,7 @@ export function VersionCard({ version, isActive, sourceDurationMs, onClick }: Ve
         )}>
           {label}
         </p>
-        <p className="mt-1 flex gap-3 text-sm text-muted">
+        <p className="mt-1 flex gap-3 text-base text-muted">
           {dur != null && <span className="font-mono">{formatDuration(dur)}</span>}
           {cuts.length > 0 && (
             <span>{cuts.length} cut{cuts.length !== 1 ? "s" : ""}</span>

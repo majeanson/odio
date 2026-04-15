@@ -30,17 +30,17 @@ export function VotePanel({ version, votes, currentUserEmail, memberCount, isCas
 
   return (
     <section aria-label="Vote">
-      <div className="flex items-baseline gap-2 mb-4 px-1">
-        <p className="text-xs font-bold uppercase tracking-widest text-muted">Vote</p>
-        <span className="text-xs text-muted">
+      <div className="flex items-baseline gap-2 mb-5 px-1">
+        <p className="text-sm font-bold text-muted">Vote</p>
+        <span className="text-sm text-muted">
           on v{version.versionNumber}
           {version.description && ` · ${version.description}`}
         </span>
       </div>
 
       {allVotedKeep && (
-        <div className="mb-4 rounded-2xl bg-success/10 border border-success/30 px-5 py-4 flex items-center gap-3">
-          <span className="text-success text-xl">✓</span>
+        <div className="mb-5 rounded-2xl bg-success/10 border border-success/30 px-5 py-5 flex items-center gap-3">
+          <span className="text-success text-2xl" aria-hidden>✓</span>
           <p className="text-base font-semibold text-success">Everyone voted Keep — ready to freeze</p>
         </div>
       )}
@@ -54,14 +54,16 @@ export function VotePanel({ version, votes, currentUserEmail, memberCount, isCas
               key={value}
               onClick={() => onVote({ versionId: version.id, value })}
               disabled={isCasting}
-              className={`flex flex-col items-center justify-center gap-2 rounded-2xl border px-2 py-7 transition-colors ${
+              aria-label={`${label} — ${sub}${isMyVote ? " (your vote)" : ""}`}
+              aria-pressed={isMyVote}
+              className={`flex flex-col items-center justify-center gap-2 rounded-2xl border px-2 py-8 transition-colors ${
                 isMyVote ? color : "bg-surface border-border text-muted hover:bg-elevated"
               }`}
             >
-              <span className={`text-4xl leading-none ${isMyVote ? "" : "opacity-40"}`}>{symbol}</span>
+              <span className={`text-4xl leading-none ${isMyVote ? "" : "opacity-40"}`} aria-hidden>{symbol}</span>
               <span className={`text-base font-bold ${isMyVote ? "" : "text-secondary"}`}>{label}</span>
-              <span className="text-xs text-muted leading-snug text-center">{sub}</span>
-              {count > 0 && <span className="text-sm font-semibold tabular-nums">{count}</span>}
+              <span className="text-sm text-muted leading-snug text-center">{sub}</span>
+              {count > 0 && <span className="text-base font-semibold tabular-nums">{count}</span>}
             </button>
           );
         })}

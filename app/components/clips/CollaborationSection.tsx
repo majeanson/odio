@@ -3,6 +3,7 @@
 // Mounts the relevant hooks and delegates all rendering to focused sub-components.
 // scope="vote-stage" → VotePanel + StageSelector
 // scope="comments"   → CommentComposer + CommentThread
+// scope="full"       → both sections (Team tab — post-edit collaboration view)
 
 import { useVotes } from "@/hooks/useVotes";
 import { useComments } from "@/hooks/useComments";
@@ -26,7 +27,7 @@ interface CollaborationSectionProps {
   initialStage: ClipStage;
   /** True when the current user can change the stage (canEdit && !frozen). */
   canEditStage?: boolean;
-  scope: "vote-stage" | "comments";
+  scope: "vote-stage" | "comments" | "full";
 }
 
 export function CollaborationSection({
@@ -50,9 +51,12 @@ export function CollaborationSection({
     versions[versions.length - 1] ??
     null;
 
+  const showVote = scope === "vote-stage" || scope === "full";
+  const showComments = scope === "comments" || scope === "full";
+
   return (
     <div className="flex flex-col gap-6">
-      {scope === "vote-stage" && voteVersion && (
+      {showVote && voteVersion && (
         <VotePanel
           version={voteVersion}
           votes={votes}
@@ -63,7 +67,7 @@ export function CollaborationSection({
         />
       )}
 
-      {scope === "vote-stage" && (
+      {showVote && (
         <StageSelector
           stage={stage}
           canEdit={canEditStage}
@@ -71,9 +75,13 @@ export function CollaborationSection({
         />
       )}
 
-      {scope === "comments" && (
+      {scope === "full" && (
+        <div className="h-px bg-white/10" />
+      )}
+
+      {showComments && (
         <section aria-label="Comments">
-          <p className="mb-4 text-xs font-bold uppercase tracking-widest text-muted px-1">
+          <p className="mb-4 text-sm font-bold text-muted px-1">
             Comments {comments.length > 0 && `(${comments.length})`}
           </p>
           <CommentComposer onSubmit={addComment} isPending={isAdding} />

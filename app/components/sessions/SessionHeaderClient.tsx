@@ -159,7 +159,7 @@ export function SessionHeaderClient({
           onClick={() => setNotesSheetOpen(true)}
           className="mx-5 mb-3 rounded-2xl bg-surface px-5 py-3 text-left w-[calc(100%-2.5rem)]"
         >
-          <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-1">Session notes</p>
+          <p className="text-sm font-semibold text-muted mb-1">Session notes</p>
           <p className="text-base text-secondary line-clamp-2">{notes}</p>
         </button>
       )}

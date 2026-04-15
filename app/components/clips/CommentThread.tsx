@@ -32,7 +32,7 @@ export function CommentThread({ comments, currentUserEmail, isEditing, onEdit, o
   }
 
   if (comments.length === 0) {
-    return <p className="text-center text-sm text-muted py-6">No comments yet — be the first</p>;
+    return <p className="text-center text-base text-muted py-8">No comments yet — be the first</p>;
   }
 
   return (
@@ -40,10 +40,10 @@ export function CommentThread({ comments, currentUserEmail, isEditing, onEdit, o
       {comments.map((comment) => {
         const isOwn = comment.userEmail === currentUserEmail;
         return (
-          <li key={comment.id} className="rounded-2xl bg-surface px-5 py-4">
+          <li key={comment.id} className="rounded-2xl bg-surface px-5 py-5">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted mb-1.5">
+                <p className="text-sm text-muted mb-2">
                   {comment.userEmail.split("@")[0]}
                   <span className="mx-1.5 text-muted/40">·</span>
                   {formatRelativeTime(comment.createdAt)}
@@ -60,18 +60,18 @@ export function CommentThread({ comments, currentUserEmail, isEditing, onEdit, o
                         if (e.key === "Enter") commitEdit(comment.id);
                         if (e.key === "Escape") setEditingId(null);
                       }}
-                      className="flex-1 rounded-xl border border-accent bg-elevated px-3 py-2 text-sm text-primary focus:outline-none"
+                      className="flex-1 rounded-xl border border-accent bg-elevated px-4 py-3 text-base text-primary focus:outline-none"
                     />
                     <button
                       onClick={() => commitEdit(comment.id)}
-                      disabled={isEditing}
-                      className="icon-sm text-sm text-accent font-medium px-1"
+                      disabled={isEditing || !editText.trim()}
+                      className="text-base text-accent font-semibold px-2 disabled:opacity-40"
                     >
                       Save
                     </button>
                   </div>
                 ) : (
-                  <p className="text-base text-primary">{comment.text}</p>
+                  <p className="text-base text-primary leading-relaxed">{comment.text}</p>
                 )}
               </div>
 
@@ -79,8 +79,8 @@ export function CommentThread({ comments, currentUserEmail, isEditing, onEdit, o
                 <div className="flex gap-1 shrink-0 mt-0.5">
                   <button
                     onClick={() => startEdit(comment)}
-                    className="icon-sm p-1.5 text-muted hover:text-secondary"
-                    aria-label="Edit"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:text-secondary hover:bg-elevated transition-colors"
+                    aria-label="Edit comment"
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden>
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -89,8 +89,8 @@ export function CommentThread({ comments, currentUserEmail, isEditing, onEdit, o
                   </button>
                   <button
                     onClick={() => onDelete(comment.id)}
-                    className="icon-sm p-1.5 text-muted hover:text-danger"
-                    aria-label="Delete"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:text-danger hover:bg-elevated transition-colors"
+                    aria-label="Delete comment"
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden>
                       <path d="M18 6L6 18M6 6l12 12" />

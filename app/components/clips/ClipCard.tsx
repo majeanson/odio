@@ -1,8 +1,8 @@
 "use client";
 
-// Clip card — shows clip name (inline editable), duration,
-// version count badge, processing spinner, and frozen lock icon.
-// Stage is shown only in the clip detail collaboration section, not here.
+// Clip card — shows clip name (inline editable with a shuffle button for a new
+// death-metal name), stage chip, duration, version count badge, processing
+// spinner, and frozen lock icon.
 // "···" button on the right opens the delete confirmation sheet (replaces
 // the undiscoverable long-press pattern).
 
@@ -10,10 +10,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useClipRename } from "@/hooks/useClipRename";
 import { formatDuration } from "@/lib/utils";
+import { generateDeathMetalName } from "@/lib/clipNames";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { AudioBars } from "@/components/ui/AudioBars";
-import type { Clip } from "@/types";
+import type { Clip, ClipStage } from "@/types";
+
+const STAGE_CHIP: Record<ClipStage, { label: string; className: string }> = {
+  IDEA:       { label: "idea",       className: "bg-white/10 text-muted" },
+  SKETCH:     { label: "sketch",     className: "bg-blue-500/15 text-blue-400" },
+  DEVELOPING: { label: "developing", className: "bg-amber-500/15 text-amber-400" },
+  DEMO_READY: { label: "demo-ready", className: "bg-green-500/15 text-green-400" },
+};
 
 interface ClipCardProps {
   clip: Clip;
@@ -27,6 +35,24 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
   const rename = useClipRename(clip.id, clip.name);
   const [deleteSheetOpen, setDeleteSheetOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [shuffling, setShuffling] = useState(false);
+
+  async function handleShuffle(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (shuffling) return;
+    const newName = generateDeathMetalName();
+    setShuffling(true);
+    try {
+      const res = await fetch(`/api/clips/${clip.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName }),
+      });
+      if (res.ok) router.refresh();
+    } finally {
+      setShuffling(false);
+    }
+  }
 
   async function handleDelete() {
     setDeleting(true);
@@ -51,12 +77,12 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
   return (
     <>
       <div
-        className="flex items-center gap-4 rounded-2xl bg-surface px-5 py-4 transition-colors active:bg-elevated cursor-pointer h-full"
+        className="flex items-center gap-4 rounded-2xl bg-surface px-5 py-5 transition-colors active:bg-elevated cursor-pointer h-full"
         onClick={handleCardClick}
       >
         {/* Main content */}
         <div className="flex-1 min-w-0">
-          {/* Clip name — tap to rename inline */}
+          {/* Clip name — tap to rename inline; shuffle button randomises the name */}
           {rename.editingName ? (
             <input
               autoFocus
@@ -70,27 +96,52 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
-            <button
-              className="text-left font-display text-lg font-semibold text-primary"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); rename.startEditing(); }}
-            >
-              {rename.saving ? <span className="opacity-60">{rename.nameInput}</span> : rename.name}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                className="text-left font-display text-lg font-semibold text-primary"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); rename.startEditing(); }}
+              >
+                {rename.saving || shuffling
+                  ? <span className="opacity-60">{rename.nameInput}</span>
+                  : rename.name}
+              </button>
+              {/* Shuffle button — randomise the clip name */}
+              {!clip.frozen && (
+                <button
+                  onClick={handleShuffle}
+                  disabled={shuffling}
+                  aria-label="Randomise name"
+                  className="flex size-6 items-center justify-center rounded-full text-muted hover:text-secondary hover:bg-elevated transition-colors disabled:opacity-40 shrink-0"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-3.5" aria-hidden>
+                    <polyline points="16 3 21 3 21 8" />
+                    <line x1="4" y1="20" x2="21" y2="3" />
+                    <polyline points="21 16 21 21 16 21" />
+                    <line x1="15" y1="15" x2="21" y2="21" />
+                  </svg>
+                </button>
+              )}
+            </div>
           )}
 
-          {/* Meta row: time · duration · version count */}
-          <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <span className="text-sm text-muted">
+          {/* Meta row: time · duration · version count · stage chip */}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="text-base text-muted">
               {new Date(clip.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
             </span>
             {(clip.latestResultDurationMs ?? clip.sourceDurationMs) != null && (
-              <span className="font-mono text-sm text-muted">
+              <span className="font-mono text-base text-muted">
                 {formatDuration((clip.latestResultDurationMs ?? clip.sourceDurationMs)!)}
               </span>
             )}
             {clip._count && clip._count.versions > 0 && (
-              <span className="text-sm text-muted">
+              <span className="text-base text-muted">
                 {clip._count.versions}v
+              </span>
+            )}
+            {!clip.frozen && clip.stage && (
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STAGE_CHIP[clip.stage].className}`}>
+                {STAGE_CHIP[clip.stage].label}
               </span>
             )}
           </div>

@@ -50,6 +50,7 @@ export function ClipActionsClient({
 
   const [freezeSheetOpen, setFreezeSheetOpen] = useState(false);
   const [cleanupSheetOpen, setCleanupSheetOpen] = useState(false);
+  const [justFrozen, setJustFrozen] = useState(false);
 
   const [unfreezing, setUnfreezing] = useState(false);
   const [cleaningUp, setCleaningUp] = useState(false);
@@ -69,6 +70,7 @@ export function ClipActionsClient({
     if (res.ok) {
       setFreezeSheetOpen(false);
       setIsFrozen(true);
+      setJustFrozen(true);
       router.refresh();
     } else {
       const body = await res.json().catch(() => ({}));
@@ -166,6 +168,16 @@ export function ClipActionsClient({
           label="Freeze"
           sub="Lock editing and render the final file"
         />
+      )}
+
+      {/* Post-freeze callout — shown once per session after the user taps Freeze */}
+      {justFrozen && (
+        <div className="rounded-2xl bg-accent/10 border border-accent/25 px-5 py-4">
+          <p className="text-base font-semibold text-accent mb-1">This song is frozen</p>
+          <p className="text-sm text-secondary leading-relaxed">
+            The final render is in progress. Generate a share link below so your band can listen as soon as it&apos;s ready.
+          </p>
+        </div>
       )}
 
       {/* Frozen status + unfreeze */}

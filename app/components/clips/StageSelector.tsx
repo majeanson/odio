@@ -40,17 +40,17 @@ export function StageSelector({ stage, canEdit, onChange }: StageSelectorProps) 
 
   return (
     <section aria-label="Song stage">
-      <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted px-1">Song stage</p>
+      <p className="mb-3 text-sm font-bold text-muted px-1">Song stage</p>
 
       {canEdit ? (
         <button
           onClick={() => setSheetOpen(true)}
           className="flex w-full items-center gap-4 rounded-2xl bg-surface px-5 py-5 hover:bg-elevated transition-colors text-left"
         >
-          <span className={`size-3 rounded-full shrink-0 ${STAGE_DOT[stage]}`} />
+          <span className={`size-4 rounded-full shrink-0 ${STAGE_DOT[stage]}`} />
           <div className="flex-1 min-w-0">
             <span className="text-lg font-semibold text-primary">{STAGE_LABELS[stage]}</span>
-            <span className="block text-sm text-muted mt-0.5">{STAGE_DESCRIPTIONS[stage]}</span>
+            <span className="block text-base text-muted mt-1">{STAGE_DESCRIPTIONS[stage]}</span>
           </div>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-5 text-muted shrink-0" aria-hidden>
             <polyline points="9 18 15 12 9 6" />
@@ -61,7 +61,7 @@ export function StageSelector({ stage, canEdit, onChange }: StageSelectorProps) 
           <span className={`size-3 rounded-full shrink-0 mt-1 ${STAGE_DOT[stage]}`} />
           <div>
             <span className="text-lg font-semibold text-primary">{STAGE_LABELS[stage]}</span>
-            <span className="block text-sm text-muted mt-0.5">{STAGE_DESCRIPTIONS[stage]}</span>
+            <span className="block text-base text-muted mt-1">{STAGE_DESCRIPTIONS[stage]}</span>
           </div>
         </div>
       )}

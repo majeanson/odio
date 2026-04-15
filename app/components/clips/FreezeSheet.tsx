@@ -38,11 +38,11 @@ export function FreezeSheet({ open, onClose, clipName, versions, initialVersionI
 
   return (
     <BottomSheet open={open} onClose={onClose} title="Freeze clip">
-      <div className="space-y-4">
+      <div className="space-y-5">
 
         {/* Final file name */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-muted">Final file name</label>
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-muted">Final file name</label>
           <input
             type="text"
             value={finalName}
@@ -51,14 +51,14 @@ export function FreezeSheet({ open, onClose, clipName, versions, initialVersionI
             maxLength={100}
             className="w-full rounded-2xl border border-border bg-surface px-5 py-4 text-base text-primary placeholder:text-muted focus:border-accent focus:outline-none"
           />
-          <p className="text-xs text-muted">
+          <p className="text-sm text-muted">
             Saved to Drive as <span className="font-mono">{safeName}.aac</span>
           </p>
         </div>
 
         {/* Version picker */}
-        <div className="space-y-1.5">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted">Version to lock</p>
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-muted">Version to lock</p>
           <div className="space-y-2">
             {versions.map((v) => (
               <button
@@ -70,16 +70,16 @@ export function FreezeSheet({ open, onClose, clipName, versions, initialVersionI
               >
                 <span className="text-base font-semibold w-8">v{v.versionNumber}</span>
                 {v.description && (
-                  <span className="flex-1 text-sm text-muted truncate">{v.description}</span>
+                  <span className="flex-1 text-base text-muted line-clamp-1">{v.description}</span>
                 )}
                 {v.resultDurationMs != null && (
-                  <span className="font-mono text-sm text-muted ml-auto">
+                  <span className="font-mono text-sm text-muted ml-auto shrink-0">
                     {Math.floor(v.resultDurationMs / 60000)}:
                     {String(Math.floor((v.resultDurationMs % 60000) / 1000)).padStart(2, "0")}
                   </span>
                 )}
                 {selectedVersionId === v.id && (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="size-4 shrink-0" aria-hidden>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="size-5 shrink-0" aria-hidden>
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 )}
@@ -88,7 +88,7 @@ export function FreezeSheet({ open, onClose, clipName, versions, initialVersionI
           </div>
         </div>
 
-        {error && <p className="text-sm text-danger">{error}</p>}
+        {error && <p className="text-base text-danger">{error}</p>}
         <Button onClick={handleFreeze} disabled={freezing || !selectedVersionId} fullWidth size="lg">
           {freezing ? "Freezing…" : "Freeze this version"}
         </Button>

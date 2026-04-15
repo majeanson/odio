@@ -29,7 +29,7 @@ export function EmptyState({
       )}
     >
       {icon && <span className="text-7xl leading-none">{icon}</span>}
-      <p className="font-display text-3xl font-bold text-primary">{title}</p>
+      <h2 className="font-display text-3xl font-bold text-primary">{title}</h2>
       {description && (
         <p className="text-base text-secondary max-w-sm">{description}</p>
       )}
