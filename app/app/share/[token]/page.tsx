@@ -4,9 +4,9 @@
 
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { formatDuration } from "@/lib/utils";
+import { formatDuration, remapStampsForCuts } from "@/lib/utils";
 import { STAMP_EMOJI, STAMP_COLORS, STAGE_LABELS } from "@/types";
-import type { ClipStage, StampType } from "@/types";
+import type { ClipStage, StampType, CutMark } from "@/types";
 import { PublicPlayer } from "@/components/share/PublicPlayer";
 
 export default async function SharePage({
@@ -25,8 +25,7 @@ export default async function SharePage({
         },
       },
       versions: {
-        where: { versionNumber: 1 },
-        take: 1,
+        select: { id: true, resultDurationMs: true, cutMarks: true },
       },
       stamps: { orderBy: { timestampMs: "asc" } },
     },
@@ -34,7 +33,18 @@ export default async function SharePage({
 
   if (!clip || !clip.frozen || !clip.publicToken) notFound();
 
-  const frozenVersion = clip.versions[0] ?? null;
+  const frozenVersion = clip.frozenVersionId
+    ? (clip.versions.find((v) => v.id === clip.frozenVersionId) ?? null)
+    : null;
+
+  const frozenCuts = Array.isArray(frozenVersion?.cutMarks)
+    ? (frozenVersion!.cutMarks as unknown as CutMark[])
+    : [];
+
+  const remappedStamps = remapStampsForCuts(
+    clip.stamps.map((s) => ({ id: s.id, timestampMs: s.timestampMs, type: s.type as StampType })),
+    frozenCuts,
+  );
 
   return (
     <div className="flex min-h-svh flex-col bg-base text-primary">
@@ -79,12 +89,8 @@ export default async function SharePage({
       <main className="flex-1 px-5">
         <PublicPlayer
           token={token}
-          sourceDurationMs={clip.sourceDurationMs ?? 0}
-          stamps={clip.stamps.map((s) => ({
-            id: s.id,
-            timestampMs: s.timestampMs,
-            type: s.type as StampType,
-          }))}
+          sourceDurationMs={frozenVersion?.resultDurationMs ?? clip.sourceDurationMs ?? 0}
+          stamps={remappedStamps}
         />
       </main>
 

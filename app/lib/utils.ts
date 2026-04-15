@@ -115,6 +115,29 @@ export function formatDurationDiff(
   return `${formatDuration(sourceDurationMs)} → ${formatDuration(result)} (-${formatDuration(removed)})`;
 }
 
+/**
+ * Filter and remap stamps for a frozen (cut-rendered) audio file.
+ * - Stamps that fall inside a cut region are removed.
+ * - Remaining stamp timestamps are shifted left by the total cut duration
+ *   that precedes them, so positions stay correct in the rendered file.
+ * Cuts must be non-overlapping (enforced by the editor).
+ */
+export function remapStampsForCuts<T extends { timestampMs: number }>(
+  stamps: T[],
+  cutMarks: CutMark[],
+): T[] {
+  if (cutMarks.length === 0) return stamps;
+  const sorted = [...cutMarks].sort((a, b) => a.startMs - b.startMs);
+  return stamps
+    .filter((s) => !sorted.some((c) => s.timestampMs >= c.startMs && s.timestampMs < c.endMs))
+    .map((s) => {
+      const removedMs = sorted
+        .filter((c) => c.endMs <= s.timestampMs)
+        .reduce((sum, c) => sum + (c.endMs - c.startMs), 0);
+      return { ...s, timestampMs: s.timestampMs - removedMs };
+    });
+}
+
 // ─── Clip Auto-naming ─────────────────────────────────────────────────────────
 
 /**

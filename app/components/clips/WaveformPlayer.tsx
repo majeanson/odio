@@ -7,7 +7,7 @@
 // No editing, no version management, no cut creation.
 // Used on: clip detail page.
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import { useWaveSurfer } from "./useWaveSurfer";
 import { WaveformCanvas } from "./WaveformCanvas";
 import { WaveformPlayButton } from "./WaveformPlayButton";
@@ -71,6 +71,15 @@ export function WaveformPlayer({
 
   // ── Derived ────────────────────────────────────────────────────────────────
   const { wsState, isPlaying, currentTimeMs, effectiveDurationMs } = ws;
+
+  // Filter out stamps that fall inside cut regions — they're unreachable during playback.
+  // Source timestamps are preserved (player operates in source-time space).
+  const visibleStamps = useMemo(
+    () => activeCuts.length === 0
+      ? stamps
+      : stamps.filter((s) => !activeCuts.some((c) => s.timestampMs >= c.startMs && s.timestampMs < c.endMs)),
+    [stamps, activeCuts],
+  );
   const virtualDurationMs = activeCuts.length > 0
     ? calcResultDuration(effectiveDurationMs, activeCuts)
     : effectiveDurationMs;
@@ -121,7 +130,7 @@ export function WaveformPlayer({
         cursorStyle="pointer"
       />
 
-      <StampJumpRow stamps={stamps} wsState={wsState} onSeek={ws.seek} />
+      <StampJumpRow stamps={visibleStamps} wsState={wsState} onSeek={ws.seek} />
 
       {/* Play button */}
       <div className="pb-6 pt-2 flex justify-center">
