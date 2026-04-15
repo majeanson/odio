@@ -17,11 +17,14 @@
 //   - Drag horizontally when zoomed (no edge proximity) → pan waveform
 //   - Zoom controls: 1×/2×/4×/8×/16×/32×/64× with basePxPerSec scaling
 //   - Cut list rows: expandable nudge controls (±100ms, ±1s, ±5s) + zoom-to-cut
+//
+// Cut bands are rendered as React divs (NOT WaveSurfer regions).
+// WaveSurfer is used only for: audio playback, waveform rendering, cursor display.
+// This removes all RegionsPlugin failure modes (setOptions/getRegions/virtualAppend).
 
 import { useEffect, useRef, useState, useCallback, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import WaveSurfer from "wavesurfer.js";
-import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.js";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { AudioBars } from "@/components/ui/AudioBars";
@@ -47,18 +50,9 @@ interface WaveformEditorProps {
 }
 
 interface CutMark {
+  id: string;
   startMs: number;
   endMs: number;
-  regionId: string;
-}
-
-// WaveSurfer 7 Region public API uses setOptions(), not update().
-interface WsRegion {
-  id: string;
-  start: number;
-  end: number;
-  remove(): void;
-  setOptions(opts: { start?: number; end?: number; color?: string; drag?: boolean; resize?: boolean }): void;
 }
 
 type DragMode = "pending" | "create" | "pan" | "resize";
@@ -67,9 +61,8 @@ interface DragState {
   startX: number;
   startY: number;
   startSec: number;
-  region: WsRegion | null;
   mode: DragMode;
-  resizeRegionId: string | null;
+  resizeCutId: string | null;
   resizeEdge: "start" | "end" | null;
   panScrollStart: number;
 }
@@ -109,7 +102,6 @@ export function WaveformEditor({
   // Wavesurfer refs
   const containerRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WaveSurfer | null>(null);
-  const regionsRef = useRef<ReturnType<typeof RegionsPlugin.create> | null>(null);
   const cutMarksRef = useRef<CutMark[]>([]);   // kept in sync for timeupdate handler
   const dragStateRef = useRef<DragState | null>(null);
   // WaveSurfer's internal scroll container (wrapper.parentElement).
@@ -121,6 +113,8 @@ export function WaveformEditor({
   // right before play() — fixes WaveSurfer's click-while-paused sync gap where
   // the visual cursor moves but audio element's currentTime can lag behind.
   const currentTimeMsRef = useRef(0);
+  // Counter for generating cut IDs — never resets, avoids key collisions.
+  const nextCutIdRef = useRef(0);
 
   // Playback + waveform state
   const [wsState, setWsState] = useState<"loading" | "ready" | "error">("loading");
@@ -138,6 +132,8 @@ export function WaveformEditor({
   const [cutMarks, setCutMarks] = useState<CutMark[]>([]);
   const [hasDraft, setHasDraft] = useState(false);
   const [expandedCutId, setExpandedCutId] = useState<string | null>(null);
+  // Live preview during a create-mode drag (rendered as a lighter red band).
+  const [previewCut, setPreviewCut] = useState<{ startMs: number; endMs: number } | null>(null);
 
   // Zoom + scroll state (tracked in React for re-rendering handle positions)
   const [zoomLevel, setZoomLevel] = useState<ZoomLevel>(1);
@@ -204,15 +200,15 @@ export function WaveformEditor({
     return Math.max(0, Math.min(clipDurationSec, (relX / m.totalWidth) * clipDurationSec));
   }
 
-  // Returns the cut regionId + edge closest to the pointer, within EDGE_GRAB_PX.
+  // Returns the cut id + edge closest to the pointer, within EDGE_GRAB_PX.
   // Uses nearest-edge-wins across all cuts so a thin trim at the start of a long
   // clip always resolves to the correct edge instead of "start" winning by first-match.
-  function findEdgeAt(clientX: number): { regionId: string; edge: "start" | "end" } | null {
+  function findEdgeAt(clientX: number): { cutId: string; edge: "start" | "end" } | null {
     const m = getWaveMetrics();
     if (!m || effectiveDurationMs === 0) return null;
     const visibleX = clientX - m.rect.left;
 
-    let best: { regionId: string; edge: "start" | "end"; dist: number } | null = null;
+    let best: { cutId: string; edge: "start" | "end"; dist: number } | null = null;
 
     for (const cm of cutMarksRef.current) {
       const startPx = (cm.startMs / effectiveDurationMs) * m.totalWidth - m.scrollLeft;
@@ -222,46 +218,28 @@ export function WaveformEditor({
       const de = Math.abs(visibleX - endPx);
 
       if (ds <= EDGE_GRAB_PX && (!best || ds < best.dist)) {
-        best = { regionId: cm.regionId, edge: "start", dist: ds };
+        best = { cutId: cm.id, edge: "start", dist: ds };
       }
       if (de <= EDGE_GRAB_PX && (!best || de < best.dist)) {
-        best = { regionId: cm.regionId, edge: "end", dist: de };
+        best = { cutId: cm.id, edge: "end", dist: de };
       }
     }
 
-    return best ? { regionId: best.regionId, edge: best.edge } : null;
+    return best ? { cutId: best.cutId, edge: best.edge } : null;
   }
 
-  // ── Region helpers ────────────────────────────────────────────────────────
+  // ── Cut helpers ───────────────────────────────────────────────────────────
 
-  function addEditRegion(startSec: number, endSec: number): WsRegion | null {
-    if (!regionsRef.current) return null;
-    const region = regionsRef.current.addRegion({
-      start: startSec, end: endSec,
-      color: "rgba(239, 68, 68, 0.3)",
-      drag: false, resize: false, // we manage interaction ourselves
-    }) as unknown as WsRegion;
-    // Disable pointer events on the region's shadow DOM element so our overlay
-    // receives all touches. WaveSurfer hard-codes pointerEvents:"all" in initElement(),
-    // which causes the shadow DOM region element to intercept taps in the middle of
-    // the red band before the overlay can see them. Without this, "tap inside cut"
-    // detection never fires because the shadow DOM eats the pointerdown.
-    // The element is created synchronously in the Region constructor, so it exists
-    // immediately when addRegion returns (virtualAppend only handles DOM insertion).
-    const el = (region as unknown as { element?: HTMLElement }).element;
-    if (el) el.style.pointerEvents = "none";
-    return region;
+  function newCutId(): string {
+    return `cut-${++nextCutIdRef.current}`;
   }
 
-  function loadCutsIntoEditor(marks: Array<{ startMs: number; endMs: number }>) {
-    if (!regionsRef.current) return;
-    regionsRef.current.clearRegions();
-    const next: CutMark[] = marks.map((m) => {
-      const r = addEditRegion(m.startMs / 1000, m.endMs / 1000);
-      return { startMs: m.startMs, endMs: m.endMs, regionId: r?.id ?? "" };
-    });
-    // Sync ref immediately so drag handlers see the new cuts without waiting
-    // for the useEffect that syncs cutMarksRef after the next render cycle.
+  function loadCuts(marks: Array<{ startMs: number; endMs: number }>) {
+    const next: CutMark[] = marks.map((m) => ({
+      id: newCutId(),
+      startMs: m.startMs,
+      endMs: m.endMs,
+    }));
     cutMarksRef.current = next;
     setCutMarks(next);
   }
@@ -277,9 +255,6 @@ export function WaveformEditor({
     basePxPerSecRef.current = 0;
     scrollContainerRef.current = null;
 
-    const regions = RegionsPlugin.create();
-    regionsRef.current = regions;
-
     const ws = WaveSurfer.create({
       container: containerRef.current,
       url: `/api/audio/${clipId}`,
@@ -290,7 +265,6 @@ export function WaveformEditor({
       height: 100,
       normalize: true,
       interact: false, // we manage all pointer events via the overlay
-      plugins: [regions],
     });
 
     wsRef.current = ws;
@@ -356,20 +330,10 @@ export function WaveformEditor({
       }
     });
 
-    // Track scroll position so edge handles re-render at the correct pixel position.
+    // Track scroll position so cut bands re-render at the correct pixel position.
     ws.on("scroll", (_visStart: number, _visEnd: number) => {
       const sc = scrollContainerRef.current;
       if (sc) setWaveScrollLeft(sc.scrollLeft);
-    });
-
-    // region-updated fires from WaveSurfer's own drag system; harmless here since
-    // we set drag:false/resize:false. Keep as safety net.
-    regions.on("region-updated", (region) => {
-      setCutMarks((prev) => prev.map((cm) =>
-        cm.regionId === region.id
-          ? { ...cm, startMs: Math.round(region.start * 1000), endMs: Math.round(region.end * 1000) }
-          : cm,
-      ));
     });
 
     return () => { ws.destroy(); wsRef.current = null; };
@@ -430,19 +394,21 @@ export function WaveformEditor({
 
   // ── Nudge ─────────────────────────────────────────────────────────────────
 
-  function nudgeCut(regionId: string, edge: "start" | "end", deltaMs: number) {
-    const cm = cutMarksRef.current.find((c) => c.regionId === regionId);
-    if (!cm) return;
-    const region = regionsRef.current?.getRegions().find((r) => r.id === regionId) as WsRegion | undefined;
-    if (edge === "start") {
-      const newMs = Math.max(0, Math.min(cm.endMs - 50, cm.startMs + deltaMs));
-      region?.setOptions({ start: newMs / 1000 });
-      setCutMarks((prev) => prev.map((c) => c.regionId === regionId ? { ...c, startMs: newMs } : c));
-    } else {
-      const newMs = Math.min(effectiveDurMsRef.current, Math.max(cm.startMs + 50, cm.endMs + deltaMs));
-      region?.setOptions({ end: newMs / 1000 });
-      setCutMarks((prev) => prev.map((c) => c.regionId === regionId ? { ...c, endMs: newMs } : c));
-    }
+  function nudgeCut(cutId: string, edge: "start" | "end", deltaMs: number) {
+    setCutMarks((prev) => {
+      const next = prev.map((cm) => {
+        if (cm.id !== cutId) return cm;
+        if (edge === "start") {
+          const newMs = Math.max(0, Math.min(cm.endMs - 50, cm.startMs + deltaMs));
+          return { ...cm, startMs: newMs };
+        } else {
+          const newMs = Math.min(effectiveDurMsRef.current, Math.max(cm.startMs + 50, cm.endMs + deltaMs));
+          return { ...cm, endMs: newMs };
+        }
+      });
+      cutMarksRef.current = next;
+      return next;
+    });
   }
 
   // ── Drag overlay handlers ─────────────────────────────────────────────────
@@ -453,22 +419,20 @@ export function WaveformEditor({
     const startSec = clientXToSec(e.clientX);
     const startMs  = startSec * 1000;
 
-    // 1. Check proximity to a cut edge (desktop precision, works at any zoom).
+    // 1. Check proximity to a cut edge (works at any zoom).
     const edgeHit = findEdgeAt(e.clientX);
     if (edgeHit) {
       dragStateRef.current = {
         startX: e.clientX, startY: e.clientY, startSec,
-        region: null, mode: "resize",
-        resizeRegionId: edgeHit.regionId, resizeEdge: edgeHit.edge,
+        mode: "resize",
+        resizeCutId: edgeHit.cutId, resizeEdge: edgeHit.edge,
         panScrollStart: 0,
       };
       return;
     }
 
     // 2. Tap landed INSIDE a cut region — resize the nearest edge.
-    // This is the primary mobile path: the user taps anywhere on the red band
-    // rather than hitting the precise ±24px edge zone. Pick whichever edge
-    // (start or end) is closer to the tap position.
+    // Primary mobile path: tap anywhere in the red band, not just the edge zone.
     const hitCut = cutMarksRef.current.find(
       (cm) => startMs > cm.startMs && startMs < cm.endMs,
     );
@@ -477,8 +441,8 @@ export function WaveformEditor({
         (startMs - hitCut.startMs) < (hitCut.endMs - startMs) ? "start" : "end";
       dragStateRef.current = {
         startX: e.clientX, startY: e.clientY, startSec,
-        region: null, mode: "resize",
-        resizeRegionId: hitCut.regionId, resizeEdge: edge,
+        mode: "resize",
+        resizeCutId: hitCut.id, resizeEdge: edge,
         panScrollStart: 0,
       };
       return;
@@ -486,8 +450,8 @@ export function WaveformEditor({
 
     dragStateRef.current = {
       startX: e.clientX, startY: e.clientY, startSec,
-      region: null, mode: "pending",
-      resizeRegionId: null, resizeEdge: null,
+      mode: "pending",
+      resizeCutId: null, resizeEdge: null,
       panScrollStart: scrollContainerRef.current?.scrollLeft ?? 0,
     };
   }
@@ -507,29 +471,22 @@ export function WaveformEditor({
     const deltaY = e.clientY - drag.startY;
 
     // ── Resize mode ───────────────────────────────────────────────────────
-    if (drag.mode === "resize" && drag.resizeRegionId && drag.resizeEdge) {
-      const sec = clientXToSec(e.clientX);
-      const ms  = Math.round(sec * 1000);
-      const region = regionsRef.current?.getRegions().find((r) => r.id === drag.resizeRegionId) as WsRegion | undefined;
-      if (region) {
-        if (drag.resizeEdge === "start") {
-          const clampedMs = Math.max(0, Math.min(Math.round(region.end * 1000) - 50, ms));
-          region.setOptions({ start: clampedMs / 1000 });
-          const next = cutMarksRef.current.map((cm) =>
-            cm.regionId === drag.resizeRegionId ? { ...cm, startMs: clampedMs } : cm,
-          );
-          cutMarksRef.current = next;
-          setCutMarks(next);
-        } else {
-          const clampedMs = Math.min(effectiveDurMsRef.current, Math.max(Math.round(region.start * 1000) + 50, ms));
-          region.setOptions({ end: clampedMs / 1000 });
-          const next = cutMarksRef.current.map((cm) =>
-            cm.regionId === drag.resizeRegionId ? { ...cm, endMs: clampedMs } : cm,
-          );
-          cutMarksRef.current = next;
-          setCutMarks(next);
-        }
-      }
+    if (drag.mode === "resize" && drag.resizeCutId && drag.resizeEdge) {
+      const ms = Math.round(clientXToSec(e.clientX) * 1000);
+      setCutMarks((prev) => {
+        const next = prev.map((cm) => {
+          if (cm.id !== drag.resizeCutId) return cm;
+          if (drag.resizeEdge === "start") {
+            const clampedMs = Math.max(0, Math.min(cm.endMs - 50, ms));
+            return { ...cm, startMs: clampedMs };
+          } else {
+            const clampedMs = Math.min(effectiveDurMsRef.current, Math.max(cm.startMs + 50, ms));
+            return { ...cm, endMs: clampedMs };
+          }
+        });
+        cutMarksRef.current = next;
+        return next;
+      });
       return;
     }
 
@@ -556,20 +513,11 @@ export function WaveformEditor({
     }
 
     // ── Create mode ──────────────────────────────────────────────────────
-    if (drag.mode === "create" && regionsRef.current) {
+    if (drag.mode === "create") {
       const sec = clientXToSec(e.clientX);
-      const [start, end] = [Math.min(drag.startSec, sec), Math.max(drag.startSec, sec)];
-      if (drag.region) {
-        // Live resize: use setOptions() — the correct WaveSurfer 7 API.
-        drag.region.setOptions({ start, end });
-      } else {
-        const r = regionsRef.current.addRegion({
-          start, end,
-          color: "rgba(239, 68, 68, 0.15)",
-          drag: false, resize: false,
-        }) as unknown as WsRegion;
-        dragStateRef.current = { ...drag, region: r };
-      }
+      const startMs = Math.round(Math.min(drag.startSec, sec) * 1000);
+      const endMs   = Math.round(Math.max(drag.startSec, sec) * 1000);
+      setPreviewCut({ startMs, endMs });
     }
   }
 
@@ -577,6 +525,7 @@ export function WaveformEditor({
     const drag = dragStateRef.current;
     if (!drag || !wsRef.current) return;
     dragStateRef.current = null;
+    setPreviewCut(null);
 
     const seekTo = (clientX: number) => {
       const sec = Math.min(clientXToSec(clientX), wsRef.current!.getDuration());
@@ -585,7 +534,7 @@ export function WaveformEditor({
     };
 
     if (drag.mode === "resize") {
-      // Tap on edge (no movement) → treat as a seek to that position.
+      // Tap on edge or inside cut (no real movement) → treat as a seek.
       if (Math.abs(e.clientX - drag.startX) < 6 && Math.abs(e.clientY - drag.startY) < 6) {
         seekTo(e.clientX);
       }
@@ -596,32 +545,39 @@ export function WaveformEditor({
 
     // Tap (< 8px movement) → seek
     if (Math.abs(e.clientX - drag.startX) < 8) {
-      if (drag.region) drag.region.remove();
       seekTo(e.clientX);
       return;
     }
 
     // Create mode — finalize the dragged region
-    if (drag.region) {
-      const { start, end } = drag.region;
-      drag.region.remove();
-      if (end - start >= 0.05 && regionsRef.current) {
-        const r = addEditRegion(start, end);
-        if (r) setCutMarks((prev) => [...prev, { startMs: Math.round(start * 1000), endMs: Math.round(end * 1000), regionId: r.id }]);
+    if (drag.mode === "create") {
+      const sec = clientXToSec(e.clientX);
+      const startMs = Math.round(Math.min(drag.startSec, sec) * 1000);
+      const endMs   = Math.round(Math.max(drag.startSec, sec) * 1000);
+      if (endMs - startMs >= 50) {
+        const newCut: CutMark = { id: newCutId(), startMs, endMs };
+        setCutMarks((prev) => {
+          const next = [...prev, newCut];
+          cutMarksRef.current = next;
+          return next;
+        });
       }
     }
   }
 
   // ── Cut mark operations ───────────────────────────────────────────────────
 
-  function removeCut(regionId: string) {
-    regionsRef.current?.getRegions().find((r) => r.id === regionId)?.remove();
-    setCutMarks((prev) => prev.filter((cm) => cm.regionId !== regionId));
-    if (expandedCutId === regionId) setExpandedCutId(null);
+  function removeCut(cutId: string) {
+    setCutMarks((prev) => {
+      const next = prev.filter((cm) => cm.id !== cutId);
+      cutMarksRef.current = next;
+      return next;
+    });
+    if (expandedCutId === cutId) setExpandedCutId(null);
   }
 
   function clearAllCuts() {
-    regionsRef.current?.clearRegions();
+    cutMarksRef.current = [];
     setCutMarks([]);
     setExpandedCutId(null);
   }
@@ -632,7 +588,7 @@ export function WaveformEditor({
     const draft = loadDraft(clipId);
     if (!draft) return;
     setHasDraft(false);
-    loadCutsIntoEditor(draft);
+    loadCuts(draft);
   }
 
   // ── Load version cuts ─────────────────────────────────────────────────────
@@ -641,7 +597,7 @@ export function WaveformEditor({
     const marks = Array.isArray(version.cutMarks)
       ? (version.cutMarks as Array<{ startMs: number; endMs: number }>)
       : [];
-    loadCutsIntoEditor(marks);
+    loadCuts(marks);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -651,7 +607,7 @@ export function WaveformEditor({
     if (!effectiveDurationMs) return;
     // 20% of clip length per side — large enough to grab comfortably at 1× zoom.
     const t = clipDurationSec * 0.2;
-    loadCutsIntoEditor([
+    loadCuts([
       { startMs: 0, endMs: Math.round(t * 1000) },
       { startMs: Math.round((clipDurationSec - t) * 1000), endMs: effectiveDurationMs },
     ]);
@@ -686,16 +642,15 @@ export function WaveformEditor({
     setSubmitError(null);
     try {
       const validCuts = cutMarks
-        .map(({ startMs, endMs, regionId }) => ({
+        .map(({ startMs, endMs }) => ({
           startMs: Math.max(0, Math.min(startMs, effectiveDurationMs)),
           endMs:   Math.max(0, Math.min(endMs,   effectiveDurationMs)),
-          regionId,
         }))
         .filter(({ startMs, endMs }) => endMs > startMs);
       const res = await fetch(`/api/clips/${clipId}/versions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cutMarks: validCuts.map(({ startMs, endMs }) => ({ startMs, endMs })), description: description.trim() || undefined }),
+        body: JSON.stringify({ cutMarks: validCuts, description: description.trim() || undefined }),
       });
       if (!res.ok) { const b = await res.json().catch(() => ({})); setSubmitError(b.error ?? "Failed"); setSubmitting(false); return; }
       const v = await res.json();
@@ -720,7 +675,7 @@ export function WaveformEditor({
     ? Math.round((containerWidthPx / waveTotalWidth) * effectiveDurationMs)
     : effectiveDurationMs;
 
-  // Cut edge positions in visible pixels (for rendering grab-zone indicators).
+  // Cut edge position in visible pixels (for rendering bands + grab-zone indicators).
   // Recomputed when waveScrollLeft or waveTotalWidth changes.
   const cutEdgePx = (ms: number): number => {
     if (effectiveDurationMs === 0) return 0;
@@ -780,11 +735,56 @@ export function WaveformEditor({
           <div className="relative">
             <div ref={containerRef} className="w-full" />
 
+            {/* Cut bands — rendered as React divs above the waveform.
+                Pointer-events none so all touches fall through to the overlay.
+                z-5 keeps them under the edge-grab indicators (z-10). */}
+            {wsState === "ready" && !splitMode && (
+              <>
+                {cutMarks.map((cm) => {
+                  const sPx = cutEdgePx(cm.startMs);
+                  const ePx = cutEdgePx(cm.endMs);
+                  if (ePx <= 0 || sPx >= containerWidthPx) return null;
+                  const left  = Math.max(0, sPx);
+                  const right = Math.min(containerWidthPx, ePx);
+                  return (
+                    <div
+                      key={cm.id}
+                      className="pointer-events-none absolute top-0 bottom-0"
+                      style={{
+                        left,
+                        width: right - left,
+                        background: "rgba(239, 68, 68, 0.28)",
+                        zIndex: 5,
+                      }}
+                    />
+                  );
+                })}
+                {previewCut && (() => {
+                  const sPx = cutEdgePx(previewCut.startMs);
+                  const ePx = cutEdgePx(previewCut.endMs);
+                  if (ePx <= 0 || sPx >= containerWidthPx) return null;
+                  const left  = Math.max(0, sPx);
+                  const right = Math.min(containerWidthPx, ePx);
+                  return (
+                    <div
+                      className="pointer-events-none absolute top-0 bottom-0"
+                      style={{
+                        left,
+                        width: right - left,
+                        background: "rgba(239, 68, 68, 0.15)",
+                        zIndex: 5,
+                      }}
+                    />
+                  );
+                })()}
+              </>
+            )}
+
             {/* Drag overlay — tap=seek, drag=create/resize/pan depending on context */}
             {wsState === "ready" && !splitMode && (
               <div
                 className="absolute inset-0 touch-none select-none"
-                style={{ cursor: cursorStyle }}
+                style={{ cursor: cursorStyle, zIndex: 20 }}
                 onPointerDown={handleDragStart}
                 onPointerMove={handleDragMove}
                 onPointerUp={handleDragEnd}
@@ -793,20 +793,19 @@ export function WaveformEditor({
             )}
 
             {/* Cut edge visual indicators — pointer-events:none, purely decorative.
-                Interaction is handled entirely by the overlay above. The overlay's
-                handleDragStart detects both edge proximity AND taps inside a cut
-                region, so no per-handle pointer events are needed. */}
+                Rendered above the overlay (z-30) just for visual layering; the
+                overlay itself intercepts all pointer events. */}
             {wsState === "ready" && !splitMode && cutMarks.map((cm) => {
               const sPx = cutEdgePx(cm.startMs);
               const ePx = cutEdgePx(cm.endMs);
               const HALF = EDGE_GRAB_PX;
 
               return (
-                <Fragment key={cm.regionId}>
+                <Fragment key={cm.id}>
                   {sPx > -HALF && sPx < containerWidthPx + HALF && (
                     <div
-                      className="pointer-events-none absolute top-0 bottom-0 z-10 flex items-center justify-center"
-                      style={{ left: sPx - HALF, width: HALF * 2 }}
+                      className="pointer-events-none absolute top-0 bottom-0 flex items-center justify-center"
+                      style={{ left: sPx - HALF, width: HALF * 2, zIndex: 30 }}
                     >
                       <div className="absolute inset-y-0 w-0.5 bg-danger/70" style={{ left: HALF - 1 }} />
                       <div className="absolute flex flex-col gap-0.5 items-center" style={{ left: HALF - 6, top: "50%", transform: "translateY(-50%)" }}>
@@ -818,8 +817,8 @@ export function WaveformEditor({
                   )}
                   {ePx > -HALF && ePx < containerWidthPx + HALF && (
                     <div
-                      className="pointer-events-none absolute top-0 bottom-0 z-10 flex items-center justify-center"
-                      style={{ left: ePx - HALF, width: HALF * 2 }}
+                      className="pointer-events-none absolute top-0 bottom-0 flex items-center justify-center"
+                      style={{ left: ePx - HALF, width: HALF * 2, zIndex: 30 }}
                     >
                       <div className="absolute inset-y-0 w-0.5 bg-danger/70" style={{ left: HALF - 1 }} />
                       <div className="absolute flex flex-col gap-0.5 items-center" style={{ left: HALF - 6, top: "50%", transform: "translateY(-50%)" }}>
@@ -1058,13 +1057,13 @@ export function WaveformEditor({
             Cuts ({cutMarks.length}) · {formatPosition(resultDurationMs)} result
           </p>
           {cutMarks.map((cm) => {
-            const isExpanded = expandedCutId === cm.regionId;
+            const isExpanded = expandedCutId === cm.id;
             return (
-              <div key={cm.regionId} className="rounded-xl overflow-hidden">
+              <div key={cm.id} className="rounded-xl overflow-hidden">
                 {/* Cut row header */}
                 <button
                   className="w-full flex items-center gap-2 py-2 px-1 text-left active:bg-elevated/50 transition-colors rounded-xl"
-                  onClick={() => setExpandedCutId(isExpanded ? null : cm.regionId)}
+                  onClick={() => setExpandedCutId(isExpanded ? null : cm.id)}
                 >
                   {/* Expand chevron */}
                   <svg
@@ -1082,7 +1081,7 @@ export function WaveformEditor({
                   </span>
                   {/* Delete */}
                   <button
-                    onClick={(e) => { e.stopPropagation(); removeCut(cm.regionId); }}
+                    onClick={(e) => { e.stopPropagation(); removeCut(cm.id); }}
                     aria-label="Remove cut"
                     className="p-1.5 text-muted hover:text-danger transition-colors shrink-0"
                   >
@@ -1104,7 +1103,7 @@ export function WaveformEditor({
                         {NUDGE_STEPS.map(([delta, label]) => (
                           <button
                             key={label}
-                            onClick={() => nudgeCut(cm.regionId, "start", delta)}
+                            onClick={() => nudgeCut(cm.id, "start", delta)}
                             className="rounded-lg bg-elevated px-2.5 py-1.5 font-mono text-xs text-muted hover:bg-elevated/80 hover:text-primary active:scale-95 transition-all"
                           >
                             {label}
@@ -1122,7 +1121,7 @@ export function WaveformEditor({
                         {NUDGE_STEPS.map(([delta, label]) => (
                           <button
                             key={label}
-                            onClick={() => nudgeCut(cm.regionId, "end", delta)}
+                            onClick={() => nudgeCut(cm.id, "end", delta)}
                             className="rounded-lg bg-elevated px-2.5 py-1.5 font-mono text-xs text-muted hover:bg-elevated/80 hover:text-primary active:scale-95 transition-all"
                           >
                             {label}
@@ -1215,46 +1214,38 @@ export function WaveformEditor({
           <div className="space-y-1">
             <label className="text-sm text-muted" htmlFor="version-desc">Description (optional)</label>
             <input
-              id="version-desc" type="text" value={description}
+              id="version-desc"
+              type="text"
+              value={description}
               onChange={(e) => setDescription(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submitVersion()}
-              placeholder="Cut the dead air at the start" maxLength={200}
-              className="w-full rounded-2xl border border-border bg-surface px-5 py-3.5 text-base text-primary placeholder:text-muted focus:border-accent focus:outline-none"
+              placeholder="e.g. cut intro, tighten ending"
+              className="w-full rounded-xl bg-elevated px-4 py-3 text-sm text-primary placeholder:text-muted/50 outline-none focus:ring-2 focus:ring-accent/50"
             />
           </div>
           {submitError && <p className="text-sm text-danger">{submitError}</p>}
-          <Button onClick={submitVersion} disabled={submitting} fullWidth size="lg">
-            {submitting ? "Submitting…" : "Submit version"}
+          <Button onClick={submitVersion} loading={submitting} fullWidth size="lg">
+            Save version
           </Button>
-          <Button onClick={() => setSubmitSheetOpen(false)} variant="ghost" fullWidth>Cancel</Button>
         </div>
       </BottomSheet>
 
-      {/* ── Split confirmation sheet ── */}
-      <BottomSheet open={splitSheetOpen} onClose={() => setSplitSheetOpen(false)} title="Split into two songs">
+      {/* ── Split confirm sheet ── */}
+      <BottomSheet open={splitSheetOpen} onClose={() => setSplitSheetOpen(false)} title="Split clip">
         <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="rounded-2xl bg-elevated px-5 py-4 flex items-center gap-4">
-              <span className="text-sm font-semibold text-secondary w-14 shrink-0">Part A</span>
-              <span className="font-mono text-base text-primary">0:00:00 – {formatPosition(splitMs)}</span>
-              <span className="font-mono text-sm text-muted ml-auto">{formatDuration(splitMs)}</span>
-            </div>
-            <div className="rounded-2xl bg-elevated px-5 py-4 flex items-center gap-4">
-              <span className="text-sm font-semibold text-secondary w-14 shrink-0">Part B</span>
-              <span className="font-mono text-base text-primary">{formatPosition(splitMs)} →</span>
-              <span className="font-mono text-sm text-muted ml-auto">{formatDuration(effectiveDurationMs - splitMs)}</span>
-            </div>
+          <div className="rounded-2xl bg-elevated px-5 py-4 space-y-1">
+            <p className="text-sm text-secondary">Split at <span className="font-mono text-primary">{formatPosition(splitMs)}</span></p>
+            <p className="text-xs text-muted">Two new clips will be created from this recording.</p>
           </div>
-          <p className="text-sm text-muted">
-            Each part gets its own audio file in Drive. Takes a few seconds — hang tight.
-          </p>
           {splitError && <p className="text-sm text-danger">{splitError}</p>}
-          <Button onClick={handleSplit} disabled={splitting} loading={splitting} fullWidth size="lg">
-            {splitting ? "Splitting…" : "Confirm split"}
+          <Button onClick={handleSplit} loading={splitting} fullWidth size="lg">
+            Confirm split
           </Button>
-          <Button onClick={() => setSplitSheetOpen(false)} variant="ghost" fullWidth>Cancel</Button>
+          <Button onClick={() => setSplitSheetOpen(false)} variant="ghost" fullWidth>
+            Cancel
+          </Button>
         </div>
       </BottomSheet>
+
     </div>
   );
 }
