@@ -543,8 +543,9 @@ export function WaveformEditor({
 
     if (drag.mode === "pan") return;
 
-    // Tap (< 8px movement) → seek
-    if (Math.abs(e.clientX - drag.startX) < 8) {
+    // Mode still "pending" means handleDragMove never saw enough movement to
+    // commit to "create" — this is a tap. Seek regardless of final coordinates.
+    if (drag.mode === "pending") {
       seekTo(e.clientX);
       return;
     }
