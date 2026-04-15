@@ -535,8 +535,12 @@ export function WaveformEditor({
   function seekToSec(sec: number) {
     if (!wsRef.current) return;
     const clamped = Math.min(sec, wsRef.current.getDuration());
-    currentTimeMsRef.current = clamped * 1000;
+    // Call setTime FIRST — it may fire a timeupdate with the OLD currentTime
+    // on some mobile browsers before the audio element updates. Setting the
+    // ref and display state AFTER overrides any such stale timeupdate.
     wsRef.current.setTime(clamped);
+    currentTimeMsRef.current = clamped * 1000;
+    setCurrentTimeMs(clamped * 1000);
   }
 
   function handleDragCancel() {
@@ -993,10 +997,10 @@ export function WaveformEditor({
               if (ws.isPlaying()) {
                 ws.pause();
               } else {
-                // Re-seek to tracked position before playing — fixes WaveSurfer's
-                // click-while-paused gap where the visual cursor moves but the
-                // audio element's currentTime can lag behind.
-                ws.setTime(currentTimeMsRef.current / 1000);
+                // No re-seek needed: interact:false means all seeks go through
+                // seekToSec() which calls ws.setTime() directly, keeping
+                // media.currentTime in sync. Re-seeking here would overwrite
+                // the correct position with a potentially stale ref value.
                 ws.play();
               }
             }}
