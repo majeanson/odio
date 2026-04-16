@@ -198,6 +198,22 @@ export function BandSettingsClient({
         </div>
       </section>
 
+      {/* Life-as-Code */}
+      <section>
+        <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3">Life-as-Code</p>
+        <div className="rounded-2xl bg-surface p-5 space-y-3">
+          <p className="text-sm text-secondary">Feature documentation — decisions, user guide, roadmap, and dev views.</p>
+          <a
+            href="/lac/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-accent underline underline-offset-4"
+          >
+            Open hub {externalLinkIcon}
+          </a>
+        </div>
+      </section>
+
       {/* Remove / Leave confirmation sheet */}
       <BottomSheet
         open={removeConfirmEmail !== null}

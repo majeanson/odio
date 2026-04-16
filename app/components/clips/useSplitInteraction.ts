@@ -14,6 +14,8 @@ import { useRef, useState } from "react";
 
 /** Pixels of movement before a tap is treated as a drag. */
 const DRAG_THRESHOLD = 8;
+/** Minimum distance in ms from either end — prevents zero-length clips. */
+const MIN_SPLIT_BUFFER_MS = 500;
 
 interface UseSplitInteractionOptions {
   containerRef: React.MutableRefObject<HTMLDivElement | null>;
@@ -49,6 +51,11 @@ export function useSplitInteraction({
   const [cursorStyle, setCursorStyle] = useState("crosshair");
   const [hoverMs, setHoverMs] = useState<number | null>(null);
 
+  function clampSplitMs(rawMs: number): number {
+    const effDur = effectiveDurMsRef.current;
+    return Math.max(MIN_SPLIT_BUFFER_MS, Math.min(effDur - MIN_SPLIT_BUFFER_MS, rawMs));
+  }
+
   function clientXToSec(clientX: number): number {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect || effectiveDurMsRef.current === 0) return 0;
@@ -79,7 +86,7 @@ export function useSplitInteraction({
 
       // No pointer captured — pure hover. Show ghost line at current position.
       if (!drag) {
-        setHoverMs(Math.round(clientXToSec(e.clientX) * 1000));
+        setHoverMs(clampSplitMs(Math.round(clientXToSec(e.clientX) * 1000)));
         return;
       }
 
@@ -88,7 +95,7 @@ export function useSplitInteraction({
         dragRef.current = { ...drag, didDrag: true };
         setCursorStyle("grabbing");
       }
-      onSetSplitMs(Math.round(clientXToSec(e.clientX) * 1000));
+      onSetSplitMs(clampSplitMs(Math.round(clientXToSec(e.clientX) * 1000)));
     },
 
     onPointerUp(_e: React.PointerEvent<HTMLDivElement>) {
@@ -100,8 +107,9 @@ export function useSplitInteraction({
       if (!drag.didDrag) {
         // Tap → place the split marker at the tapped position AND seek there.
         // This is the primary "click to place" interaction — no listening required.
-        onSetSplitMs(Math.round(drag.startSec * 1000));
-        onSeek(drag.startSec);
+        const ms = clampSplitMs(Math.round(drag.startSec * 1000));
+        onSetSplitMs(ms);
+        onSeek(ms / 1000);
       }
       // Drag: onSetSplitMs was already called live in onPointerMove.
     },

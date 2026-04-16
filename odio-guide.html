@@ -1,0 +1,1447 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Odio — User Guide</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #0f0d0b;
+        --bg-sidebar: #0b0a08;
+        --bg-card: #181512;
+        --bg-hover: #1e1a16;
+        --bg-active: #231e17;
+        --border: #262018;
+        --border-soft: #1e1a14;
+        --text: #ece3d8;
+        --text-mid: #b0a494;
+        --text-soft: #736455;
+        --accent: #c4a255;
+        --accent-warm: #e8b865;
+        --mono:
+          "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", monospace;
+        --sans:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+
+        --status-frozen: #5b82cc;
+        --status-active: #4aad72;
+        --status-draft: #c4a255;
+
+        --status-frozen-bg: rgba(91, 130, 204, 0.1);
+        --status-active-bg: rgba(74, 173, 114, 0.1);
+        --status-draft-bg: rgba(196, 162, 85, 0.1);
+
+        --domain-getstarted: #c4a255;
+        --domain-recording: #e8674a;
+        --domain-sessions: #4aad72;
+        --domain-band: #5b82cc;
+        --domain-editing: #b87fda;
+        --domain-finishing: #e8b865;
+        --domain-storage: #736455;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 14px;
+        line-height: 1.6;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* ── Shell ── */
+      .shell {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .topbar {
+        flex-shrink: 0;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 20px;
+        background: var(--bg-sidebar);
+        border-bottom: 1px solid var(--border);
+        z-index: 10;
+      }
+      .topbar-brand {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--accent);
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+      }
+      .topbar-sep {
+        color: var(--border);
+        font-size: 18px;
+        line-height: 1;
+      }
+      .topbar-title {
+        font-size: 13px;
+        color: var(--text-mid);
+        white-space: nowrap;
+      }
+      .topbar-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .topbar-count {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text-soft);
+      }
+      .topbar-search-wrap {
+        position: relative;
+      }
+      #global-search {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 5px 10px 5px 28px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text);
+        outline: none;
+        width: 180px;
+        transition:
+          border-color 0.15s,
+          width 0.2s;
+      }
+      #global-search:focus {
+        border-color: var(--accent);
+        width: 240px;
+      }
+      #global-search::placeholder {
+        color: var(--text-soft);
+      }
+      .search-icon {
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-soft);
+        pointer-events: none;
+      }
+
+      .body-row {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+      }
+
+      /* ── Sidebar ── */
+      .sidebar {
+        width: 256px;
+        flex-shrink: 0;
+        background: var(--bg-sidebar);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .sidebar-header {
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .sidebar-label {
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+        margin-bottom: 4px;
+      }
+      .sidebar-subtitle {
+        font-size: 11px;
+        color: var(--text-mid);
+      }
+
+      .nav-tree {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 0 32px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+      }
+      .nav-tree::-webkit-scrollbar {
+        width: 4px;
+      }
+      .nav-tree::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+
+      .nav-domain-header {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 14px 5px;
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+        cursor: pointer;
+        user-select: none;
+      }
+      .nav-domain-header:hover {
+        color: var(--text-mid);
+      }
+      .nav-domain-pip {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .nav-arrow {
+        font-size: 8px;
+        margin-left: auto;
+        transition: transform 0.15s;
+      }
+      .collapsed .nav-arrow {
+        transform: rotate(-90deg);
+      }
+      .nav-group-items {
+        overflow: hidden;
+      }
+      .nav-group.collapsed .nav-group-items {
+        display: none;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 14px 5px 24px;
+        cursor: pointer;
+        border-left: 2px solid transparent;
+        text-decoration: none;
+        transition: background 0.1s;
+      }
+      .nav-item:hover {
+        background: var(--bg-hover);
+      }
+      .nav-item.active {
+        background: var(--bg-active);
+        border-left-color: var(--accent);
+      }
+      .nav-item-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .nav-item-dot.frozen {
+        background: var(--status-frozen);
+      }
+      .nav-item-dot.active {
+        background: var(--status-active);
+      }
+      .nav-item-dot.draft {
+        background: var(--status-draft);
+      }
+      .nav-item-name {
+        font-size: 12px;
+        color: var(--text-mid);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+      }
+      .nav-item:hover .nav-item-name,
+      .nav-item.active .nav-item-name {
+        color: var(--text);
+      }
+
+      /* ── Content ── */
+      .content {
+        flex: 1;
+        min-width: 0;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+      }
+      .content::-webkit-scrollbar {
+        width: 6px;
+      }
+      .content::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 3px;
+      }
+
+      /* Home */
+      .home-page {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 56px 40px 80px;
+      }
+      .home-eyebrow {
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 14px;
+      }
+      .home-title {
+        font-size: 36px;
+        font-weight: 800;
+        color: var(--text);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        margin-bottom: 10px;
+      }
+      .home-sub {
+        font-size: 15px;
+        color: var(--text-mid);
+        line-height: 1.75;
+        max-width: 540px;
+        margin-bottom: 40px;
+      }
+
+      .stat-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 48px;
+      }
+      .stat-card {
+        padding: 16px 20px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        min-width: 120px;
+      }
+      .stat-num {
+        font-family: var(--mono);
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .stat-lbl {
+        font-size: 11px;
+        color: var(--text-soft);
+        margin-top: 4px;
+      }
+
+      .home-section-title {
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .toc-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .toc-card {
+        padding: 12px 16px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+        text-decoration: none;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .toc-card:hover {
+        background: var(--bg-hover);
+        border-color: var(--text-soft);
+      }
+      .toc-pip {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 4px;
+      }
+      .toc-card-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        line-height: 1.3;
+      }
+      .toc-card-sub {
+        font-size: 11px;
+        color: var(--text-soft);
+        margin-top: 2px;
+      }
+
+      /* Feature pages */
+      .feature-page {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 48px 40px 80px;
+      }
+      .feature-page.hidden {
+        display: none;
+      }
+
+      .feature-domain-eyebrow {
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .feature-title {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--text);
+        letter-spacing: -0.015em;
+        line-height: 1.2;
+        margin-bottom: 12px;
+      }
+      .feature-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 32px;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-family: var(--mono);
+        font-size: 10px;
+        border: 1px solid;
+      }
+      .status-badge.frozen {
+        color: var(--status-frozen);
+        border-color: rgba(91, 130, 204, 0.4);
+        background: var(--status-frozen-bg);
+      }
+      .status-badge.active {
+        color: var(--status-active);
+        border-color: rgba(74, 173, 114, 0.4);
+        background: var(--status-active-bg);
+      }
+      .status-badge.draft {
+        color: var(--status-draft);
+        border-color: rgba(196, 162, 85, 0.4);
+        background: var(--status-draft-bg);
+      }
+
+      .tag {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 999px;
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text-soft);
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+      }
+
+      /* ── User guide block — the star of the page ── */
+      .guide-block {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 28px 32px;
+        margin-bottom: 28px;
+      }
+      .guide-block-label {
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 16px;
+      }
+      .guide-text {
+        font-size: 14px;
+        line-height: 1.85;
+        color: var(--text-mid);
+      }
+      .guide-text p {
+        margin-bottom: 12px;
+      }
+      .guide-text p:last-child {
+        margin-bottom: 0;
+      }
+      .guide-step {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 14px;
+        align-items: flex-start;
+      }
+      .guide-step-num {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--accent);
+        background: rgba(196, 162, 85, 0.1);
+        border: 1px solid rgba(196, 162, 85, 0.2);
+        border-radius: 4px;
+        padding: 2px 7px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .guide-step-text {
+        font-size: 14px;
+        line-height: 1.75;
+        color: var(--text-mid);
+        flex: 1;
+      }
+      .guide-step-text strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .inline-key {
+        display: inline-block;
+        padding: 1px 7px;
+        border-radius: 4px;
+        font-family: var(--mono);
+        font-size: 11px;
+        background: var(--bg-hover);
+        border: 1px solid var(--border);
+        color: var(--text);
+        white-space: nowrap;
+      }
+
+      /* Tip / note callout */
+      .callout {
+        display: flex;
+        gap: 12px;
+        padding: 14px 18px;
+        border-radius: 8px;
+        border: 1px solid;
+        margin-bottom: 24px;
+      }
+      .callout.tip {
+        background: rgba(74, 173, 114, 0.07);
+        border-color: rgba(74, 173, 114, 0.25);
+      }
+      .callout.note {
+        background: rgba(196, 162, 85, 0.07);
+        border-color: rgba(196, 162, 85, 0.25);
+      }
+      .callout.warn {
+        background: rgba(232, 103, 74, 0.07);
+        border-color: rgba(232, 103, 74, 0.25);
+      }
+      .callout-icon {
+        font-size: 15px;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .callout-body {
+        font-size: 13px;
+        line-height: 1.7;
+        color: var(--text-mid);
+      }
+      .callout-body strong {
+        color: var(--text);
+      }
+
+      /* Limitation list */
+      .limit-list {
+        margin: 0;
+        padding-left: 0;
+        list-style: none;
+      }
+      .limit-list li {
+        display: flex;
+        gap: 10px;
+        font-size: 13px;
+        color: var(--text-soft);
+        line-height: 1.65;
+        margin-bottom: 6px;
+      }
+      .limit-list li::before {
+        content: "—";
+        color: var(--text-soft);
+        flex-shrink: 0;
+        opacity: 0.5;
+      }
+
+      /* Domain chapter navigation (prev/next) */
+      .feature-nav {
+        display: flex;
+        gap: 10px;
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+      }
+      .feature-nav-btn {
+        flex: 1;
+        padding: 14px 18px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .feature-nav-btn:hover {
+        background: var(--bg-hover);
+        border-color: var(--text-soft);
+      }
+      .feature-nav-btn.next {
+        justify-content: flex-end;
+        text-align: right;
+      }
+      .nav-btn-arrow {
+        font-size: 16px;
+        color: var(--text-soft);
+        flex-shrink: 0;
+      }
+      .nav-btn-label {
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+      }
+      .nav-btn-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        margin-top: 2px;
+      }
+
+      /* Search results overlay */
+      #search-results {
+        position: fixed;
+        top: 46px;
+        right: 20px;
+        width: 340px;
+        max-height: 400px;
+        overflow-y: auto;
+        background: var(--bg-sidebar);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        z-index: 100;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        display: none;
+      }
+      #search-results.visible {
+        display: block;
+      }
+      .sr-item {
+        padding: 10px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border-soft);
+        transition: background 0.1s;
+      }
+      .sr-item:last-child {
+        border-bottom: none;
+      }
+      .sr-item:hover {
+        background: var(--bg-hover);
+      }
+      .sr-item-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .sr-item-domain {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text-soft);
+        margin-top: 2px;
+      }
+      .sr-item-snippet {
+        font-size: 12px;
+        color: var(--text-mid);
+        margin-top: 4px;
+        line-height: 1.5;
+      }
+      .sr-empty {
+        padding: 20px 16px;
+        font-size: 13px;
+        color: var(--text-soft);
+      }
+
+      mark {
+        background: rgba(196, 162, 85, 0.25);
+        color: var(--text);
+        border-radius: 2px;
+        padding: 0 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <!-- Topbar -->
+      <div class="topbar">
+        <span class="topbar-brand">lac·guide</span>
+        <span class="topbar-sep">/</span>
+        <span class="topbar-title">Odio</span>
+        <div class="topbar-right">
+          <span class="topbar-count" id="feature-count">— features</span>
+          <div class="topbar-search-wrap">
+            <svg
+              class="search-icon"
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              id="global-search"
+              placeholder="Search guide…"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="body-row">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="sidebar-header">
+            <div class="sidebar-label">User Guide</div>
+            <div class="sidebar-subtitle">Collaborative jam recorder</div>
+          </div>
+          <nav class="nav-tree" id="nav-tree"></nav>
+        </div>
+
+        <!-- Content -->
+        <main class="content" id="content"></main>
+      </div>
+    </div>
+
+    <!-- Search results -->
+    <div id="search-results"></div>
+
+    <script>
+      // ── Feature data (harvested from feature.jsons) ─────────────────────────────
+
+      const FEATURES = [
+        {
+          id: "auth",
+          title: "Signing In",
+          status: "frozen",
+          domain: "get-started",
+          domainLabel: "Getting Started",
+          domainColor: "var(--domain-getstarted)",
+          tags: ["auth", "google-oauth", "nextauth", "session", "drive.file"],
+          guide: `Visit the Odio app and click <strong>Sign in with Google</strong>. You'll be prompted to grant Google Drive access — Odio only creates files under its own app scope and cannot read anything else in your Drive.
+
+After sign-in, you're redirected to your bands home page. Your session persists across browser restarts — you stay signed in automatically.
+
+To sign out, open Band settings and tap Sign out at the bottom.
+
+The public share player (<span class="inline-key">/share/[token]</span> links) never requires sign-in — anyone with the link can listen.`,
+          steps: null,
+          callout: {
+            type: "note",
+            icon: "🔑",
+            text: "<strong>Drive scope:</strong> Odio requests <code>drive.file</code> access only — it can read and manage files it creates, but not your existing Drive content.",
+          },
+          limitations: null,
+        },
+        {
+          id: "app-shell",
+          title: "App Navigation",
+          status: "active",
+          domain: "get-started",
+          domainLabel: "Getting Started",
+          domainColor: "var(--domain-getstarted)",
+          tags: [
+            "navigation",
+            "dark-theme",
+            "onboarding",
+            "mobile-first",
+            "bottom-tab-bar",
+          ],
+          guide: `After signing in, you land on your bands list. If you haven't created a band yet, the app walks you through a quick setup wizard.
+
+The <strong>bottom tab bar</strong> is always visible and has four destinations:
+<ul style="margin: 8px 0 8px 20px; line-height: 2;">
+  <li><strong>Sessions</strong> — browse and open recording sessions</li>
+  <li><strong>Record</strong> — jump directly to the recording screen</li>
+  <li><strong>Clips</strong> — the current session's clip list (appears once you're inside a session)</li>
+  <li><strong>Band</strong> — member list, invite link, Drive folder, settings</li>
+</ul>
+
+Tap <strong>Record</strong> from anywhere to go straight to recording — you don't need to navigate first.`,
+          steps: null,
+          callout: {
+            type: "tip",
+            icon: "💡",
+            text: "Odio works best added to your home screen. In Safari, tap Share → Add to Home Screen. In Chrome, tap the menu → Install.",
+          },
+          limitations: null,
+        },
+        {
+          id: "recording",
+          title: "Recording a Song",
+          status: "frozen",
+          domain: "recording",
+          domainLabel: "Recording",
+          domainColor: "var(--domain-recording)",
+          tags: [
+            "recording",
+            "mediarecorder",
+            "audio",
+            "stamps",
+            "ios",
+            "google-drive",
+          ],
+          guide: null,
+          steps: [
+            {
+              text: "Tap the <strong>Record</strong> tab from anywhere in the app.",
+            },
+            {
+              text: "Tap the large <strong>circle button</strong> to start recording. The timer runs; the level meter shows audio input.",
+            },
+            {
+              text: "While recording, tap stamp buttons any time to mark notable moments: 🔥 <strong>Fire</strong> (great take), ⭐ <strong>Keep</strong> (use this), ❓ <strong>Uncertain</strong>, 💡 <strong>Idea</strong>.",
+            },
+            {
+              text: "Tap <strong>Add note</strong> to type a quick text annotation without stopping.",
+            },
+            {
+              text: "Tap the <strong>square stop button</strong> to finish the recording.",
+            },
+            {
+              text: "On the post-record screen, <strong>name the clip</strong>. Tap <strong>Next Song →</strong> to immediately start the next recording while the previous one uploads in the background — or navigate away.",
+            },
+          ],
+          callout: {
+            type: "tip",
+            icon: "🎙️",
+            text: "Stamps and notes are timestamped to the exact moment you tapped — they show up as colored markers in the waveform editor later.",
+          },
+          limitations: [
+            "Recording requires microphone permission. iOS Safari will ask on first launch.",
+            "Maximum recommended clip length is ~30 minutes (≈43 MB as AAC). Longer clips may be rejected by the browser.",
+            "Screen lock will stop recording on iOS unless Wake Lock is granted (automatic if the browser supports it).",
+          ],
+        },
+        {
+          id: "audio-input",
+          title: "External Microphone / USB Interface",
+          status: "frozen",
+          domain: "recording",
+          domainLabel: "Recording",
+          domainColor: "var(--domain-recording)",
+          tags: ["audio-input", "external-mic", "mediadevices"],
+          guide: `If you have an external microphone, USB audio interface, or headset plugged in when you open the recording screen, a small mic icon appears to the left of the record button.
+
+Tap it to choose your audio input from the list. Your selection is remembered for next time.
+
+If the chosen device is unplugged after selection, the app automatically falls back to the built-in mic and shows a brief notification.`,
+          steps: null,
+          callout: null,
+          limitations: [
+            "USB audio interfaces are not supported on iOS Safari — use a headset mic or the built-in mic on iPhone.",
+          ],
+        },
+        {
+          id: "multi-recorder",
+          title: "Anyone Can Record",
+          status: "frozen",
+          domain: "recording",
+          domainLabel: "Recording",
+          domainColor: "var(--domain-recording)",
+          tags: [
+            "multi-recorder",
+            "roles",
+            "permissions",
+            "google-drive",
+            "upload",
+          ],
+          guide: `Any <strong>Editor-role</strong> band member can record — not just the band creator. Editors see the Record tab in the nav and can start a recording from their own device. The audio automatically lands in the band's shared Drive folder (owned by the band creator).
+
+If the creator's Drive connection expires, a banner appears: <em>"Drive connection needs renewal — ask [creator name] to re-authorize."</em>
+
+The clip card shows <em>"Recorded by X"</em> when the recorder is not the band creator.`,
+          steps: null,
+          callout: {
+            type: "note",
+            icon: "🔒",
+            text: "<strong>Roles:</strong> Recorder > Editor > Member. Recorders can delete clips. Editors can record and edit versions. Members can only view and vote.",
+          },
+          limitations: null,
+        },
+        {
+          id: "upload-banner",
+          title: "Upload Progress",
+          status: "active",
+          domain: "recording",
+          domainLabel: "Recording",
+          domainColor: "var(--domain-recording)",
+          tags: ["upload", "banner", "progress", "resilience", "retry"],
+          guide: `After stopping a recording, a <strong>banner appears at the top of every screen</strong> showing upload progress. You can navigate freely — the upload continues in the background.
+
+If the upload completes, the banner disappears automatically.
+
+If the connection drops, the banner shows <em>"Upload paused"</em> with a <strong>Retry</strong> button — tap it once reconnected.
+
+If the band creator's Drive connection expires, the banner shows an error with a <strong>Save file</strong> button as a last resort — tap it to download the raw recording to your device before it's lost.`,
+          steps: null,
+          callout: null,
+          limitations: null,
+        },
+        {
+          id: "resilience",
+          title: "Recording Recovery",
+          status: "frozen",
+          domain: "recording",
+          domainLabel: "Recording",
+          domainColor: "var(--domain-recording)",
+          tags: [
+            "indexeddb",
+            "resilience",
+            "offline",
+            "retry",
+            "upload",
+            "fallback",
+          ],
+          guide: `Recording resilience is automatic and invisible when things work. If an upload fails (network drops, Drive token expires), a banner appears: <em>"You have [N] recording(s) waiting to upload"</em>.
+
+When the app reopens after a crash, pending recordings are detected automatically — nothing is lost.`,
+          steps: null,
+          callout: {
+            type: "warn",
+            icon: "⚠️",
+            text: "Tap <strong>Discard</strong> (with confirmation) only if you're sure you don't want the recording — this permanently removes it from recovery storage.",
+          },
+          limitations: [
+            "Pending recordings are stored in your browser's IndexedDB — clearing site data in browser settings will erase them.",
+            "A 'Save to device' fallback lets you download the raw AAC file if Drive is permanently unavailable.",
+          ],
+        },
+        {
+          id: "sessions",
+          title: "Sessions & Clips",
+          status: "active",
+          domain: "sessions",
+          domainLabel: "Sessions",
+          domainColor: "var(--domain-sessions)",
+          tags: [
+            "sessions",
+            "clips",
+            "naming",
+            "song-stage",
+            "death-metal-names",
+          ],
+          guide: `Sessions appear in the band's session list sorted by date — one session = one jam night. Tap a session to see its clips.
+
+<strong>Clip names</strong> are auto-generated using memorable death metal word pairs (e.g. <em>Putrid Descent</em>, <em>Severed Throne</em>). Tap the clip name to rename it inline. Tap the <strong>shuffle icon</strong> next to the name to roll a new name — saves automatically.
+
+Each clip card shows: name · duration · version count · stage · status indicator.
+
+The <strong>stage chip</strong> tracks the song's creative progress: <span class="inline-key">idea</span> → <span class="inline-key">sketch</span> → <span class="inline-key">developing</span> → <span class="inline-key">demo-ready</span>. Change it from the clip detail page.
+
+Tap the <strong>session name</strong> to rename it inline. Tap the <strong>notes icon</strong> to add session notes. Tap the <strong>QR icon</strong> to show a QR code bandmates can scan to join.`,
+          steps: null,
+          callout: {
+            type: "tip",
+            icon: "💡",
+            text: "Tap <strong>···</strong> on a clip to delete it (Recorder-only). A confirmation sheet will warn you before anything is removed from Drive.",
+          },
+          limitations: [
+            "Death metal names are random — two clips in the same session could get the same name (rare). Just rename one.",
+          ],
+        },
+        {
+          id: "band",
+          title: "Band Space — Members & Drive",
+          status: "active",
+          domain: "band",
+          domainLabel: "Your Band",
+          domainColor: "var(--domain-band)",
+          tags: [
+            "band",
+            "invite",
+            "members",
+            "google-drive",
+            "qr-code",
+            "role-management",
+          ],
+          guide: `Create a band from the home screen. You become the band's <strong>Recorder</strong> (admin role).
+
+<strong>Inviting members:</strong> Share the invite link or QR code with bandmates. They sign in with Google and join as Editors. Once they join, their email appears in Settings → Members.
+
+<strong>Sharing the Drive folder:</strong> After someone joins, share the Drive folder with their email from Google Drive — this gives them visibility into the audio files (one-time step per member).
+
+<strong>Roles:</strong> In Settings, use the role buttons to switch a member between Editor and Member. Tap Remove to remove a member (confirmation required). Non-Recorder members can Leave band from their own member row.
+
+<strong>Drive file management:</strong> Editors and Recorders can open <em>"Manage files / sync"</em> from the Storage section. Hit <strong>Sync</strong> to check which files still exist in Drive — green dot = ok, red = missing. Delete a source file to free Drive space while keeping the clip. Delete a clip to remove it entirely from Odio and Drive.`,
+          steps: null,
+          callout: {
+            type: "warn",
+            icon: "⚠️",
+            text: "Delete actions in the Drive file manager <strong>permanently remove files from Google Drive</strong>. A confirmation sheet is always shown first.",
+          },
+          limitations: null,
+        },
+        {
+          id: "versioning",
+          title: "Editing & Versioning",
+          status: "active",
+          domain: "editing",
+          domainLabel: "Editing",
+          domainColor: "var(--domain-editing)",
+          tags: [
+            "versioning",
+            "waveform-editor",
+            "waveform-player",
+            "localstorage",
+            "skip-cuts",
+            "split",
+          ],
+          guide: `From a clip's detail page, select a version in the <strong>Versions</strong> section to hear that version's cuts applied. Tap stamp chips (🔥 ⭐ etc.) in the player to seek to that moment.
+
+Tap <strong>Edit cuts</strong> to open the full-screen waveform editor.`,
+          steps: [
+            {
+              text: "In the editor: <strong>drag on the waveform</strong> to create a red cut region (that section will be removed).",
+            },
+            {
+              text: "Tap <strong>Trim</strong> to pre-seed start and end cuts from the current playback position.",
+            },
+            { text: "Tap <strong>Clear all</strong> to reset all cuts." },
+            {
+              text: "Tap <strong>Start from</strong> pills to load a previous version's cuts as a starting point.",
+            },
+            {
+              text: "Tap <strong>Submit edit</strong> to save as a new version — a description is optional but helpful.",
+            },
+            {
+              text: "Tap <strong>Split</strong> to divide the song at a chosen time: mark the split point on the waveform, confirm — Odio creates Part A and Part B as two fully independent new clips, each with their own trimmed audio file in Drive. The original clip stays unchanged.",
+            },
+          ],
+          callout: {
+            type: "tip",
+            icon: "✂️",
+            text: "Cut marks are auto-saved in your browser as you work. If you close the tab by accident, your work is still there when you reopen the editor.",
+          },
+          limitations: [
+            "Cut marks are saved per-browser — they won't appear on a different device until you submit a new version.",
+            "The original clip's source file stays in Drive after a split. Go to Settings → Manage files to delete it once you're happy with Part A and B.",
+          ],
+        },
+        {
+          id: "freeze",
+          title: "Freezing a Song",
+          status: "frozen",
+          domain: "finishing",
+          domainLabel: "Finishing",
+          domainColor: "var(--domain-finishing)",
+          tags: ["freeze", "render", "ffmpeg", "public-share"],
+          guide: `When the band is happy with a version, <strong>freeze the clip</strong> to lock editing and produce the final audio file.`,
+          steps: [
+            {
+              text: "Open the clip detail page and tap <strong>Freeze</strong>.",
+            },
+            {
+              text: "Choose which version to freeze and confirm the final name.",
+            },
+            {
+              text: "The page shows <em>'Rendering…'</em> for a few seconds while FFmpeg produces the final file.",
+            },
+            {
+              text: "Once done, a <strong>lock icon</strong> appears — the clip is now frozen and permanently playable.",
+            },
+          ],
+          callout: {
+            type: "note",
+            icon: "🔒",
+            text: "Only a Recorder can unfreeze a clip. Unfreezing reopens editing but removes the frozen status — the final render file is kept in Drive until you clean it up.",
+          },
+          limitations: null,
+        },
+        {
+          id: "public-share",
+          title: "Public Share Link",
+          status: "active",
+          domain: "finishing",
+          domainLabel: "Finishing",
+          domainColor: "var(--domain-finishing)",
+          tags: [
+            "public-share",
+            "wavesurfer",
+            "unauthenticated",
+            "frozen",
+            "download",
+          ],
+          guide: `After freezing a clip, tap <strong>Enable public share</strong> on the clip detail page to generate a <span class="inline-key">/share/[token]</span> link.
+
+Share this URL with anyone — they can open it in any browser without signing in. They'll see the clip name, a waveform player, and stamp markers. They can play, seek, and download the audio.
+
+To revoke access, tap <strong>Enable public share</strong> again to disable — the link immediately stops working.`,
+          steps: null,
+          callout: {
+            type: "tip",
+            icon: "🔗",
+            text: "The share link works for everyone — family, managers, collaborators — no Odio account needed.",
+          },
+          limitations: null,
+        },
+        {
+          id: "storage",
+          title: "Drive Storage & Cleanup",
+          status: "frozen",
+          domain: "storage",
+          domainLabel: "Storage",
+          domainColor: "var(--domain-storage)",
+          tags: ["storage", "google-drive", "cleanup", "archive", "quota"],
+          guide: `In the Band tab, tap <strong>Settings</strong> to see Drive storage usage. The bar shows how many MB / GB of Drive are used by this band's recordings.
+
+<strong>After a clip is frozen</strong> and the band is happy with it, tap <strong>Clean up source audio</strong> on the clip detail page to delete the raw recording from Drive — the final rendered file is kept and the clip stays fully playable.
+
+Tap <strong>Delete clip</strong> (Recorder only) to permanently remove a clip and all its files from Drive.`,
+          steps: null,
+          callout: {
+            type: "note",
+            icon: "💾",
+            text: "A 30-minute AAC recording is ~43 MB. Google Drive free tier is 15 GB, supporting ~350 raw clips before cleanup is needed.",
+          },
+          limitations: [
+            "Drive storage is under the recorder's account — other members can't see usage until you share the Drive folder with them.",
+          ],
+        },
+      ];
+
+      // ── Domain order ─────────────────────────────────────────────────────────────
+
+      const DOMAIN_ORDER = [
+        {
+          id: "get-started",
+          label: "Getting Started",
+          color: "var(--domain-getstarted)",
+        },
+        {
+          id: "recording",
+          label: "Recording",
+          color: "var(--domain-recording)",
+        },
+        { id: "sessions", label: "Sessions", color: "var(--domain-sessions)" },
+        { id: "band", label: "Your Band", color: "var(--domain-band)" },
+        { id: "editing", label: "Editing", color: "var(--domain-editing)" },
+        {
+          id: "finishing",
+          label: "Finishing",
+          color: "var(--domain-finishing)",
+        },
+        { id: "storage", label: "Storage", color: "var(--domain-storage)" },
+      ];
+
+      // ── Build sidebar ─────────────────────────────────────────────────────────────
+
+      const navTree = document.getElementById("nav-tree");
+      const featureCount = document.getElementById("feature-count");
+      featureCount.textContent = FEATURES.length + " features";
+
+      DOMAIN_ORDER.forEach((domain) => {
+        const features = FEATURES.filter((f) => f.domain === domain.id);
+        if (!features.length) return;
+
+        const group = document.createElement("div");
+        group.className = "nav-group";
+        group.dataset.domain = domain.id;
+
+        const header = document.createElement("div");
+        header.className = "nav-domain-header";
+        header.innerHTML = `
+    <div class="nav-domain-pip" style="background:${domain.color}"></div>
+    ${domain.label}
+    <span class="nav-arrow">▾</span>
+  `;
+        header.addEventListener("click", () =>
+          group.classList.toggle("collapsed"),
+        );
+
+        const items = document.createElement("div");
+        items.className = "nav-group-items";
+        features.forEach((f) => {
+          const item = document.createElement("div");
+          item.className = "nav-item";
+          item.dataset.id = f.id;
+          item.innerHTML = `
+      <div class="nav-item-dot ${f.status}"></div>
+      <span class="nav-item-name">${f.title}</span>
+    `;
+          item.addEventListener("click", () => showPage(f.id));
+          items.appendChild(item);
+        });
+
+        group.appendChild(header);
+        group.appendChild(items);
+        navTree.appendChild(group);
+      });
+
+      // Add home link at top
+      const homeLink = document.createElement("div");
+      homeLink.className = "nav-item active";
+      homeLink.dataset.id = "home";
+      homeLink.style.cssText =
+        "border-left-color: var(--accent); margin-bottom: 6px;";
+      homeLink.innerHTML = `<span class="nav-item-name" style="color: var(--text);">Overview</span>`;
+      homeLink.addEventListener("click", () => showPage("home"));
+      navTree.insertBefore(homeLink, navTree.firstChild);
+
+      // ── Build content pages ───────────────────────────────────────────────────────
+
+      const content = document.getElementById("content");
+
+      // Home page
+      const homePage = document.createElement("div");
+      homePage.id = "page-home";
+      homePage.className = "feature-page";
+      homePage.innerHTML = `
+  <div class="home-eyebrow">odio · user guide</div>
+  <div class="home-title">Odio</div>
+  <div class="home-sub">A collaborative jam session recorder for small bands. Record songs from any browser, trim and edit takes, vote on versions, and freeze the best one.</div>
+  <div class="stat-row">
+    ${DOMAIN_ORDER.map((d) => {
+      const count = FEATURES.filter((f) => f.domain === d.id).length;
+      return `<div class="stat-card">
+        <div class="stat-num" style="color:${d.color}">${count}</div>
+        <div class="stat-lbl">${d.label}</div>
+      </div>`;
+    }).join("")}
+  </div>
+  <div class="home-section-title">Jump to a topic</div>
+  <div class="toc-grid">
+    ${FEATURES.map(
+      (f) => `
+      <div class="toc-card" onclick="showPage('${f.id}')">
+        <div class="toc-pip" style="background:${f.domainColor}"></div>
+        <div>
+          <div class="toc-card-title">${f.title}</div>
+          <div class="toc-card-sub">${f.domainLabel} · <span style="color:var(--status-${f.status})">${f.status}</span></div>
+        </div>
+      </div>
+    `,
+    ).join("")}
+  </div>
+`;
+      content.appendChild(homePage);
+
+      // Feature pages
+      FEATURES.forEach((f, idx) => {
+        const page = document.createElement("div");
+        page.id = `page-${f.id}`;
+        page.className = "feature-page hidden";
+
+        const prev = FEATURES[idx - 1];
+        const next = FEATURES[idx + 1];
+
+        // Guide body
+        let guideBody = "";
+        if (f.steps) {
+          guideBody = f.steps
+            .map(
+              (s, i) => `
+      <div class="guide-step">
+        <div class="guide-step-num">${String(i + 1).padStart(2, "0")}</div>
+        <div class="guide-step-text">${s.text}</div>
+      </div>
+    `,
+            )
+            .join("");
+          if (f.guide) {
+            guideBody += `<div class="guide-text" style="margin-top:16px">${f.guide}</div>`;
+          }
+        } else if (f.guide) {
+          guideBody = `<div class="guide-text">${f.guide
+            .split("\n\n")
+            .map((p) => `<p>${p}</p>`)
+            .join("")}</div>`;
+        }
+
+        const callout = f.callout
+          ? `
+    <div class="callout ${f.callout.type}">
+      <div class="callout-icon">${f.callout.icon}</div>
+      <div class="callout-body">${f.callout.text}</div>
+    </div>
+  `
+          : "";
+
+        const limits = f.limitations
+          ? `
+    <div style="margin-top:24px">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-soft);margin-bottom:10px;">Known Limitations</div>
+      <ul class="limit-list">${f.limitations.map((l) => `<li>${l}</li>`).join("")}</ul>
+    </div>
+  `
+          : "";
+
+        const navButtons = `
+    <div class="feature-nav">
+      ${
+        prev
+          ? `<div class="feature-nav-btn" onclick="showPage('${prev.id}')">
+        <div class="nav-btn-arrow">←</div>
+        <div><div class="nav-btn-label">Previous</div><div class="nav-btn-title">${prev.title}</div></div>
+      </div>`
+          : "<div></div>"
+      }
+      ${
+        next
+          ? `<div class="feature-nav-btn next" onclick="showPage('${next.id}')">
+        <div><div class="nav-btn-label">Next</div><div class="nav-btn-title">${next.title}</div></div>
+        <div class="nav-btn-arrow">→</div>
+      </div>`
+          : "<div></div>"
+      }
+    </div>
+  `;
+
+        page.innerHTML = `
+    <div class="feature-domain-eyebrow" style="color:${f.domainColor}">${f.domainLabel}</div>
+    <div class="feature-title">${f.title}</div>
+    <div class="feature-meta">
+      <span class="status-badge ${f.status}">${f.status}</span>
+      ${f.tags.map((t) => `<span class="tag">${t}</span>`).join("")}
+    </div>
+    ${callout}
+    <div class="guide-block">
+      <div class="guide-block-label">How to use</div>
+      ${guideBody}
+    </div>
+    ${limits}
+    ${navButtons}
+  `;
+
+        content.appendChild(page);
+      });
+
+      // ── Page navigation ────────────────────────────────────────────────────────
+
+      function showPage(id) {
+        // Hide all pages
+        document
+          .querySelectorAll(".feature-page")
+          .forEach((p) => p.classList.add("hidden"));
+        // Show target
+        const page = document.getElementById(`page-${id}`);
+        if (page) {
+          page.classList.remove("hidden");
+          content.scrollTop = 0;
+        }
+
+        // Update nav active state
+        document.querySelectorAll(".nav-item").forEach((item) => {
+          item.classList.toggle("active", item.dataset.id === id);
+        });
+      }
+
+      // ── Search ─────────────────────────────────────────────────────────────────
+
+      const searchInput = document.getElementById("global-search");
+      const searchResults = document.getElementById("search-results");
+
+      function stripHtml(html) {
+        const tmp = document.createElement("div");
+        tmp.innerHTML = html;
+        return tmp.textContent || "";
+      }
+
+      searchInput.addEventListener("input", () => {
+        const q = searchInput.value.trim().toLowerCase();
+        if (!q) {
+          searchResults.classList.remove("visible");
+          return;
+        }
+
+        const matches = FEATURES.filter((f) => {
+          const text = [
+            f.title,
+            f.domainLabel,
+            ...(f.tags || []),
+            stripHtml(f.guide || ""),
+            f.steps?.map((s) => stripHtml(s.text)).join(" ") || "",
+          ]
+            .join(" ")
+            .toLowerCase();
+          return text.includes(q);
+        });
+
+        if (!matches.length) {
+          searchResults.innerHTML = `<div class="sr-empty">No results for "${searchInput.value}"</div>`;
+        } else {
+          searchResults.innerHTML = matches
+            .map((f) => {
+              const text = stripHtml(f.guide || f.steps?.[0]?.text || "");
+              const snip = text.length > 90 ? text.slice(0, 90) + "…" : text;
+              const hl = (s) =>
+                s.replace(
+                  new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
+                  (m) => `<mark>${m}</mark>`,
+                );
+              return `<div class="sr-item" onclick="showPage('${f.id}');searchInput.value='';searchResults.classList.remove('visible')">
+        <div class="sr-item-title">${hl(f.title)}</div>
+        <div class="sr-item-domain">${f.domainLabel} · ${f.status}</div>
+        <div class="sr-item-snippet">${hl(snip)}</div>
+      </div>`;
+            })
+            .join("");
+        }
+        searchResults.classList.add("visible");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (
+          !searchInput.contains(e.target) &&
+          !searchResults.contains(e.target)
+        ) {
+          searchResults.classList.remove("visible");
+        }
+      });
+
+      searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          searchInput.value = "";
+          searchResults.classList.remove("visible");
+        }
+      });
+    </script>
+  </body>
+</html>

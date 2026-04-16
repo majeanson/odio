@@ -4,6 +4,7 @@
 
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
+import { DriveActionWarning } from "@/components/ui/DriveActionWarning";
 
 interface CleanupSheetProps {
   open: boolean;
@@ -16,6 +17,7 @@ export function CleanupSheet({ open, onClose, isDeleting, onConfirm }: CleanupSh
   return (
     <BottomSheet open={open} onClose={onClose} title="Clean up source audio">
       <div className="space-y-3">
+        <DriveActionWarning message="The raw source file will be permanently deleted from your Google Drive. The frozen render stays." />
         <div className="rounded-2xl bg-elevated px-5 py-4 space-y-1">
           <p className="text-sm font-medium text-primary">Will be deleted</p>
           <p className="text-sm text-secondary">Raw source .aac from Drive</p>

@@ -235,6 +235,16 @@ export function WaveformEditor({
     sc.scrollLeft = Math.max(0, Math.min(sc.scrollWidth - rect.width, playheadPx - rect.width / 2));
   }
 
+  function scrollStep(direction: "left" | "right") {
+    const sc = ws.scrollContainerRef.current;
+    const containerW = ws.containerRef.current?.clientWidth ?? 300;
+    if (!sc) return;
+    const step = containerW * 0.4;
+    sc.scrollLeft = direction === "left"
+      ? Math.max(0, sc.scrollLeft - step)
+      : Math.min(sc.scrollWidth - containerW, sc.scrollLeft + step);
+  }
+
   function zoomToCut(cm: CutMark) {
     const containerWidth = ws.containerRef.current?.clientWidth ?? 300;
     if (ws.basePxPerSecRef.current === 0) return;
@@ -426,6 +436,8 @@ export function WaveformEditor({
                 onZoomIn={zoomIn}
                 onZoomOut={zoomOut}
                 onScrollToPlayhead={scrollToPlayhead}
+                onScrollLeft={() => scrollStep("left")}
+                onScrollRight={() => scrollStep("right")}
               />
             )}
             <StampJumpRow stamps={stamps} wsState={wsState} onSeek={ws.seek} />

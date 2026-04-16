@@ -7,7 +7,7 @@
 //   drag near a cut edge         → resize that boundary immediately
 //   drag inside cut (not edge)   → deferred resize (commits after threshold)
 //   drag on empty area           → create new cut (with live preview)
-//   horizontal drag when zoomed  → pan the waveform scroll
+//   pan when zoomed              → ← / → scroll buttons in WaveformZoomControls
 //
 // No WaveSurfer state, no cut marks state — those are owned by the coordinator.
 // This hook only reads positions via refs and calls the supplied callbacks.
@@ -25,7 +25,7 @@ export interface InteractionCutMark {
   endMs: number;
 }
 
-type DragMode = "pending" | "create" | "pan" | "resize";
+type DragMode = "pending" | "create" | "resize";
 
 interface DragState {
   startX: number;
@@ -39,7 +39,6 @@ interface DragState {
   // Committed to resize mode after MOVE_THRESHOLD; treated as seek if lifted sooner.
   deferredResizeCutId: string | null;
   deferredResizeEdge: "start" | "end" | null;
-  panScrollStart: number;
 }
 
 export interface UseCutInteractionOptions {
@@ -127,7 +126,6 @@ export function useCutInteraction({
         mode: "resize",
         resizeCutId: edgeHit.cutId, resizeEdge: edgeHit.edge,
         deferredResizeCutId: null, deferredResizeEdge: null,
-        panScrollStart: 0,
       };
       return;
     }
@@ -146,7 +144,6 @@ export function useCutInteraction({
       resizeCutId: null, resizeEdge: null,
       deferredResizeCutId: hitCut?.id ?? null,
       deferredResizeEdge: deferredEdge,
-      panScrollStart: scrollContainerRef.current?.scrollLeft ?? 0,
     };
   }
 
@@ -178,20 +175,11 @@ export function useCutInteraction({
           ...drag, mode: "resize",
           resizeCutId: drag.deferredResizeCutId, resizeEdge: drag.deferredResizeEdge,
         };
-      } else if (zoomLevelRef.current > 1 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-        // Horizontal drag while zoomed → pan
-        dragStateRef.current = { ...drag, mode: "pan" };
       } else {
-        // Create new cut
+        // All other drags (including horizontal at any zoom level) create a cut.
+        // Panning when zoomed uses the ← / → scroll buttons in WaveformZoomControls.
         dragStateRef.current = { ...drag, mode: "create" };
       }
-      return;
-    }
-
-    // ── Pan ───────────────────────────────────────────────────────────────────
-    if (drag.mode === "pan") {
-      const sc = scrollContainerRef.current;
-      if (sc) sc.scrollLeft = Math.max(0, drag.panScrollStart - deltaX);
       return;
     }
 
@@ -210,6 +198,7 @@ export function useCutInteraction({
     if (!drag) return;
     dragStateRef.current = null;
     setPreviewCut(null);
+    setCursorStyle(findEdgeAt(e.clientX) ? "ew-resize" : "crosshair");
 
     // Tap with no movement → seek to where the pointer went down.
     // Use startSec (captured at pointerdown), not e.clientX at pointerup —
@@ -228,8 +217,6 @@ export function useCutInteraction({
       return;
     }
 
-    if (drag.mode === "pan") return;
-
     if (drag.mode === "create") {
       const sec = clientXToSec(e.clientX);
       const startMs = Math.round(Math.min(drag.startSec, sec) * 1000);
@@ -243,6 +230,7 @@ export function useCutInteraction({
     // clientX is 0 or garbage on cancel — never seek, just clear drag state.
     dragStateRef.current = null;
     setPreviewCut(null);
+    setCursorStyle("crosshair");
   }
 
   return {

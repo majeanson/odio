@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { DriveActionWarning } from "@/components/ui/DriveActionWarning";
 import { DriveFileRow } from "./DriveFileRow";
 import { DriveImportSection } from "./DriveImportSection";
 
@@ -246,13 +247,15 @@ export function DriveFilesClient({ bandId, driveFolderId, items: initialItems }:
       >
         {confirmItem && (
           <div className="space-y-4">
+            <DriveActionWarning
+              message={
+                confirmItem.type === "clip"
+                  ? "The clip and both its audio files (source + final render) will be permanently deleted from your Google Drive."
+                  : "The raw source file will be permanently deleted from your Google Drive. The clip metadata stays in Odio, but audio will no longer be playable if the clip is not frozen."
+              }
+            />
             <div className="rounded-2xl bg-elevated px-5 py-4 space-y-1">
               <p className="text-sm font-semibold text-primary">{confirmItem.clipName}</p>
-              <p className="text-sm text-secondary">
-                {confirmItem.type === "clip"
-                  ? "The clip, all its versions, and both Drive files (source + final) will be permanently deleted. This cannot be undone."
-                  : "The raw source file will be deleted from Drive. The clip and all its versions stay in Odio. If the clip is not frozen, audio will no longer be playable."}
-              </p>
             </div>
             <Button
               onClick={() => confirmItem.type === "clip" ? handleDeleteClip(confirmItem.clipId) : handleDeleteSource(confirmItem.clipId)}

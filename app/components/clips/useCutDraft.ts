@@ -59,8 +59,10 @@ export function useCutDraft({ clipId, cutMarks, onLoadCuts }: UseCutDraftOptions
   }, []);
 
   // Auto-save: persist current cut marks on every change.
+  // Only write when there are actual cuts — writing an empty array on initial
+  // mount would overwrite any saved draft before the mount check can read it.
   useEffect(() => {
-    writeDraft(clipId, cutMarks);
+    if (cutMarks.length > 0) writeDraft(clipId, cutMarks);
   }, [clipId, cutMarks]);
 
   function resume() {

@@ -28,6 +28,16 @@ export function PublicPlayer({ token, sourceDurationMs, stamps }: PublicPlayerPr
 
   const { wsState, isPlaying, currentTimeMs, effectiveDurationMs } = ws;
 
+  // ── Click-to-seek ────────────────────────────────────────────────────────────
+  // Same pattern as WaveformPlayer: WaveSurfer is interact:false, so all pointer
+  // events are handled by the overlay div below.
+  function seekAtPointer(e: React.PointerEvent<HTMLDivElement>) {
+    const rect = ws.containerRef.current?.getBoundingClientRect();
+    if (!rect || ws.effectiveDurationMs === 0) return;
+    const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    ws.seek(frac * (ws.effectiveDurationMs / 1000));
+  }
+
   return (
     <div className="space-y-4">
 
@@ -44,8 +54,18 @@ export function PublicPlayer({ token, sourceDurationMs, stamps }: PublicPlayerPr
           </span>
         </div>
 
-        {/* WaveSurfer mount point — interact:false, no overlay needed (no seeking in public player) */}
-        <div ref={ws.containerRef} className="w-full" />
+        {/* WaveSurfer mount point + pointer overlay */}
+        <div className="relative">
+          <div ref={ws.containerRef} className="w-full" />
+          {wsState === "ready" && (
+            <div
+              className="absolute inset-0 touch-none select-none"
+              style={{ cursor: "pointer", zIndex: 20 }}
+              onPointerDown={(e) => e.currentTarget.setPointerCapture(e.pointerId)}
+              onPointerUp={seekAtPointer}
+            />
+          )}
+        </div>
 
         {wsState === "loading" && (
           <div className="flex items-center justify-center h-[100px] -mt-[100px]">

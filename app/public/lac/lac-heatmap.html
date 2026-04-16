@@ -1,0 +1,2184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>odio — LAC Heatmap</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #12100e;
+    --bg-sidebar: #0e0c0a;
+    --bg-card: #1a1714;
+    --bg-hover: #201d1a;
+    --border: #2a2420;
+    --border-soft: #221e1b;
+    --text: #e8ddd4;
+    --text-mid: #b0a49c;
+    --text-soft: #7a6a5a;
+    --accent: #c4a255;
+    --accent-warm: #e8b865;
+    --mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --status-active: #4aad72;
+    --status-draft: #c4a255;
+    --status-frozen: #5b82cc;
+    --status-deprecated: #cc5b5b;
+    --cell-filled: rgba(74, 173, 114, 0.7);
+    --cell-empty: rgba(204, 91, 91, 0.22);
+    --cell-size: 32px;
+    --row-header-w: 260px;
+    --topbar-h: 44px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ── Topbar ── */
+
+  .topbar {
+    height: var(--topbar-h);
+    background: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-left {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-mid);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .topbar-diamond {
+    color: var(--accent);
+    font-size: 14px;
+  }
+
+  .topbar-sep {
+    color: var(--border);
+  }
+
+  .topbar-right {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-soft);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .topbar-project {
+    color: var(--text-mid);
+    font-weight: 600;
+  }
+
+  .topbar-count {
+    color: var(--text-soft);
+  }
+
+  /* ── Page body ── */
+
+  .page-body {
+    flex: 1;
+    overflow: auto;
+    padding: 24px 20px 60px;
+  }
+
+  /* ── Grid wrapper ── */
+
+  .grid-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── Table ── */
+
+  table.heatmap-table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    /* row-header col + 16 field cols + pct col */
+    width: calc(var(--row-header-w) + var(--cell-size) * 16 + 52px);
+  }
+
+  /* ── Column headers ── */
+
+  .col-header {
+    width: var(--cell-size);
+    height: 120px;
+    vertical-align: bottom;
+    padding: 0;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .col-label-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 100%;
+    padding-bottom: 6px;
+  }
+
+  .col-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-soft);
+    white-space: nowrap;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    letter-spacing: 0.05em;
+    display: block;
+  }
+
+  .row-header-spacer {
+    width: var(--row-header-w);
+  }
+
+  .pct-header {
+    width: 52px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    vertical-align: bottom;
+    padding-bottom: 8px;
+    text-align: right;
+    padding-right: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Summary row ── */
+
+  .summary-row {
+    background: var(--bg-sidebar);
+  }
+
+  .summary-header {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: right;
+    padding-right: 10px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+
+  .summary-cell {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-soft);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .summary-pct {
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Feature rows ── */
+
+  .feature-row {
+    border-bottom: 1px solid var(--border-soft);
+    transition: background 0.1s;
+  }
+
+  .feature-row:hover {
+    background: var(--bg-hover);
+  }
+
+  /* ── Row header ── */
+
+  .row-header {
+    width: var(--row-header-w);
+    padding: 5px 10px 5px 0;
+    text-align: right;
+    vertical-align: middle;
+    position: sticky;
+    left: 0;
+    background: var(--bg);
+    z-index: 10;
+    border-right: 1px solid var(--border-soft);
+  }
+
+  .feature-row:hover .row-header {
+    background: var(--bg-hover);
+  }
+
+  .row-header-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+  }
+
+  .row-key {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-mid);
+    white-space: nowrap;
+  }
+
+  .row-title {
+    font-size: 11px;
+    color: var(--text-soft);
+    font-style: italic;
+    word-break: break-word;
+    max-width: calc(var(--row-header-w) - 10px);
+    text-align: right;
+  }
+
+  .row-domain {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.6;
+    white-space: nowrap;
+  }
+
+  /* ── Cells ── */
+
+  .cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    padding: 3px;
+    cursor: default;
+    vertical-align: middle;
+  }
+
+  .cell:hover .cell-inner {
+    filter: brightness(1.25);
+    outline: 1px solid rgba(255, 255, 255, 0.2);
+    outline-offset: -1px;
+  }
+
+  .cell-inner {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 3px;
+    transition: filter 0.1s, outline 0.1s;
+  }
+
+  .cell-filled .cell-inner {
+    background: var(--cell-filled);
+  }
+
+  .cell-empty .cell-inner {
+    background: var(--cell-empty);
+  }
+
+  /* ── Completeness % column ── */
+
+  .pct-cell {
+    width: 52px;
+    text-align: right;
+    padding-right: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+
+  .pct-mark {
+    font-size: 9px;
+    opacity: 0.7;
+  }
+
+  /* ── Summary footer ── */
+
+  .summary-footer {
+    margin-top: 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: auto 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+    max-width: 900px;
+  }
+
+  .footer-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .footer-block-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .overall-pct {
+    font-size: 36px;
+    font-weight: 700;
+    font-family: var(--mono);
+    line-height: 1;
+  }
+
+  .overall-label {
+    font-size: 11px;
+    color: var(--text-soft);
+  }
+
+  .footer-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer-list li {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-mid);
+    padding: 2px 0;
+  }
+
+  .footer-list li::before {
+    content: '· ';
+    color: var(--text-soft);
+  }
+
+  /* ── Empty state ── */
+
+  .empty-grid {
+    text-align: center;
+    padding: 80px 24px;
+    color: var(--text-soft);
+    font-size: 14px;
+  }
+
+  .empty-grid .empty-icon {
+    font-size: 48px;
+    color: var(--border);
+    margin-bottom: 20px;
+  }
+
+  .empty-grid code {
+    font-family: var(--mono);
+    color: var(--accent);
+  }
+
+  /* ── Tooltip ── */
+
+  #lac-tooltip {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 8px 12px;
+    max-width: 300px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+
+  #lac-tooltip.visible {
+    opacity: 1;
+  }
+
+  .tt-field {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+  }
+
+  .tt-feature {
+    font-size: 11px;
+    color: var(--text-mid);
+    margin-bottom: 6px;
+    font-style: italic;
+  }
+
+  .tt-value {
+    font-family: var(--mono);
+    font-size: 11px;
+    word-break: break-word;
+  }
+
+  .tt-value.filled {
+    color: #4aad72;
+  }
+
+  .tt-value.empty {
+    color: var(--text-soft);
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-diamond">◈</span>
+      <span>lac</span>
+      <span class="topbar-sep">·</span>
+      <span>heatmap</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-project">odio</span>
+      <span class="topbar-count">14 features</span>
+    </div>
+  </div>
+
+  <div class="page-body">
+    
+    
+    <div class="grid-wrap">
+      <table class="heatmap-table" role="grid" aria-label="Feature completeness heatmap">
+        <thead>
+          
+        <tr>
+          <th class="row-header-spacer" scope="col"></th>
+          
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">problem</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">analysis</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">impl</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">success</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">decisions</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">limitations</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">tags</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">domain</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">userGuide</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">owner</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">priority</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">compFile</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">npmPkgs</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">pubInterface</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">snippets</span>
+            </div>
+          </th>
+          <th class="col-header" scope="col">
+            <div class="col-label-wrap">
+              <span class="col-label">annotations</span>
+            </div>
+          </th>
+          <th class="pct-header" scope="col">done</th>
+        </tr>
+          
+        <tr class="summary-row">
+          <td class="row-header summary-header">fill %</td>
+          <td class="summary-cell" title="100% filled">100<span class="pct-mark">%</span></td><td class="summary-cell" title="100% filled">100<span class="pct-mark">%</span></td><td class="summary-cell" title="100% filled">100<span class="pct-mark">%</span></td><td class="summary-cell" title="100% filled">100<span class="pct-mark">%</span></td><td class="summary-cell" title="100% filled">100<span class="pct-mark">%</span></td><td class="summary-cell" title="100% filled">100<span class="pct-mark">%</span></td><td class="summary-cell" title="100% filled">100<span class="pct-mark">%</span></td><td class="summary-cell" title="100% filled">100<span class="pct-mark">%</span></td><td class="summary-cell" title="93% filled">93<span class="pct-mark">%</span></td><td class="summary-cell" title="0% filled">0<span class="pct-mark">%</span></td><td class="summary-cell" title="93% filled">93<span class="pct-mark">%</span></td><td class="summary-cell" title="93% filled">93<span class="pct-mark">%</span></td><td class="summary-cell" title="0% filled">0<span class="pct-mark">%</span></td><td class="summary-cell" title="0% filled">0<span class="pct-mark">%</span></td><td class="summary-cell" title="0% filled">0<span class="pct-mark">%</span></td><td class="summary-cell" title="0% filled">0<span class="pct-mark">%</span></td>
+          <td class="pct-cell summary-pct"></td>
+        </tr>
+        </thead>
+        <tbody>
+          
+        <tr class="feature-row" data-feature-idx="0">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-004</span>
+              <span class="row-title">App Shell — Navigation, Dark Theme, Onboarding, Empty States</span>
+              <span class="row-domain">app-shell</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="0"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="0"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="0"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="0"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="0"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="0"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="0"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="0"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="0"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="0"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="0"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="0"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="0"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="0"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="0"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="0"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="1">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-001</span>
+              <span class="row-title">Odio — Collaborative Jam Session Recorder</span>
+              <span class="row-domain">audio/collaboration</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="1"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="1"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="1"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="1"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="1"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="1"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="1"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="1"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="1"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="1"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="1"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="1"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="1"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="1"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="1"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="1"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(60, 60%, 45%)">50<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="2">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-003</span>
+              <span class="row-title">Auth — Google OAuth via NextAuth.js</span>
+              <span class="row-domain">auth</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="2"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="2"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="2"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="2"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="2"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="2"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="2"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="2"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="2"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="2"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="2"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="2"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="2"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="2"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="2"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="2"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="3">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-005</span>
+              <span class="row-title">Band Space — Band Creation, Invites, Drive Folder, Members</span>
+              <span class="row-domain">band</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="3"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="3"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="3"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="3"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="3"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="3"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="3"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="3"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="3"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="3"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="3"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="3"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="3"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="3"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="3"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="3"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="4">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-006</span>
+              <span class="row-title">Recording — Browser-Based Audio Capture</span>
+              <span class="row-domain">recording</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="4"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="4"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="4"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="4"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="4"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="4"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="4"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="4"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="4"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="4"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="4"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="4"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="4"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="4"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="4"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="4"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="5">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-008</span>
+              <span class="row-title">Multi-Recorder — Any Editor Can Record Into the Band's Drive</span>
+              <span class="row-domain">recording</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="5"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="5"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="5"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="5"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="5"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="5"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="5"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="5"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="5"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="5"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="5"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="5"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="5"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="5"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="5"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="5"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="6">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-009</span>
+              <span class="row-title">Recording Resilience — IndexedDB Safety Net, Upload Retry, Save-to-Device Fallback</span>
+              <span class="row-domain">recording</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="6"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="6"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="6"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="6"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="6"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="6"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="6"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="6"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="6"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="6"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="6"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="6"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="6"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="6"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="6"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="6"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="7">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-010</span>
+              <span class="row-title">Upload Banner — Persistent Upload Progress Across All Pages</span>
+              <span class="row-domain">recording</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="7"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="7"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="7"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="7"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="7"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="7"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="7"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="7"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="7"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="7"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="7"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="7"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="7"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="7"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="7"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="7"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="8">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-018</span>
+              <span class="row-title">Audio Input Selection — External Mic, USB Interface, Headset</span>
+              <span class="row-domain">recording</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="8"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="8"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="8"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="8"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="8"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="8"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="8"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="8"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="8"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="8"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="8"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="8"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="8"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="8"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="8"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="8"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="9">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-002</span>
+              <span class="row-title">FFmpeg POC — Validate Bundle Size and Render Pipeline on Vercel</span>
+              <span class="row-domain">render</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="9"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="9"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="9"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="9"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="9"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="9"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="9"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="9"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="9"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="9"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="9"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="9"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="9"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="9"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="9"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="9"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="10">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-014</span>
+              <span class="row-title">Render — Server-Side FFmpeg on Freeze + Public Share</span>
+              <span class="row-domain">render</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="10"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="10"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="10"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="10"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="10"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="10"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="10"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="10"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="10"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="10"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="10"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="10"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="10"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="10"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="10"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="10"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="11">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-015</span>
+              <span class="row-title">Public Share Player — Unauthenticated Clip Playback</span>
+              <span class="row-domain">render</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="11"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="11"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="11"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="11"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="11"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="11"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="11"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="11"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="11"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="11"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="11"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="11"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="11"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="11"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="11"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="11"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="12">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-017</span>
+              <span class="row-title">Storage Management — Drive Quota, Cleanup, Archive</span>
+              <span class="row-domain">storage</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="12"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="12"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="12"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="12"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="12"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="12"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="12"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="12"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="12"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="12"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="12"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="12"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="12"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="12"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="12"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="12"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        <tr class="feature-row" data-feature-idx="13">
+          <th class="row-header" scope="row">
+            <div class="row-header-inner">
+              <span class="row-key">odio-2026-012</span>
+              <span class="row-title">Versioning — Version Chain, Waveform Editor, Waveform Player, Freeze</span>
+              <span class="row-domain">versioning</span>
+            </div>
+          </th>
+          <td
+            class="cell cell-filled"
+            data-feature-idx="13"
+            data-col-idx="0"
+            role="gridcell"
+            aria-label="problem: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="13"
+            data-col-idx="1"
+            role="gridcell"
+            aria-label="analysis: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="13"
+            data-col-idx="2"
+            role="gridcell"
+            aria-label="implementation: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="13"
+            data-col-idx="3"
+            role="gridcell"
+            aria-label="successCriteria: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="13"
+            data-col-idx="4"
+            role="gridcell"
+            aria-label="decisions: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="13"
+            data-col-idx="5"
+            role="gridcell"
+            aria-label="knownLimitations: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="13"
+            data-col-idx="6"
+            role="gridcell"
+            aria-label="tags: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="13"
+            data-col-idx="7"
+            role="gridcell"
+            aria-label="domain: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="13"
+            data-col-idx="8"
+            role="gridcell"
+            aria-label="userGuide: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="13"
+            data-col-idx="9"
+            role="gridcell"
+            aria-label="owner: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="13"
+            data-col-idx="10"
+            role="gridcell"
+            aria-label="priority: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-filled"
+            data-feature-idx="13"
+            data-col-idx="11"
+            role="gridcell"
+            aria-label="componentFile: filled"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="13"
+            data-col-idx="12"
+            role="gridcell"
+            aria-label="npmPackages: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="13"
+            data-col-idx="13"
+            role="gridcell"
+            aria-label="publicInterface: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="13"
+            data-col-idx="14"
+            role="gridcell"
+            aria-label="codeSnippets: empty"
+          ><span class="cell-inner"></span></td><td
+            class="cell cell-empty"
+            data-feature-idx="13"
+            data-col-idx="15"
+            role="gridcell"
+            aria-label="annotations: empty"
+          ><span class="cell-inner"></span></td>
+          <td class="pct-cell" style="color:hsl(83, 60%, 45%)">69<span class="pct-mark">%</span></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="summary-footer">
+      <div class="footer-block">
+        <div class="footer-block-title">Overall</div>
+        <div class="overall-pct" style="color:hsl(82, 60%, 45%)">68<span class="pct-mark">%</span></div>
+        <div class="overall-label">complete</div>
+      </div>
+      <div class="footer-block">
+        <div class="footer-block-title">Most missed fields</div>
+        <ul class="footer-list">
+          <li>owner (0%)</li>
+          <li>npmPkgs (0%)</li>
+          <li>pubInterface (0%)</li>
+          <li>snippets (0%)</li>
+        </ul>
+      </div>
+      <div class="footer-block">
+        <div class="footer-block-title">Most complete features</div>
+        <ul class="footer-list">
+          <li>odio-2026-017 (69%)</li>
+          <li>odio-2026-014 (69%)</li>
+          <li>odio-2026-012 (69%)</li>
+        </ul>
+      </div>
+    </div>
+    
+  </div>
+
+  <div id="lac-tooltip" role="tooltip" aria-live="polite">
+    <div class="tt-field" id="tt-field"></div>
+    <div class="tt-feature" id="tt-feature"></div>
+    <div class="tt-value" id="tt-value"></div>
+  </div>
+
+<script>
+(function () {
+  'use strict';
+
+  var FEATURES = [{"featureKey":"odio-2026-004","title":"App Shell — Navigation, Dark Theme, Onboarding, Empty States","domain":"app-shell","fields":[{"key":"problem","label":"problem","filled":true,"preview":"The app needs a solid foundation: a responsive web app th…"},{"key":"analysis","label":"analysis","filled":true,"preview":"Next.js App Router. Dark theme only — no light mode in V1…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. app/layout.tsx: root layout with dark theme CSS variab…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Dark theme renders correctly everywhere; no light mode;…"},{"key":"decisions","label":"decisions","filled":true,"preview":"No PWA in V1 — standard responsive web app only (+6 more)"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"No add-to-home-screen in V1 — users must bookma… (+1 more)"},{"key":"tags","label":"tags","filled":true,"preview":"navigation (+6 more)"},{"key":"domain","label":"domain","filled":true,"preview":"app-shell"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"After signing in, users land on their bands list. The bot…"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"1"},{"key":"componentFile","label":"compFile","filled":true,"preview":"components/layout/BottomTabBar.tsx"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-001","title":"Odio — Collaborative Jam Session Recorder","domain":"audio/collaboration","fields":[{"key":"problem","label":"problem","filled":true,"preview":"Musicians lose the best moments from their jam sessions. …"},{"key":"analysis","label":"analysis","filled":true,"preview":"Pure web PWA (Next.js). No native app. Browser MediaRecor…"},{"key":"implementation","label":"impl","filled":true,"preview":"**Stack:** Next.js (App Router) + TypeScript + Tailwind C…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Recorder opens browser (any device), records a session,…"},{"key":"decisions","label":"decisions","filled":true,"preview":"Web-only PWA — no native app (+6 more)"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"iOS Safari stops MediaRecorder if screen locks … (+4 more)"},{"key":"tags","label":"tags","filled":true,"preview":"audio (+9 more)"},{"key":"domain","label":"domain","filled":true,"preview":"audio/collaboration"},{"key":"userGuide","label":"userGuide","filled":false,"preview":"— not set"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":false,"preview":"— not set"},{"key":"componentFile","label":"compFile","filled":false,"preview":"— not set"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-003","title":"Auth — Google OAuth via NextAuth.js","domain":"auth","fields":[{"key":"problem","label":"problem","filled":true,"preview":"Band members need a shared identity layer — without creat…"},{"key":"analysis","label":"analysis","filled":true,"preview":"NextAuth.js with Google provider. Scopes requested at sig…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. lib/auth.ts: NextAuth.js config with GoogleProvider (s…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Sign in with Google works on iOS Safari, Android Chrome…"},{"key":"decisions","label":"decisions","filled":true,"preview":"drive.file scope at sign-in, not deferred (+1 more)"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"drive.file scope only covers files the app crea… (+2 more)"},{"key":"tags","label":"tags","filled":true,"preview":"auth (+4 more)"},{"key":"domain","label":"domain","filled":true,"preview":"auth"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"Users visit the app and click 'Sign in with Google'. They…"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"1"},{"key":"componentFile","label":"compFile","filled":true,"preview":"lib/auth.ts"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-005","title":"Band Space — Band Creation, Invites, Drive Folder, Members","domain":"band","fields":[{"key":"problem","label":"problem","filled":true,"preview":"Band members need a shared space where all sessions are v…"},{"key":"analysis","label":"analysis","filled":true,"preview":"Band metadata (name, members, Drive folder ID, invite cod…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. app/(auth)/bands/page.tsx: lists all bands for current…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Create band: enter name → band record created in Postgr…"},{"key":"decisions","label":"decisions","filled":true,"preview":"Pill buttons for role change instead of native … (+3 more)"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"New members cannot hear audio until the recorde… (+3 more)"},{"key":"tags","label":"tags","filled":true,"preview":"band (+6 more)"},{"key":"domain","label":"domain","filled":true,"preview":"band"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"Create a band from the home screen. Share the invite link…"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"1"},{"key":"componentFile","label":"compFile","filled":true,"preview":"components/bands/DriveFilesClient.tsx"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-006","title":"Recording — Browser-Based Audio Capture","domain":"recording","fields":[{"key":"problem","label":"problem","filled":true,"preview":"The recorder needs to capture multiple songs during a liv…"},{"key":"analysis","label":"analysis","filled":true,"preview":"Browser MediaRecorder API with getUserMedia. Typical clip…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. app/record/page.tsx: full-screen recording screen — ti…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Record button triggers microphone permission request on…"},{"key":"decisions","label":"decisions","filled":true,"preview":"Resumable Drive upload from browser (bypasses V… (+3 more)"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"iOS Safari stops MediaRecorder if the screen lo… (+3 more)"},{"key":"tags","label":"tags","filled":true,"preview":"recording (+6 more)"},{"key":"domain","label":"domain","filled":true,"preview":"recording"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"Tap the Record tab from anywhere. On the recording screen…"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"1"},{"key":"componentFile","label":"compFile","filled":true,"preview":"hooks/useRecorder.ts"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-008","title":"Multi-Recorder — Any Editor Can Record Into the Band's Drive","domain":"recording","fields":[{"key":"problem","label":"problem","filled":true,"preview":"On jam night, the person who created the band may not alw…"},{"key":"analysis","label":"analysis","filled":true,"preview":"The existing recording upload flow already makes multi-re…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. app/api/upload/init/route.ts: POST — role check `['REC…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Any Editor-role band member sees the Record tab in the …"},{"key":"decisions","label":"decisions","filled":true,"preview":"Reuse creator's stored token — no per-member Dr… (+2 more)"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"If the band creator revokes Google Drive access… (+2 more)"},{"key":"tags","label":"tags","filled":true,"preview":"recording (+5 more)"},{"key":"domain","label":"domain","filled":true,"preview":"recording"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"Any Editor-role band member can record — not just the ban…"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"2"},{"key":"componentFile","label":"compFile","filled":true,"preview":"app/api/upload/init/route.ts"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-009","title":"Recording Resilience — IndexedDB Safety Net, Upload Retry, Save-to-Device Fallback","domain":"recording","fields":[{"key":"problem","label":"problem","filled":true,"preview":"A recording is a one-time, irreplaceable event. Currently…"},{"key":"analysis","label":"analysis","filled":true,"preview":"The audio blob lives in RAM from record-start until uploa…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. lib/pendingUploads.ts: IndexedDB helpers using idb lib…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Audio blob written to IndexedDB immediately on recordin…"},{"key":"decisions","label":"decisions","filled":true,"preview":"IndexedDB as the primary persistence layer for … (+3 more)"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"IndexedDB is cleared when the user clears brows… (+4 more)"},{"key":"tags","label":"tags","filled":true,"preview":"recording (+6 more)"},{"key":"domain","label":"domain","filled":true,"preview":"recording"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"Recording resilience is automatic and invisible when thin…"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"2"},{"key":"componentFile","label":"compFile","filled":true,"preview":"hooks/usePendingUploads.ts"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-010","title":"Upload Banner — Persistent Upload Progress Across All Pages","domain":"recording","fields":[{"key":"problem","label":"problem","filled":true,"preview":"After stopping a recording, the band member needs to navi…"},{"key":"analysis","label":"analysis","filled":true,"preview":"UploadBanner.tsx is a fixed-position (top-0, z-50) client…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. components/common/UploadBanner.tsx: client component. …"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Banner visible on every authenticated page during any u…"},{"key":"decisions","label":"decisions","filled":true,"preview":"Most actionable upload shown first — errors bef… (+1 more)"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"Banner occupies top space — sticky headers belo… (+3 more)"},{"key":"tags","label":"tags","filled":true,"preview":"upload (+6 more)"},{"key":"domain","label":"domain","filled":true,"preview":"recording"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"After stopping a recording, a banner appears at the top o…"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"2"},{"key":"componentFile","label":"compFile","filled":true,"preview":"components/common/UploadBanner.tsx"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-018","title":"Audio Input Selection — External Mic, USB Interface, Headset","domain":"recording","fields":[{"key":"problem","label":"problem","filled":true,"preview":"The recording always uses the device's default microphone…"},{"key":"analysis","label":"analysis","filled":true,"preview":"MediaDevices.enumerateDevices() returns all available aud…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. hooks/useRecorder.ts: on mount, calls navigator.mediaD…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Before starting a recording, app calls enumerateDevices…"},{"key":"decisions","label":"decisions","filled":true,"preview":"Picker only shown when multiple inputs exist"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"iOS Safari does not consistently enumerate Blue… (+1 more)"},{"key":"tags","label":"tags","filled":true,"preview":"recording (+4 more)"},{"key":"domain","label":"domain","filled":true,"preview":"recording"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"If you have an external microphone, USB audio interface, …"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"4"},{"key":"componentFile","label":"compFile","filled":true,"preview":"components/recording/DevicePicker.tsx"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-002","title":"FFmpeg POC — Validate Bundle Size and Render Pipeline on Vercel","domain":"render","fields":[{"key":"problem","label":"problem","filled":true,"preview":"@ffmpeg-installer/ffmpeg bundles the FFmpeg binary at ~38…"},{"key":"analysis","label":"analysis","filled":true,"preview":"The POC validates three things in isolation:\n\n1. **Bundle…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. Created GET /api/render/poc route that accepts ?url= p…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Next.js project with @ffmpeg-installer/ffmpeg + fluent-…"},{"key":"decisions","label":"decisions","filled":true,"preview":"POC before any production render code"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"Vercel Hobby function timeout is 10s — this may… (+1 more)"},{"key":"tags","label":"tags","filled":true,"preview":"ffmpeg (+5 more)"},{"key":"domain","label":"domain","filled":true,"preview":"render"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"This is an internal validation endpoint, not a user-facin…"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"1"},{"key":"componentFile","label":"compFile","filled":true,"preview":"app/api/render/poc/route.ts"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-014","title":"Render — Server-Side FFmpeg on Freeze + Public Share","domain":"render","fields":[{"key":"problem","label":"problem","filled":true,"preview":"When a version is frozen, a real audio file must be produ…"},{"key":"analysis","label":"analysis","filled":true,"preview":"Next.js API route POST /api/render: fetch source .aac fro…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. app/api/clips/[clipId]/freeze/route.ts: POST — Editor+…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Freeze triggers render within 2s of user confirmation\n-…"},{"key":"decisions","label":"decisions","filled":true,"preview":"Server-side FFmpeg only — no client-side WASM (+1 more)"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"Vercel /tmp is ephemeral (512MB limit) — source… (+3 more)"},{"key":"tags","label":"tags","filled":true,"preview":"ffmpeg (+5 more)"},{"key":"domain","label":"domain","filled":true,"preview":"render"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"On a clip's detail page, tap 'Freeze' on any version to p…"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"2"},{"key":"componentFile","label":"compFile","filled":true,"preview":"app/api/clips/[clipId]/freeze/route.ts"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-015","title":"Public Share Player — Unauthenticated Clip Playback","domain":"render","fields":[{"key":"problem","label":"problem","filled":true,"preview":"A frozen clip should be shareable outside the band — with…"},{"key":"analysis","label":"analysis","filled":true,"preview":"The public share page (/share/[token]) fetches clip metad…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. components/share/PublicPlayer.tsx: client component. P…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- /share/[token] loads without authentication\n- Waveform …"},{"key":"decisions","label":"decisions","filled":true,"preview":"Audio served via server-side proxy even on publ… (+1 more)"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"Public audio proxy uses the recorder's Drive to… (+2 more)"},{"key":"tags","label":"tags","filled":true,"preview":"public-share (+5 more)"},{"key":"domain","label":"domain","filled":true,"preview":"render"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"After freezing a clip, tap 'Enable public share' on the c…"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"3"},{"key":"componentFile","label":"compFile","filled":true,"preview":"components/share/PublicPlayer.tsx"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-017","title":"Storage Management — Drive Quota, Cleanup, Archive","domain":"storage","fields":[{"key":"problem","label":"problem","filled":true,"preview":"Audio files in Google Drive grow over time (~43MB per raw…"},{"key":"analysis","label":"analysis","filled":true,"preview":"Storage indicator shown in band settings and session list…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. app/api/bands/[bandId]/storage/route.ts: GET — fetches…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Band settings shows Drive storage used by Odio files (M…"},{"key":"decisions","label":"decisions","filled":true,"preview":"Cleanup is explicit and manual — no automatic d…"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"Drive API quota query may not reflect real-time… (+2 more)"},{"key":"tags","label":"tags","filled":true,"preview":"storage (+4 more)"},{"key":"domain","label":"domain","filled":true,"preview":"storage"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"In the Band tab, tap Settings to see Drive storage usage.…"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"3"},{"key":"componentFile","label":"compFile","filled":true,"preview":"app/api/bands/[bandId]/storage/route.ts"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]},{"featureKey":"odio-2026-012","title":"Versioning — Version Chain, Waveform Editor, Waveform Player, Freeze","domain":"versioning","fields":[{"key":"problem","label":"problem","filled":true,"preview":"A raw recording needs to evolve from v1 (messy, includes …"},{"key":"analysis","label":"analysis","filled":true,"preview":"Two dedicated components with separate concerns:\n\n**Wavef…"},{"key":"implementation","label":"impl","filled":true,"preview":"1. components/clips/WaveformPlayer.tsx: pure player compo…"},{"key":"successCriteria","label":"success","filled":true,"preview":"- Version list shows full chain: v number, description, r…"},{"key":"decisions","label":"decisions","filled":true,"preview":"WaveformPlayer and WaveformEditor are separate … (+7 more)"},{"key":"knownLimitations","label":"limitations","filled":true,"preview":"Split takes a few seconds on the server (FFmpeg… (+3 more)"},{"key":"tags","label":"tags","filled":true,"preview":"versioning (+8 more)"},{"key":"domain","label":"domain","filled":true,"preview":"versioning"},{"key":"userGuide","label":"userGuide","filled":true,"preview":"From a clip's detail page, select a version in the Versio…"},{"key":"owner","label":"owner","filled":false,"preview":"— not set"},{"key":"priority","label":"priority","filled":true,"preview":"2"},{"key":"componentFile","label":"compFile","filled":true,"preview":"components/clips/WaveformEditor.tsx"},{"key":"npmPackages","label":"npmPkgs","filled":false,"preview":"— not set"},{"key":"publicInterface","label":"pubInterface","filled":false,"preview":"— not set"},{"key":"codeSnippets","label":"snippets","filled":false,"preview":"— not set"},{"key":"annotations","label":"annotations","filled":false,"preview":"— not set"}]}];
+
+  var tooltip = document.getElementById('lac-tooltip');
+  var ttField = document.getElementById('tt-field');
+  var ttFeature = document.getElementById('tt-feature');
+  var ttValue = document.getElementById('tt-value');
+
+  var MARGIN = 14;
+
+  function showTooltip(e, featureIdx, colIdx) {
+    var feature = FEATURES[featureIdx];
+    if (!feature) return;
+    var field = feature.fields[colIdx];
+    if (!field) return;
+
+    ttField.textContent = field.key;
+    ttFeature.textContent = feature.featureKey + ' — ' + feature.title;
+    ttValue.textContent = field.preview;
+    ttValue.className = 'tt-value ' + (field.filled ? 'filled' : 'empty');
+
+    tooltip.classList.add('visible');
+    positionTooltip(e);
+  }
+
+  function positionTooltip(e) {
+    var tw = tooltip.offsetWidth;
+    var th = tooltip.offsetHeight;
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+
+    var x = e.clientX + MARGIN;
+    var y = e.clientY + MARGIN;
+
+    if (x + tw > vw - 8) x = e.clientX - tw - MARGIN;
+    if (y + th > vh - 8) y = e.clientY - th - MARGIN;
+    if (x < 8) x = 8;
+    if (y < 8) y = 8;
+
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  }
+
+  function hideTooltip() {
+    tooltip.classList.remove('visible');
+  }
+
+  document.addEventListener('mousemove', function (e) {
+    var target = e.target;
+    // Walk up to find a cell
+    var cell = null;
+    var node = target;
+    while (node && node !== document.body) {
+      if (node.dataset && node.dataset.featureIdx !== undefined && node.dataset.colIdx !== undefined) {
+        cell = node;
+        break;
+      }
+      // Also check if we are in the .cell-inner span — look at parentElement
+      if (node.parentElement && node.parentElement.dataset && node.parentElement.dataset.featureIdx !== undefined) {
+        cell = node.parentElement;
+        break;
+      }
+      node = node.parentElement;
+    }
+
+    if (cell) {
+      var fi = parseInt(cell.dataset.featureIdx, 10);
+      var ci = parseInt(cell.dataset.colIdx, 10);
+      showTooltip(e, fi, ci);
+      positionTooltip(e);
+    } else {
+      hideTooltip();
+    }
+  });
+
+  document.addEventListener('mouseleave', hideTooltip);
+})();
+</script>
+</body>
+</html>

@@ -14,6 +14,7 @@ import { generateDeathMetalName } from "@/lib/clipNames";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { AudioBars } from "@/components/ui/AudioBars";
+import { DriveActionWarning } from "@/components/ui/DriveActionWarning";
 import type { Clip, ClipStage } from "@/types";
 
 const STAGE_CHIP: Record<ClipStage, { label: string; className: string }> = {
@@ -191,9 +192,9 @@ export function ClipCard({ clip, bandId, canDelete = false, onDelete }: ClipCard
         title={`Delete "${rename.name}"?`}
       >
         <div className="space-y-3">
+          <DriveActionWarning message="The clip, all its versions, and its audio files will be permanently deleted from your Google Drive. This cannot be undone." />
           <p className="text-sm text-secondary">
-            This will permanently delete the clip and all its versions from
-            Drive. This cannot be undone.
+            This also removes all Odio metadata: versions, stamps, votes, and comments.
           </p>
           <Button
             onClick={handleDelete}

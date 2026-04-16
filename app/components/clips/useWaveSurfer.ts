@@ -165,6 +165,7 @@ export function useWaveSurfer({
     ws.on("pause", () => setIsPlaying(false));
     ws.on("finish", () => {
       setIsPlaying(false);
+      seekTargetMsRef.current = null;
       ws.setTime(0);
       currentTimeMsRef.current = 0;
       setCurrentTimeMs(0);
@@ -188,7 +189,9 @@ export function useWaveSurfer({
 
       // Hard stop at effective duration (stale Drive upload guard)
       if (effDur > 0 && ms >= effDur) {
+        setIsPlaying(false);
         ws.pause();
+        seekTargetMsRef.current = null;
         ws.setTime(0);
         currentTimeMsRef.current = 0;
         setCurrentTimeMs(0);

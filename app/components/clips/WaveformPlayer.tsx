@@ -63,7 +63,10 @@ export function WaveformPlayer({
   }
 
   const pointerHandlers = {
-    onPointerDown: (_e: React.PointerEvent<HTMLDivElement>) => {},
+    onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
+      // Capture so onPointerUp fires even if the finger drifts off the element.
+      e.currentTarget.setPointerCapture(e.pointerId);
+    },
     onPointerMove: (_e: React.PointerEvent<HTMLDivElement>) => {},
     onPointerUp: seekAtPointer,
     onPointerCancel: (_e: React.PointerEvent<HTMLDivElement>) => {},

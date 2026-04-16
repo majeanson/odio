@@ -13,6 +13,8 @@ interface WaveformZoomControlsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onScrollToPlayhead: () => void;
+  onScrollLeft: () => void;
+  onScrollRight: () => void;
 }
 
 export function WaveformZoomControls({
@@ -21,6 +23,8 @@ export function WaveformZoomControls({
   onZoomIn,
   onZoomOut,
   onScrollToPlayhead,
+  onScrollLeft,
+  onScrollRight,
 }: WaveformZoomControlsProps) {
   const canZoomOut = zoomLevel > 1;
   const canZoomIn = zoomLevel < ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
@@ -64,10 +68,31 @@ export function WaveformZoomControls({
           <span className="text-xs text-muted font-mono">
             {formatDuration(visibleDurationMs)} visible
           </span>
+          {/* Scroll left */}
+          <button
+            onClick={onScrollLeft}
+            aria-label="Scroll left"
+            className="ml-auto flex h-8 w-8 items-center justify-center rounded-xl bg-elevated text-muted hover:text-primary active:scale-95 transition-all"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden>
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          {/* Scroll right */}
+          <button
+            onClick={onScrollRight}
+            aria-label="Scroll right"
+            className="flex h-8 w-8 items-center justify-center rounded-xl bg-elevated text-muted hover:text-primary active:scale-95 transition-all"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden>
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+          {/* Center on playhead */}
           <button
             onClick={onScrollToPlayhead}
             aria-label="Center on playhead"
-            className="ml-auto flex h-8 w-8 items-center justify-center rounded-xl bg-elevated text-muted hover:text-accent active:scale-95 transition-all"
+            className="flex h-8 w-8 items-center justify-center rounded-xl bg-elevated text-muted hover:text-accent active:scale-95 transition-all"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="size-4" aria-hidden>
               <circle cx="12" cy="12" r="3" />
@@ -77,9 +102,6 @@ export function WaveformZoomControls({
               <line x1="17" y1="12" x2="22" y2="12" />
             </svg>
           </button>
-          <span className="text-[10px] text-muted/50 ml-auto leading-tight text-right">
-            drag to pan
-          </span>
         </>
       )}
     </div>

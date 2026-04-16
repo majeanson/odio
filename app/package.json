@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build:lac": "lac export --all .. --out ./public/lac",
+    "build": "npm run build:lac && prisma generate && next build",
     "start": "next start"
   },
   "dependencies": {
@@ -30,6 +31,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@majeanson/lac": "^3.3.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
