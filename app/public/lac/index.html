@@ -91,11 +91,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .footer-sep   { font-family: var(--mono); font-size: 10px; color: var(--border); }
 .footer-note  { font-size: 11px; color: var(--text-soft); }
 </style>
-<script>
-function lacGo(file) {
-  location.href = location.href.replace(/[^/]*$/, '') + file;
-}
-</script>
+
 </head>
 <body>
 
@@ -144,7 +140,7 @@ function lacGo(file) {
   </div>
   <div class="primary-grid">
     
-    <a href="./lac-guide.html" onclick="event.preventDefault();lacGo('lac-guide.html')" class="primary-card">
+    <a href="/lac/lac-guide.html" class="primary-card">
       <div class="primary-card-icon">📖</div>
       <div class="primary-card-body">
         <div class="primary-card-label">User Guide</div>
@@ -152,7 +148,7 @@ function lacGo(file) {
       </div>
       <div class="primary-card-arrow">→</div>
     </a>
-    <a href="./lac-story.html" onclick="event.preventDefault();lacGo('lac-story.html')" class="primary-card">
+    <a href="/lac/lac-story.html" class="primary-card">
       <div class="primary-card-icon">📰</div>
       <div class="primary-card-body">
         <div class="primary-card-label">Product Story</div>
@@ -169,42 +165,42 @@ function lacGo(file) {
   </div>
   <div class="secondary-grid">
     
-    <a href="./lac-wiki.html" onclick="event.preventDefault();lacGo('lac-wiki.html')" class="secondary-card">
+    <a href="/lac/lac-wiki.html" class="secondary-card">
       <div class="secondary-card-icon">🗂️</div>
       <div class="secondary-card-label">Feature Wiki</div>
       <div class="secondary-card-desc">Complete searchable wiki — all fields, all features, sidebar navigation</div>
     </a>
-    <a href="./lac-kanban.html" onclick="event.preventDefault();lacGo('lac-kanban.html')" class="secondary-card">
+    <a href="/lac/lac-kanban.html" class="secondary-card">
       <div class="secondary-card-icon">📋</div>
       <div class="secondary-card-label">Kanban Board</div>
       <div class="secondary-card-desc">Active / Frozen / Draft columns with sortable, filterable cards</div>
     </a>
-    <a href="./lac-health.html" onclick="event.preventDefault();lacGo('lac-health.html')" class="secondary-card">
+    <a href="/lac/lac-health.html" class="secondary-card">
       <div class="secondary-card-icon">🏥</div>
       <div class="secondary-card-label">Health Scorecard</div>
       <div class="secondary-card-desc">Completeness, coverage, tech-debt score, and field fill rates</div>
     </a>
-    <a href="./lac-decisions.html" onclick="event.preventDefault();lacGo('lac-decisions.html')" class="secondary-card">
+    <a href="/lac/lac-decisions.html" class="secondary-card">
       <div class="secondary-card-icon">⚖️</div>
       <div class="secondary-card-label">Decision Log</div>
       <div class="secondary-card-desc">All architectural decisions consolidated and searchable by domain</div>
     </a>
-    <a href="./lac-heatmap.html" onclick="event.preventDefault();lacGo('lac-heatmap.html')" class="secondary-card">
+    <a href="/lac/lac-heatmap.html" class="secondary-card">
       <div class="secondary-card-icon">🔥</div>
       <div class="secondary-card-label">Completeness Heatmap</div>
       <div class="secondary-card-desc">Field x feature completeness grid — quickly spot gaps</div>
     </a>
-    <a href="./lac-graph.html" onclick="event.preventDefault();lacGo('lac-graph.html')" class="secondary-card">
+    <a href="/lac/lac-graph.html" class="secondary-card">
       <div class="secondary-card-icon">🕸️</div>
       <div class="secondary-card-label">Lineage Graph</div>
       <div class="secondary-card-desc">Interactive force-directed feature dependency graph</div>
     </a>
-    <a href="./lac-print.html" onclick="event.preventDefault();lacGo('lac-print.html')" class="secondary-card">
+    <a href="/lac/lac-print.html" class="secondary-card">
       <div class="secondary-card-icon">🖨️</div>
       <div class="secondary-card-label">Print</div>
       <div class="secondary-card-desc">Print-ready A4 document — all features in clean two-column layout</div>
     </a>
-    <a href="./lac-raw.html" onclick="event.preventDefault();lacGo('lac-raw.html')" class="secondary-card">
+    <a href="/lac/lac-raw.html" class="secondary-card">
       <div class="secondary-card-icon">🔩</div>
       <div class="secondary-card-label">Raw Dump</div>
       <div class="secondary-card-desc">Field-by-field dump of every feature.json with sidebar navigation</div>
