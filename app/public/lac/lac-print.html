@@ -445,7 +445,7 @@
         </div>
         <div class="cover-meta-item">
           <strong>Total features</strong>
-          54
+          55
         </div>
         <div class="cover-meta-item">
           <strong>By status</strong>
@@ -460,7 +460,7 @@
          </span>
             <span class="cover-stat">
            <span class="cover-stat-dot" style="background:#c4a255"></span>
-           <span>10 draft</span>
+           <span>11 draft</span>
          </span>
             
           </div>
@@ -762,42 +762,48 @@
     </li>
     <li class="toc-item">
       <span class="toc-num">48.</span>
+      <span class="toc-key">odio-2026-055</span>
+      <span class="toc-feature-title">Contextual Help Button</span>
+      <span class="toc-badge" style="color:#c4a255;background:#c4a2551a">Draft</span>
+    </li>
+    <li class="toc-item">
+      <span class="toc-num">49.</span>
       <span class="toc-key">odio-2026-024</span>
       <span class="toc-feature-title">InlineEdit — Tap-to-Edit Text Field</span>
       <span class="toc-badge" style="color:#4aad72;background:#4aad721a">Active</span>
     </li>
     <li class="toc-item">
-      <span class="toc-num">49.</span>
+      <span class="toc-num">50.</span>
       <span class="toc-key">odio-2026-020</span>
       <span class="toc-feature-title">OfflineBanner — No-Connection State Degradation</span>
       <span class="toc-badge" style="color:#c4a255;background:#c4a2551a">Draft</span>
     </li>
     <li class="toc-item">
-      <span class="toc-num">50.</span>
+      <span class="toc-num">51.</span>
       <span class="toc-key">odio-2026-026</span>
       <span class="toc-feature-title">Skeleton — Loading Placeholder Shimmer</span>
       <span class="toc-badge" style="color:#5b82cc;background:#5b82cc1a">Frozen</span>
     </li>
     <li class="toc-item">
-      <span class="toc-num">51.</span>
+      <span class="toc-num">52.</span>
       <span class="toc-key">odio-2026-019</span>
       <span class="toc-feature-title">Toast — Global Feedback Notification System</span>
       <span class="toc-badge" style="color:#c4a255;background:#c4a2551a">Draft</span>
     </li>
     <li class="toc-item">
-      <span class="toc-num">52.</span>
+      <span class="toc-num">53.</span>
       <span class="toc-key">odio-2026-006</span>
       <span class="toc-feature-title">Recording — Browser-Based Audio Capture</span>
       <span class="toc-badge" style="color:#5b82cc;background:#5b82cc1a">Frozen</span>
     </li>
     <li class="toc-item">
-      <span class="toc-num">53.</span>
+      <span class="toc-num">54.</span>
       <span class="toc-key">odio-2026-009</span>
       <span class="toc-feature-title">Recording Resilience — IndexedDB Safety Net, Upload Retry, Save-to-Device Fallback</span>
       <span class="toc-badge" style="color:#5b82cc;background:#5b82cc1a">Frozen</span>
     </li>
     <li class="toc-item">
-      <span class="toc-num">54.</span>
+      <span class="toc-num">55.</span>
       <span class="toc-key">odio-2026-001</span>
       <span class="toc-feature-title">Odio — Collaborative Jam Session Recorder</span>
       <span class="toc-badge" style="color:#c4a255;background:#c4a2551a">Draft</span>
@@ -4372,6 +4378,91 @@
         <div class="section-label">Tags</div>
         <div class="tags-row">
           <span class="tag">empty-state</span><span class="tag">onboarding</span><span class="tag">zero-state</span><span class="tag">ui-primitive</span><span class="tag">accessibility</span>
+        </div>
+      </div>
+
+    <div class="page-footer">
+      <span class="footer-left">Odio</span>
+      <span class="footer-right">2026-04-16</span>
+    </div>
+  </div>
+
+  <div class="page">
+    <hr class="page-rule">
+    <div class="feature-eyebrow">
+      <span class="feature-key">odio-2026-055</span>
+      <span class="feature-badge" style="color:#c4a255;background:#c4a2551a">Draft</span>
+      <span class="feature-domain">app-shell</span>
+      <span class="feature-domain">P5</span>
+    </div>
+    <h1 class="feature-h1">Contextual Help Button</h1>
+
+    <div class="section">
+      <div class="section-label">Problem</div>
+      <div class="problem-block body-text"><p>Users have no in-app documentation — they must guess how features work or leave the app to find answers. Developers and the product team also have no quick way to surface feature context from within the running app.</p></div>
+    </div>
+
+    
+      <div class="section">
+        <div class="section-label">Analysis</div>
+        <div class="body-text"><p>LAC generates rich feature.jsons with userGuide, knownLimitations, componentFile, and decisions fields. These are already exported as lac-data.json by <code>lac export --all</code>. A lightweight client component can fetch this JSON and surface contextual help for the current route with zero additional infra.</p></div>
+      </div>
+    
+      <div class="section">
+        <div class="section-label">Decisions</div>
+        <ol class="decisions-list">
+          
+            <li class="decision-item">
+              <div class="decision-header">
+                <span class="decision-num">1.</span>
+                <span class="decision-text">Client-side fetch from /lac/lac-data.json (static file)</span>
+                <span class="decision-date">2026-04-16</span>
+              </div>
+              <div class="decision-rationale">No API route needed — lac-data.json is written by `lac export --all` at build time and served as a static file. Zero backend cost, works on Vercel hobby plan.</div>
+              
+            </li>
+            <li class="decision-item">
+              <div class="decision-header">
+                <span class="decision-num">2.</span>
+                <span class="decision-text">Route→featureKey map in routeFeatureMap.ts (explicit, not auto-detected)</span>
+                <span class="decision-date">2026-04-16</span>
+              </div>
+              <div class="decision-rationale">Auto-detecting featureKeys from URL structure would be fragile. An explicit map is self-documenting, stays in version control, and forces intentional curation of which features are surfaced per route.</div>
+              
+            </li>
+            <li class="decision-item">
+              <div class="decision-header">
+                <span class="decision-num">3.</span>
+                <span class="decision-text">Inline mdToHtml() — no external markdown parser</span>
+                <span class="decision-date">2026-04-16</span>
+              </div>
+              <div class="decision-rationale">userGuide content uses simple markdown (headers, bullets, bold, code). A 15-line inline converter keeps the component dependency-free and avoids a 10kB+ import for a help panel.</div>
+              
+            </li>
+        </ol>
+      </div>
+    
+      <div class="section">
+        <div class="section-label">Implementation</div>
+        <div class="body-text"><p>Floating &#39;?&#39; pill button (fixed top-right, below topbar). On click, opens BottomSheet. Fetches /lac/lac-data.json once, caches in module scope. Resolves featureKeys from ROUTE_FEATURES (lib/routeFeatureMap.ts). Shows user view (userGuide + knownLimitations) and dev view (componentFile + decisions + deps) as tabs. Markdown rendered via lightweight mdToHtml() inline function.</p></div>
+      </div>
+    
+      <div class="section">
+        <div class="section-label">Known Limitations</div>
+        <ul class="limitations-list">
+          <li>lac-data.json is generated at build time — help content is one deploy behind if feature.jsons are updated between deploys</li><li>mdToHtml() only handles basic markdown — tables, blockquotes, and nested lists are not rendered</li><li>Help button overlaps content in landscape mobile — no auto-hide on scroll yet</li>
+        </ul>
+      </div>
+    
+      <div class="section">
+        <div class="section-label">Success Criteria</div>
+        <div class="success-block body-text"><p>Navigate to /record, click ?, see &#39;Tap the Record tab from anywhere…&#39; rendered as formatted prose with knownLimitations in the Gotchas box. Toggle to Dev tab, see hooks/useRecorder.ts chip and externalDependencies as linked chips.</p></div>
+      </div>
+    
+      <div class="section">
+        <div class="section-label">Tags</div>
+        <div class="tags-row">
+          <span class="tag">help</span><span class="tag">documentation</span><span class="tag">lac</span><span class="tag">ux</span>
         </div>
       </div>
 

@@ -12,6 +12,8 @@ import { useQuery } from "@tanstack/react-query";
 import { BottomTabBar } from "@/components/layout/BottomTabBar";
 import { UploadBanner } from "@/components/common/UploadBanner";
 import { usePendingUploads } from "@/hooks/usePendingUploads";
+import { HelpButton } from "@/components/ui/HelpButton/HelpButton";
+import { resolveRouteFeatures } from "@/lib/routeFeatureMap";
 import type { BandRole } from "@/types";
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
@@ -38,9 +40,11 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
     staleTime: 60_000, // role changes are rare — don't refetch on every focus
   });
   const memberRole = meData?.role ?? null;
+  const helpFeatureKeys = resolveRouteFeatures(pathname);
 
   return (
     <>
+      <HelpButton featureKeys={helpFeatureKeys} />
       <UploadBanner
         uploads={pendingUploads}
         onRetry={retryUpload}

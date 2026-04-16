@@ -1,0 +1,39 @@
+{
+  "featureKey": "odio-2026-055",
+  "schemaVersion": 2,
+  "title": "Contextual Help Button",
+  "status": "draft",
+  "domain": "app-shell",
+  "owner": "marc",
+  "priority": 5,
+  "tags": ["help", "documentation", "lac", "ux"],
+  "problem": "Users have no in-app documentation — they must guess how features work or leave the app to find answers. Developers and the product team also have no quick way to surface feature context from within the running app.",
+  "analysis": "LAC generates rich feature.jsons with userGuide, knownLimitations, componentFile, and decisions fields. These are already exported as lac-data.json by `lac export --all`. A lightweight client component can fetch this JSON and surface contextual help for the current route with zero additional infra.",
+  "implementation": "Floating '?' pill button (fixed top-right, below topbar). On click, opens BottomSheet. Fetches /lac/lac-data.json once, caches in module scope. Resolves featureKeys from ROUTE_FEATURES (lib/routeFeatureMap.ts). Shows user view (userGuide + knownLimitations) and dev view (componentFile + decisions + deps) as tabs. Markdown rendered via lightweight mdToHtml() inline function.",
+  "componentFile": "components/ui/HelpButton/HelpButton.tsx",
+  "externalDependencies": ["odio-2026-021", "odio-2026-047"],
+  "decisions": [
+    {
+      "date": "2026-04-16",
+      "decision": "Client-side fetch from /lac/lac-data.json (static file)",
+      "rationale": "No API route needed — lac-data.json is written by `lac export --all` at build time and served as a static file. Zero backend cost, works on Vercel hobby plan."
+    },
+    {
+      "date": "2026-04-16",
+      "decision": "Route→featureKey map in routeFeatureMap.ts (explicit, not auto-detected)",
+      "rationale": "Auto-detecting featureKeys from URL structure would be fragile. An explicit map is self-documenting, stays in version control, and forces intentional curation of which features are surfaced per route."
+    },
+    {
+      "date": "2026-04-16",
+      "decision": "Inline mdToHtml() — no external markdown parser",
+      "rationale": "userGuide content uses simple markdown (headers, bullets, bold, code). A 15-line inline converter keeps the component dependency-free and avoids a 10kB+ import for a help panel."
+    }
+  ],
+  "successCriteria": "Navigate to /record, click ?, see 'Tap the Record tab from anywhere…' rendered as formatted prose with knownLimitations in the Gotchas box. Toggle to Dev tab, see hooks/useRecorder.ts chip and externalDependencies as linked chips.",
+  "knownLimitations": [
+    "lac-data.json is generated at build time — help content is one deploy behind if feature.jsons are updated between deploys",
+    "mdToHtml() only handles basic markdown — tables, blockquotes, and nested lists are not rendered",
+    "Help button overlaps content in landscape mobile — no auto-hide on scroll yet"
+  ],
+  "userGuide": "Tap the '?' button (top right of any screen) to open contextual help for the current feature. Use the User Guide tab to understand what the feature does. Use the Dev tab to see implementation details, architecture decisions, and dependencies. Tap 'Full guide →' to open the complete LAC documentation for that feature."
+}
