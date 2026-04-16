@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build:lac": "lac export --all .. --out ./public/lac --prefix lac || echo 'skipping lac (not installed or outdated)'",
-    "build": "prisma generate && next build",
+    "build": "npm run build:lac && prisma generate && next build",
     "start": "next start"
   },
   "dependencies": {
@@ -31,7 +31,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@majeanson/lac": "^3.4.0",
+    "@majeanson/lac": "^3.4.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
