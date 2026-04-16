@@ -7,7 +7,7 @@ export function LacHubClient() {
     <LacHub
       dataUrl="/lac/lac-data.json"
       guideUrl="/lac/lac-guide.html"
-      defaultTab="sprint"
+      defaultTab="browse"
       height="calc(100dvh - 120px)"
       style={{ minHeight: 400 }}
     />
