@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odio — Release Notes</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f0d0b; --bg-card: #181512; --bg-hover: #1e1a16; --border: #262018; --text: #ece3d8; --text-mid: #b0a494; --text-soft: #736455;
+  --accent: #c4a255; --mono: 'Cascadia Code','Fira Code','Consolas',monospace; --sans: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.6; }
+.topbar { height: 46px; display: flex; align-items: center; gap: 14px; padding: 0 20px; background: #0b0a08; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.topbar-brand { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: 0.05em; }
+.topbar-sep { color: var(--border); font-size: 18px; }
+.topbar-title { font-size: 13px; color: var(--text-mid); }
+.topbar-filter { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--text-soft); padding: 3px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg-card); }
+.main { max-width: 820px; margin: 0 auto; padding: 56px 40px 100px; }
+.page-eyebrow { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+.page-title { font-size: 36px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 10px; }
+.page-sub { font-size: 15px; color: var(--text-mid); margin-bottom: 48px; max-width: 560px; }
+.stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 48px; }
+.stat-card { padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; min-width: 100px; }
+.stat-num { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--accent); }
+.stat-lbl { font-size: 11px; color: var(--text-soft); margin-top: 4px; }
+.domain-section { margin-bottom: 56px; }
+.domain-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.domain-pip { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.domain-title { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); }
+.domain-count { font-family: var(--mono); font-size: 10px; color: var(--text-soft); margin-left: auto; }
+.feature-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px; margin-bottom: 16px; }
+.card-domain-eyebrow { font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 8px; }
+.card-title { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; margin-bottom: 10px; }
+.card-pm-summary { font-size: 14px; color: var(--text-mid); line-height: 1.7; margin-bottom: 16px; font-style: italic; }
+.card-guide-block { margin-bottom: 16px; }
+.card-guide-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+.card-guide-text { font-size: 14px; color: var(--text-mid); line-height: 1.8; }
+.card-guide-text p { margin-bottom: 0.75em; }
+.card-guide-text p:last-child { margin-bottom: 0; }
+.card-guide-text ul { margin: 0.4em 0 0.8em 1.4em; }
+.card-guide-text li { margin-bottom: 0.3em; }
+.card-guide-text strong { color: var(--text); font-weight: 600; }
+.card-guide-text code { font-family: var(--mono); font-size: 12px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 3px; padding: 1px 5px; }
+.card-limits { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.card-limits-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-soft); margin-bottom: 8px; }
+.card-limits-list { list-style: none; padding: 0; }
+.card-limits-list li { font-size: 12px; color: var(--text-soft); line-height: 1.6; margin-bottom: 4px; padding-left: 14px; position: relative; }
+.card-limits-list li::before { content: '—'; position: absolute; left: 0; opacity: 0.4; }
+.empty-state { text-align: center; padding: 80px 40px; color: var(--text-soft); }
+.empty-title { font-size: 20px; color: var(--text-mid); margin-bottom: 10px; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="topbar-brand">lac·release-notes</span>
+  <span class="topbar-sep">/</span>
+  <span class="topbar-title">Odio</span>
+  <span class="topbar-filter">all frozen features</span>
+</div>
+<main class="main">
+  <div class="page-eyebrow">release notes</div>
+  <div class="page-title">Odio</div>
+  <div class="page-sub">What shipped — all frozen features. 15 features across 7 domains.</div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num">15</div><div class="stat-lbl">features shipped</div></div>
+    <div class="stat-card"><div class="stat-num">7</div><div class="stat-lbl">domains</div></div>
+    <div class="stat-card"><div class="stat-num">15</div><div class="stat-lbl">with user guides</div></div>
+  </div>
+  <div class="domain-section">
+      <div class="domain-header">
+        <div class="domain-pip" style="background:#c4a255"></div>
+        <div class="domain-title">render</div>
+        <div class="domain-count">2 features</div>
+      </div>
+      <div class="feature-card" id="odio-2026-002">
+      <div class="card-domain-eyebrow" style="color:#c4a255">render</div>
+      <div class="card-title">FFmpeg POC — Validate Bundle Size and Render Pipeline on Vercel</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>This is an internal validation endpoint, not a user-facing feature. To test: GET /api/render/poc?url=&lt;public-audio-url&gt;. The endpoint downloads the audio, applies a test cut (removes seconds 0-10), and returns the trimmed file. Used during development to confirm Vercel can run FFmpeg before building the real render pipeline.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>Vercel Hobby function timeout is 10s — this may be too tight for long clips; Pro plan raises to 300s</li><li>If bundle size fails on Hobby, Vercel Pro ($20/month) is the simplest fix — breaks the $0/month cost target</li></ul></div>
+    </div><div class="feature-card" id="odio-2026-014">
+      <div class="card-domain-eyebrow" style="color:#c4a255">render</div>
+      <div class="card-title">Render — Server-Side FFmpeg on Freeze + Public Share</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>On a clip's detail page, tap 'Freeze' on any version to produce the final audio file. The page shows 'Rendering…' for a few seconds, then displays a lock icon and download button. To share publicly: tap the Share icon on a frozen clip and copy the /share/[token] link. Anyone with the link can listen without signing in. To revoke public access, tap Share again and toggle it off.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>Vercel /tmp is ephemeral (512MB limit) — source download (~43MB) + FFmpeg output (~10MB) is within limits for typical clips</li><li>Render requires recorder&#39;s valid Drive token from Postgres — if token refresh fails (e.g., recorder revoked access), render fails with a clear error and re-auth prompt</li><li>@ffmpeg-installer/ffmpeg bundles ~38MB compressed — close to Vercel&#39;s function size limit; this is the highest-risk technical component and needs a spike before building</li><li>Any band Editor role can trigger freeze, but the render always uses the recorder&#39;s Drive token — recorder does not need to be signed in at the moment of freeze</li></ul></div>
+    </div>
+    </div><div class="domain-section">
+      <div class="domain-header">
+        <div class="domain-pip" style="background:#e8674a"></div>
+        <div class="domain-title">auth</div>
+        <div class="domain-count">1 feature</div>
+      </div>
+      <div class="feature-card" id="odio-2026-003">
+      <div class="card-domain-eyebrow" style="color:#e8674a">auth</div>
+      <div class="card-title">Auth — Google OAuth via NextAuth.js</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>Users visit the app and click 'Sign in with Google'. They are prompted to grant Google Drive access (files created by Odio only). After sign-in, they are redirected to the bands home page. Sessions persist across browser restarts. Sign-out via the Band settings page. The /share/[token] public page requires no sign-in.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>drive.file scope only covers files the app created under that specific user&#39;s account — bandmates stream audio through the server-side proxy (which uses the recorder&#39;s stored token), so bandmates do not need Drive scope just to listen</li><li>Google OAuth tokens expire after 1 hour — NextAuth DB adapter stores refresh_token in Postgres and rotates on expiry; JWT-only strategy is insufficient and must not be used</li><li>If the recorder revokes Odio&#39;s Drive access (in Google account settings), all audio becomes inaccessible to the entire band until re-authorized</li></ul></div>
+    </div>
+    </div><div class="domain-section">
+      <div class="domain-header">
+        <div class="domain-pip" style="background:#4aad72"></div>
+        <div class="domain-title">app shell</div>
+        <div class="domain-count">4 features</div>
+      </div>
+      <div class="feature-card" id="odio-2026-021">
+      <div class="card-domain-eyebrow" style="color:#4aad72">app shell</div>
+      <div class="card-title">BottomSheet — Slide-Up Modal for Confirmations and Input</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>Bottom sheets appear as a slide-up panel when you tap a destructive or important action. Tap outside the sheet or swipe it down to cancel. Tap Cancel inside the sheet to close without taking action.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>Nested sheets are not supported — opening a sheet from within another sheet will break focus trap</li><li>Swipe-down gesture uses touch events only — no mouse drag to dismiss on desktop</li></ul></div>
+    </div><div class="feature-card" id="odio-2026-022">
+      <div class="card-domain-eyebrow" style="color:#4aad72">app shell</div>
+      <div class="card-title">Button — Shared Interactive Button Component</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>Buttons throughout the app use a consistent amber (primary), red (danger), or subtle (ghost) style. All buttons are large enough to tap comfortably on mobile.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>Loading spinner color is fixed (white on primary/danger, text-secondary on ghost) — not customizable per call</li></ul></div>
+    </div><div class="feature-card" id="odio-2026-025">
+      <div class="card-domain-eyebrow" style="color:#4aad72">app shell</div>
+      <div class="card-title">Badge — Count and Status Label Pill</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>Small labels on clip cards show version count, frozen status, and processing state.</p></div></div>
+      
+    </div><div class="feature-card" id="odio-2026-026">
+      <div class="card-domain-eyebrow" style="color:#4aad72">app shell</div>
+      <div class="card-title">Skeleton — Loading Placeholder Shimmer</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>Grey shimmer placeholders appear while content is loading.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>Caller is responsible for matching Skeleton dimensions to actual content — no auto-sizing</li></ul></div>
+    </div>
+    </div><div class="domain-section">
+      <div class="domain-header">
+        <div class="domain-pip" style="background:#5b82cc"></div>
+        <div class="domain-title">recording</div>
+        <div class="domain-count">5 features</div>
+      </div>
+      <div class="feature-card" id="odio-2026-006">
+      <div class="card-domain-eyebrow" style="color:#5b82cc">recording</div>
+      <div class="card-title">Recording — Browser-Based Audio Capture</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>Tap the Record tab from anywhere. On the recording screen, tap the large circle button to start. The timer runs; the level meter shows audio input. Tap stamp buttons (fire/keep/uncertain/idea) any time to mark notable moments. Tap 'Add note' to type a quick text annotation. Tap the square stop button to finish. After stopping, name the clip on the post-record screen, tap 'Next Song' to immediately start another recording while the previous one uploads in the background, or navigate away.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>iOS Safari stops MediaRecorder if the screen locks or the user switches tabs — Wake Lock API (iOS 16.4+) mitigates accidental sleep; tab switching is user responsibility</li><li>If the browser tab is closed before the blob is written to IndexedDB (i.e., during the first few seconds after stop), the audio may be lost — mitigated by writing to IndexedDB immediately on stop before any upload attempt (see feat-recording-resilience)</li><li>Resumable upload requires two API round-trips before recording is saved — adds ~2-4s to the stop flow</li><li>Any Editor-role member can initiate a recording, but all audio lands in the band creator&#39;s Drive — members upload directly to the creator&#39;s Drive using the server-generated resumable upload session URL (which uses the creator&#39;s stored token)</li></ul></div>
+    </div><div class="feature-card" id="odio-2026-008">
+      <div class="card-domain-eyebrow" style="color:#5b82cc">recording</div>
+      <div class="card-title">Multi-Recorder — Any Editor Can Record Into the Band&#39;s Drive</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>Any Editor-role band member can record — not just the band creator. Editors see the Record tab in the nav and can start a recording from their own device. The audio automatically lands in the band's Drive folder (owned by the band creator). If the creator's Drive connection expires, a banner appears: 'Drive connection needs renewal — ask [creator name] to re-authorize.' The clip card shows 'Recorded by X' when the recorder is not the band creator.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>If the band creator revokes Google Drive access, ALL recording attempts by any Editor fail until the creator re-authorizes — one token serves the whole band; there is no per-member fallback</li><li>Two Editors recording simultaneously produce two separate clip rows with overlapping timestamps — no merging or conflict detection; both appear in the session normally</li><li>The creator&#39;s refresh_token is stored server-side in the NextAuth accounts table — this security surface already exists for the audio proxy feature; multi-recorder adds no new exposure</li></ul></div>
+    </div><div class="feature-card" id="odio-2026-027">
+      <div class="card-domain-eyebrow" style="color:#5b82cc">recording</div>
+      <div class="card-title">AudioBars — Animated Audio Level Indicator</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>The animated bars on the recording screen show that your microphone is working. If they don't move when you speak, check your mic permissions.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>Level computation is frequency-averaged — clipping (levels &gt; 1.0 from Web Audio) is clamped to 1.0 without a visual warning</li><li>Bar count is fixed at construction — responsive reflow not supported</li></ul></div>
+    </div><div class="feature-card" id="odio-2026-009">
+      <div class="card-domain-eyebrow" style="color:#5b82cc">recording</div>
+      <div class="card-title">Recording Resilience — IndexedDB Safety Net, Upload Retry, Save-to-Device Fallback</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>Recording resilience is automatic and invisible when things work. If an upload fails (network drops, Drive token expires), a banner appears at the top of the screen: 'You have [N] recording(s) waiting to upload'. Tap 'Retry' to resume when reconnected. Tap 'Save to device' to download the raw audio file to your phone or computer if Drive is permanently unavailable. Tap 'Discard' (with confirmation) to remove a pending recording from recovery. When the app reopens after a crash, pending recordings are detected automatically.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>IndexedDB is cleared when the user clears browser storage (&#39;Clear site data&#39;) — the blob would be lost; this is unavoidable without server-side buffering and is an edge case the user controls</li><li>Background Sync (automatic retry when tab is closed and connection restored) is not available on iOS Safari — recovery on iOS requires opening the app manually</li><li>Drive resumable upload session URLs expire after 7 days — a blob stranded for &gt; 7 days will need a fresh upload session, not a resume; the implementation must detect this (404 on session URL) and fall back to a new session</li><li>Storage pressure on low-end devices: a 43MB blob may trigger the browser&#39;s storage eviction policy on devices with &lt; 1GB free — &#39;Save to device&#39; should be surfaced proactively for large recordings</li><li>PostRecordScreen.doUpload() is a standalone async function that writes to IndexedDB directly without going through the Zustand store&#39;s action methods — fixed by calling usePendingUploadsStore.getState().refresh() on every status-changing path so the in-memory store stays in sync with IndexedDB and the banner dismisses immediately</li></ul></div>
+    </div><div class="feature-card" id="odio-2026-018">
+      <div class="card-domain-eyebrow" style="color:#5b82cc">recording</div>
+      <div class="card-title">Audio Input Selection — External Mic, USB Interface, Headset</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>If you have an external microphone, USB audio interface, or headset plugged in when you open the recording screen, a small mic icon appears to the left of the record button. Tap it to choose your audio input from the list. Your selection is remembered for next time. If the chosen device is unplugged after selection, the app automatically falls back to the built-in mic and shows a brief notification.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>iOS Safari does not consistently enumerate Bluetooth audio inputs — users on iOS may not see all available inputs</li><li>enumerateDevices() requires microphone permission to return device labels; before permission is granted, labels are empty strings (can only show device index, not name)</li></ul></div>
+    </div>
+    </div><div class="domain-section">
+      <div class="domain-header">
+        <div class="domain-pip" style="background:#b87fda"></div>
+        <div class="domain-title">editing</div>
+        <div class="domain-count">1 feature</div>
+      </div>
+      <div class="feature-card" id="odio-2026-038">
+      <div class="card-domain-eyebrow" style="color:#b87fda">editing</div>
+      <div class="card-title">StampJumpRow — Tappable Stamp Chips for Waveform Seek</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>Colored dots along the bottom of the waveform mark moments stamped during recording. Tap any dot to jump to that moment in the audio.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>Stamp chips are ordered by creation (recording order), not by timestamp — if a user stamped out of order, chips appear out of sequence relative to the waveform</li></ul></div>
+    </div>
+    </div><div class="domain-section">
+      <div class="domain-header">
+        <div class="domain-pip" style="background:#4ab8cc"></div>
+        <div class="domain-title">storage</div>
+        <div class="domain-count">1 feature</div>
+      </div>
+      <div class="feature-card" id="odio-2026-017">
+      <div class="card-domain-eyebrow" style="color:#4ab8cc">storage</div>
+      <div class="card-title">Storage Management — Drive Quota, Cleanup, Archive</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>In the Band tab, tap Settings to see Drive storage usage. The bar shows how many MB/GB of Drive are used by this band's recordings. After a clip is frozen and the band is happy with it, tap 'Clean up source audio' on the clip detail page to delete the raw recording from Drive — the final rendered file is kept and the clip remains fully playable. Tap 'Delete clip' (Recorder only) to permanently remove a clip and all its files from Drive.</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>Drive API quota query may not reflect real-time usage — cache with 5-minute TTL</li><li>After cleanup, v1 source audio is gone — if the frozen render was also deleted and the band wants to re-edit, they would need to re-record</li><li>Drive storage is the recorder&#39;s personal quota — shared with all their other Drive content</li></ul></div>
+    </div>
+    </div><div class="domain-section">
+      <div class="domain-header">
+        <div class="domain-pip" style="background:#cc5b5b"></div>
+        <div class="domain-title">collaboration</div>
+        <div class="domain-count">1 feature</div>
+      </div>
+      <div class="feature-card" id="odio-2026-016">
+      <div class="card-domain-eyebrow" style="color:#cc5b5b">collaboration</div>
+      <div class="card-title">Collaboration — Votes, Comments, Stamp Heat Map, Activity</div>
+      
+      <div class="card-guide-block"><div class="card-guide-label">How to use</div><div class="card-guide-text"><p>On a clip's detail page, the Versions tab shows all edits; the Comments tab shows the discussion. Vote on any version by tapping Keep, Revise, or Pass — the tally updates for all band members within seconds. Leave a comment in the text field (optionally tap the waveform first to attach a timestamp). When everyone has voted Keep on the same version, a banner appears prompting the Recorder or an Editor to freeze it. Comments can be edited or deleted by their author (long-press or tap the '...' menu).</p></div></div>
+      <div class="card-limits"><div class="card-limits-label">Known limitations</div><ul class="card-limits-list"><li>No push notifications — members need to open the app to see new votes/comments</li><li>Polling at 5-10s means activity is not instant — acceptable for post-jam async workflow</li><li>Stamp heat map is derived from recording-time stamps only (not from member actions during review)</li></ul></div>
+    </div>
+    </div>
+</main>
+</body>
+</html>

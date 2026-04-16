@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>app — Sprint Board</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f0d0b; --bg-card: #181512; --bg-hover: #1e1a16; --border: #262018; --text: #ece3d8; --text-mid: #b0a494; --text-soft: #736455;
+  --accent: #c4a255; --mono: 'Cascadia Code','Fira Code','Consolas',monospace; --sans: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --active: #4aad72; --draft: #c4a255;
+}
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.6; }
+.topbar { height: 46px; display: flex; align-items: center; gap: 14px; padding: 0 24px; background: #0b0a08; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.topbar-brand { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: 0.05em; }
+.topbar-sep { color: var(--border); font-size: 18px; }
+.topbar-title { font-size: 13px; color: var(--text-mid); }
+.topbar-stats { margin-left: auto; display: flex; gap: 16px; }
+.stat { font-family: var(--mono); font-size: 11px; color: var(--text-soft); }
+.stat strong { color: var(--text-mid); }
+.main { max-width: 1100px; margin: 0 auto; padding: 40px 32px 80px; }
+.page-title { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.015em; margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: var(--text-soft); margin-bottom: 40px; }
+.group-section { margin-bottom: 48px; }
+.group-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.group-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.group-dot.active { background: var(--active); }
+.group-dot.draft  { background: var(--draft); }
+.group-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text); }
+.group-count { font-family: var(--mono); font-size: 10px; color: var(--text-soft); margin-left: auto; }
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.sprint-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; transition: border-color 0.15s; }
+.sprint-card:hover { border-color: var(--text-soft); }
+.card-top { margin-bottom: 10px; }
+.card-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.active { background: var(--active); }
+.status-dot.draft  { background: var(--draft); }
+.card-key { font-family: var(--mono); font-size: 10px; color: var(--text-soft); }
+.priority-badge { font-family: var(--mono); font-size: 9px; padding: 1px 6px; border-radius: 3px; border: 1px solid; letter-spacing: 0.05em; }
+.card-title { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.35; }
+.card-domain { font-family: var(--mono); font-size: 10px; color: var(--text-soft); margin-top: 3px; }
+.card-problem { font-size: 12px; color: var(--text-mid); line-height: 1.6; margin-bottom: 8px; }
+.card-criteria { font-size: 11px; color: var(--text-soft); line-height: 1.5; margin-bottom: 8px; }
+.criteria-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-soft); }
+.card-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.tag { font-family: var(--mono); font-size: 9px; color: var(--text-soft); background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; }
+.empty-state { text-align: center; padding: 80px 40px; color: var(--text-soft); }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="topbar-brand">lac·sprint</span>
+  <span class="topbar-sep">/</span>
+  <span class="topbar-title">app</span>
+  <div class="topbar-stats">
+    <span class="stat"><strong>29</strong> active</span>
+    <span class="stat"><strong>9</strong> draft</span>
+    <span class="stat"><strong>8</strong> domains</span>
+  </div>
+</div>
+<main class="main">
+  <div class="page-title">app — Sprint</div>
+  <div class="page-sub">38 features in flight · sorted by priority</div>
+  <section class="group-section">
+      <div class="group-header">
+        <div class="group-dot active"></div>
+        <div class="group-title">Active</div>
+        <div class="group-count">29</div>
+      </div>
+      <div class="cards-grid">
+        <div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#cc5b5b20;color:#cc5b5b;border-color:#cc5b5b40">P1</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-005</span>
+        </div>
+        <div class="card-title">Band Space — Band Creation, Invites, Drive Folder, Members</div>
+        <div class="card-domain">band</div>
+      </div>
+      <div class="card-problem">Band members need a shared space where all sessions are visible and access is controlled.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Create band: enter name → band record created in Postgres → invite link generated
+- Invite link opens a join page: sho…</div>
+      <div class="card-tags"><span class="tag">band</span><span class="tag">invite</span><span class="tag">members</span><span class="tag">google-drive</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#cc5b5b20;color:#cc5b5b;border-color:#cc5b5b40">P1</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-050</span>
+        </div>
+        <div class="card-title">JoinBandClient — Invite Link Band Join Flow</div>
+        <div class="card-domain">band</div>
+      </div>
+      <div class="card-problem">Most users arrive in Odio as joiners — they received an invite link from a band creator.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Renders band name and &#39;Join [Band Name]&#39; button
+- Button tap: POST to join endpoint, navigates to session list on success
+- Error states: &#39;Invalid invite link&#39;, &#39;Already a member&#39;, &#39;Invite has expired&#39;
+- No Drive authorization step (joiners are MEMBER or EDITOR role — no drive.</div>
+      <div class="card-tags"><span class="tag">band</span><span class="tag">onboarding</span><span class="tag">invite</span><span class="tag">join</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#cc5b5b20;color:#cc5b5b;border-color:#cc5b5b40">P1</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-043</span>
+        </div>
+        <div class="card-title">SubmitVersionSheet — Version Description and Submission Confirmation</div>
+        <div class="card-domain">editing</div>
+      </div>
+      <div class="card-problem">Submitting a new version is the final step of the editing workflow.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Opens as BottomSheet from &#39;Submit as v[N]&#39; button
+- Description field: optional textarea, max 200ch, placeholder &#39;What changed?</div>
+      <div class="card-tags"><span class="tag">editor</span><span class="tag">submit</span><span class="tag">version</span><span class="tag">bottom-sheet</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#cc5b5b20;color:#cc5b5b;border-color:#cc5b5b40">P1</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-039</span>
+        </div>
+        <div class="card-title">WaveformCanvas — Waveform Presenter with Cut Region Overlay</div>
+        <div class="card-domain">editing</div>
+      </div>
+      <div class="card-problem">The waveform display needs to show the audio waveform, cut regions (red or dark overlays), stamp dots, annotation pins, and a drag-interaction overlay — all layered correctly without WaveSurfer&#39;s built-in interactions (which conflict with custom cut region handling).</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - WaveSurfer mounts in container div with interact:false
+- Cut bands (CSS divs) render at correct positions for given cu…</div>
+      <div class="card-tags"><span class="tag">waveform</span><span class="tag">canvas</span><span class="tag">cut-regions</span><span class="tag">overlay</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#cc5b5b20;color:#cc5b5b;border-color:#cc5b5b40">P1</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-047</span>
+        </div>
+        <div class="card-title">AuthShell — Authenticated Layout Wrapper</div>
+        <div class="card-domain">app shell</div>
+      </div>
+      <div class="card-problem">All authenticated pages need shared layout elements: the BottomTabBar, the UploadBanner (persistent upload progress), and eventually the OfflineBanner (global offline indicator).</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - UploadBanner mounted and visible on all authenticated pages
+- BottomTabBar mounted at bottom of viewport
+- bandId and …</div>
+      <div class="card-tags"><span class="tag">layout</span><span class="tag">auth</span><span class="tag">shell</span><span class="tag">upload-banner</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#cc5b5b20;color:#cc5b5b;border-color:#cc5b5b40">P1</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-046</span>
+        </div>
+        <div class="card-title">BottomTabBar — Four-Tab Persistent Navigation</div>
+        <div class="card-domain">app shell</div>
+      </div>
+      <div class="card-problem">The app has four distinct areas (Sessions, Record, Clips, Band) that need to be reachable in one tap from anywhere in the app.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Four tabs visible on all non-editor routes
+- Active tab: amber icon + label
+- Hidden on /bands/.</div>
+      <div class="card-tags"><span class="tag">navigation</span><span class="tag">tab-bar</span><span class="tag">routing</span><span class="tag">bottom-nav</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#cc5b5b20;color:#cc5b5b;border-color:#cc5b5b40">P1</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-004</span>
+        </div>
+        <div class="card-title">App Shell — Navigation, Dark Theme, Onboarding, Empty States</div>
+        <div class="card-domain">app shell</div>
+      </div>
+      <div class="card-problem">The app needs a solid foundation: a responsive web app that works on any device, navigates between recording/editing/collaboration screens fluidly, enforces auth correctly, handles first-time setup (create a band, link a Drive folder) with minimal friction, and never shows a blank screen.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Dark theme renders correctly everywhere; no light mode; high contrast readable in dim rehearsal room or car
+- System f…</div>
+      <div class="card-tags"><span class="tag">navigation</span><span class="tag">dark-theme</span><span class="tag">onboarding</span><span class="tag">mobile-first</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#cc5b5b20;color:#cc5b5b;border-color:#cc5b5b40">P1</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-048</span>
+        </div>
+        <div class="card-title">PageLayout — Standard Page Wrapper with Back Button</div>
+        <div class="card-domain">app shell</div>
+      </div>
+      <div class="card-problem">Every deep-navigation page (clip detail, band settings, editor, band creation) needs a standard header with a back button and page title, plus correct bottom padding to clear the fixed tab bar and device safe area.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Header renders with back button (chevron-left icon + back label) and page title
+- Back button navigates via Next.</div>
+      <div class="card-tags"><span class="tag">layout</span><span class="tag">navigation</span><span class="tag">back-button</span><span class="tag">page-wrapper</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#cc5b5b20;color:#cc5b5b;border-color:#cc5b5b40">P1</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-028</span>
+        </div>
+        <div class="card-title">StampRow — One-Tap Timestamp Annotation During Recording</div>
+        <div class="card-domain">recording</div>
+      </div>
+      <div class="card-problem">During a live recording, a band member wants to mark interesting moments (a great riff, an uncertain section, an idea) without interrupting the take.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Four stamp buttons rendered in equal horizontal distribution
+- Each button: minimum 72×72px touch target
+- Tap triggers light haptic (navigator.</div>
+      <div class="card-tags"><span class="tag">stamps</span><span class="tag">annotation</span><span class="tag">recording</span><span class="tag">haptic</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#cc5b5b20;color:#cc5b5b;border-color:#cc5b5b40">P1</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-007</span>
+        </div>
+        <div class="card-title">Session Management — Sessions, Clips, Naming, Stages</div>
+        <div class="card-domain">sessions</div>
+      </div>
+      <div class="card-problem">A jam night produces 3-8 clips.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Session auto-created on first record of the night
+- Session name is editable inline by any member
+- Clip auto-named with a memorable death metal name (adjective + noun, e.</div>
+      <div class="card-tags"><span class="tag">sessions</span><span class="tag">clips</span><span class="tag">crud</span><span class="tag">naming</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-012</span>
+        </div>
+        <div class="card-title">Versioning — Version Chain, Waveform Editor, Waveform Player, Freeze</div>
+        <div class="card-domain">versioning</div>
+      </div>
+      <div class="card-problem">A raw recording needs to evolve from v1 (messy, includes setup and dead air) to vFinal (clean, trimmed) through collaborative edits — with full history and a clear end state (freeze).</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Version list shows full chain: v number, description, result duration, cut count
+- Selecting a version in the detail p…</div>
+      <div class="card-tags"><span class="tag">versioning</span><span class="tag">version-history</span><span class="tag">freeze</span><span class="tag">wavesurfer</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-052</span>
+        </div>
+        <div class="card-title">BandShareButton — Invite Link and QR Code Generator</div>
+        <div class="card-domain">band</div>
+      </div>
+      <div class="card-problem">Band creators need to bring bandmates into the app quickly — ideally by showing a QR code that others can scan, or by sharing a link.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Invite link copyable with &#39;Copied!</div>
+      <div class="card-tags"><span class="tag">band</span><span class="tag">invite</span><span class="tag">qr-code</span><span class="tag">share</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-049</span>
+        </div>
+        <div class="card-title">MemberRow — Band Member List Row with Role Management</div>
+        <div class="card-domain">band</div>
+      </div>
+      <div class="card-problem">Band Settings lists all members with their roles.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Avatar initials + name + email rendered per row
+- Role chip: interactive for Recorder (not self), static for all other…</div>
+      <div class="card-tags"><span class="tag">band</span><span class="tag">members</span><span class="tag">role</span><span class="tag">settings</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-013</span>
+        </div>
+        <div class="card-title">Clip Detail — Coordinator, Actions Panel, Freeze, Share, Stage, Cleanup</div>
+        <div class="card-domain">versioning</div>
+      </div>
+      <div class="card-problem">The clip detail page must coordinate multiple independent concerns — playback, version selection, actions, and collaboration — without letting any one section own state that another needs.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Selecting a version updates WaveformPlayer to skip that version&#39;s cuts
+- Clicking the active version keeps it selected (no deselect to null state)
+- Actions section hidden when member role + non-frozen (no phantom whitespace)
+- Stage picker opens as bottom sheet with 4 options; current stage highlighted
+- Freeze picker shows version list; pre-selects latest version; on confirm: renders clip, updates UI
+- Freeze error shown inline in freeze sheet; dismiss-able
+- Post-freeze callout banner appears after a successful freeze in the same session
+- Frozen status row shows Unfreeze option for RECORDER, lock icon for non-Recorder
+- Share toggle generates /share/[token] URL and copies to clipboard
+- Copy feedback: button label changes to &#39;Copied!</div>
+      <div class="card-tags"><span class="tag">clip-detail</span><span class="tag">coordinator</span><span class="tag">freeze</span><span class="tag">share</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-037</span>
+        </div>
+        <div class="card-title">ClipCard — Clip Row in Session Clip List</div>
+        <div class="card-domain">sessions</div>
+      </div>
+      <div class="card-problem">The session clip list is the primary navigation surface for the editing workflow.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Clip name editable inline (InlineEdit, max 60ch)
+- Duration shows source duration → result duration if versions exist
+…</div>
+      <div class="card-tags"><span class="tag">clip</span><span class="tag">clip-list</span><span class="tag">card</span><span class="tag">navigation</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-041</span>
+        </div>
+        <div class="card-title">CutList — Cut Region List with Nudge Controls</div>
+        <div class="card-domain">editing</div>
+      </div>
+      <div class="card-problem">Dragging cut region handles on a waveform on mobile is imprecise for fine adjustments (±100ms range).</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - All current cut regions listed in order (sorted by start time)
+- Each row: index, startMs formatted, endMs formatted, …</div>
+      <div class="card-tags"><span class="tag">editor</span><span class="tag">cut-list</span><span class="tag">nudge</span><span class="tag">precision</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-042</span>
+        </div>
+        <div class="card-title">DraftRestoreBanner — Recover Unsaved Cuts After Browser Crash</div>
+        <div class="card-domain">editing</div>
+      </div>
+      <div class="card-problem">If a user&#39;s browser crashes or the page reloads mid-edit, all cut regions are lost — the editor opens blank.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Banner visible only when hasDraft=true AND cutMarks.</div>
+      <div class="card-tags"><span class="tag">editor</span><span class="tag">draft</span><span class="tag">localstorage</span><span class="tag">resilience</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-040</span>
+        </div>
+        <div class="card-title">EditorToolbar — Trim / Clear All / Split Quick-Action Buttons</div>
+        <div class="card-domain">editing</div>
+      </div>
+      <div class="card-problem">Creating cut regions by dragging is precise but slow for the most common editing tasks: trimming dead air from the start and end (80% of edits), and splitting a clip at a specific time.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Trim button: adds start/end cuts at 20%/80% boundaries immediately
+- Clear All: removes all cuts, disabled when hasCut…</div>
+      <div class="card-tags"><span class="tag">editor</span><span class="tag">toolbar</span><span class="tag">trim</span><span class="tag">split</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-011</span>
+        </div>
+        <div class="card-title">Timeline Editor — WaveformPlayer, WaveformEditor, Cut Regions, Version Submit</div>
+        <div class="card-domain">editing</div>
+      </div>
+      <div class="card-problem">Band members need to trim dead air and setup noise from a recording — visually, in a browser, on a phone in a car or on a laptop at home — and preview the result before committing it as a new version.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Waveform renders within 3 seconds of opening on a typical 10-min clip
+- Audio plays via Drive proxied URL — seeking su…</div>
+      <div class="card-tags"><span class="tag">wavesurfer</span><span class="tag">waveform</span><span class="tag">cut-regions</span><span class="tag">preview</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-033</span>
+        </div>
+        <div class="card-title">VersionCard — Version Row in Clip Detail Version List</div>
+        <div class="card-domain">versioning</div>
+      </div>
+      <div class="card-problem">The clip detail page lists all versions of a clip newest-first.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Renders v{N}, truncated name (12ch max), relative time, duration in one line
+- Description 2-line clamped with &#39;Show more&#39; if &gt; 2 lines
+- Mini-player play/pause button (40px) plays this version&#39;s audio from start
+- Only one mini-player active at a time (controlled by parent)
+- Vote row: Keep/Revise/Pass buttons, tally visible below
+- Votes are mutable (tapping another option replaces)
+- &#39;Edit from this version&#39; links to /edit?</div>
+      <div class="card-tags"><span class="tag">version</span><span class="tag">clip-detail</span><span class="tag">mini-player</span><span class="tag">playback</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-034</span>
+        </div>
+        <div class="card-title">VotePanel — Keep / Revise / Pass Vote UI</div>
+        <div class="card-domain">collaboration</div>
+      </div>
+      <div class="card-problem">After editing, the band needs to converge on which version is ready.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Keep/Revise/Pass buttons rendered equally spaced
+- Current user&#39;s vote highlighted with amber border
+- Tapping another…</div>
+      <div class="card-tags"><span class="tag">votes</span><span class="tag">collaboration</span><span class="tag">polling</span><span class="tag">keep</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-010</span>
+        </div>
+        <div class="card-title">Upload Banner — Persistent Upload Progress Across All Pages</div>
+        <div class="card-domain">recording</div>
+      </div>
+      <div class="card-problem">After stopping a recording, the band member needs to navigate away (to another song, to the session list, to collaborate) without losing visibility into whether the upload succeeded.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Banner visible on every authenticated page during any upload state
+- Active upload: amber background, spinner, clip name, progress bar at bottom of banner
+- Paused upload: shows &#39;Upload paused — waiting for connection&#39; with Retry button
+- Token error: shows &#39;Drive connection needs renewal — ask band creator to re-authorize&#39; with Retry + Save file buttons
+- Session error: shows &#39;Session expired — sign in again to resume upload&#39; with Retry + Save file buttons
+- Multiple pending: shows primary (most urgent) with &#39;+N more&#39; count
+- Banner disappears when all uploads complete (uploads.</div>
+      <div class="card-tags"><span class="tag">upload</span><span class="tag">banner</span><span class="tag">progress</span><span class="tag">resilience</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-029</span>
+        </div>
+        <div class="card-title">LiveWaveform — Real-Time Audio Level Meter During Recording</div>
+        <div class="card-domain">recording</div>
+      </div>
+      <div class="card-problem">The recorder needs immediate visual confirmation that their microphone is active and capturing audio.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Horizontal bar fills proportionally to microphone input level
+- Smooth animation — no jarring jumps, natural decay on …</div>
+      <div class="card-tags"><span class="tag">recording</span><span class="tag">audio</span><span class="tag">level-meter</span><span class="tag">waveform</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-054</span>
+        </div>
+        <div class="card-title">SessionHeaderClient — Session Page Title with Inline Name Edit</div>
+        <div class="card-domain">sessions</div>
+      </div>
+      <div class="card-problem">The session clip list needs a page title that shows the session name and allows inline rename (tap to edit).</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Session name rendered as tappable InlineEdit (max 40ch)
+- Tap → keyboard opens, inline input
+- Save (Return) → PATCH /…</div>
+      <div class="card-tags"><span class="tag">session</span><span class="tag">header</span><span class="tag">inline-edit</span><span class="tag">rename</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-023</span>
+        </div>
+        <div class="card-title">EmptyState — Zero-Content Placeholder with Action</div>
+        <div class="card-domain">app shell</div>
+      </div>
+      <div class="card-problem">Several screens (Session List, Clip List, Band Members) can be empty on first visit or after deletes.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Renders in center of available space (flex col, items-center, justify-center, min-h set by caller)
+- Icon: lucide icon…</div>
+      <div class="card-tags"><span class="tag">empty-state</span><span class="tag">onboarding</span><span class="tag">zero-state</span><span class="tag">ui-primitive</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-024</span>
+        </div>
+        <div class="card-title">InlineEdit — Tap-to-Edit Text Field</div>
+        <div class="card-domain">app shell</div>
+      </div>
+      <div class="card-problem">Session names, clip names, and band name are all editable.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Tap name text → input appears with same styling, keyboard opens
+- Return/Done → calls onSave(value), transitions back …</div>
+      <div class="card-tags"><span class="tag">inline-edit</span><span class="tag">rename</span><span class="tag">input</span><span class="tag">ui-primitive</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#c4a25520;color:#c4a255;border-color:#c4a25540">P3</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-035</span>
+        </div>
+        <div class="card-title">StageSelector — Clip Development Stage Picker</div>
+        <div class="card-domain">versioning</div>
+      </div>
+      <div class="card-problem">A band tracks each clip&#39;s creative stage (idea / sketch / developing / demo-ready) to know which songs are close to done vs.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Stage badge tappable by Recorder/Editor, static for Member
+- Tap → BottomSheet with 4 options, current highlighted in …</div>
+      <div class="card-tags"><span class="tag">stage</span><span class="tag">clip-detail</span><span class="tag">clip-list</span><span class="tag">picker</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#c4a25520;color:#c4a255;border-color:#c4a25540">P3</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-053</span>
+        </div>
+        <div class="card-title">SessionNotesSheet — Session-Level Notes Editor</div>
+        <div class="card-domain">sessions</div>
+      </div>
+      <div class="card-problem">A band may want to capture session-level context — &#39;rehearsal at Marco&#39;s place, trying the new bridge section&#39; — that doesn&#39;t belong on any individual clip.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - BottomSheet opens with current session notes pre-filled in textarea
+- Multi-line textarea, vertical resize, min-height…</div>
+      <div class="card-tags"><span class="tag">session</span><span class="tag">notes</span><span class="tag">bottom-sheet</span><span class="tag">metadata</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#c4a25520;color:#c4a255;border-color:#c4a25540">P3</span>
+          <span class="status-dot active"></span>
+          <span class="card-key">odio-2026-015</span>
+        </div>
+        <div class="card-title">Public Share Player — Unauthenticated Clip Playback</div>
+        <div class="card-domain">render</div>
+      </div>
+      <div class="card-problem">A frozen clip should be shareable outside the band — with a producer, a friend, or social media.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - /share/[token] loads without authentication
+- Waveform renders and plays the frozen render audio
+- Stamp chips displayed with correct emoji and timestamp
+- Play/pause 64px button — large touch target
+- Download button downloads the .</div>
+      <div class="card-tags"><span class="tag">public-share</span><span class="tag">wavesurfer</span><span class="tag">unauthenticated</span><span class="tag">frozen</span></div>
+    </div>
+      </div>
+    </section><section class="group-section">
+      <div class="group-header">
+        <div class="group-dot draft"></div>
+        <div class="group-title">Draft</div>
+        <div class="group-count">9</div>
+      </div>
+      <div class="cards-grid">
+        <div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#cc5b5b20;color:#cc5b5b;border-color:#cc5b5b40">P1</span>
+          <span class="status-dot draft"></span>
+          <span class="card-key">odio-2026-051</span>
+        </div>
+        <div class="card-title">DriveRelink — Drive Token Expiry Detection and Re-Authorization</div>
+        <div class="card-domain">band</div>
+      </div>
+      <div class="card-problem">The entire band&#39;s audio access depends on the Recorder&#39;s Google Drive token.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Audio proxy 503 with drive-token-expired detected in WaveformPlayer/Editor/PublicPlayer
+- Band Settings: danger banner shown when Recorder&#39;s Drive token is invalid
+- &#39;Reconnect&#39; button initiates Google OAuth (drive.</div>
+      <div class="card-tags"><span class="tag">drive</span><span class="tag">auth</span><span class="tag">token</span><span class="tag">reconnect</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#cc5b5b20;color:#cc5b5b;border-color:#cc5b5b40">P1</span>
+          <span class="status-dot draft"></span>
+          <span class="card-key">odio-2026-019</span>
+        </div>
+        <div class="card-title">Toast — Global Feedback Notification System</div>
+        <div class="card-domain">app shell</div>
+      </div>
+      <div class="card-problem">Multiple screens need to surface transient feedback (upload done, vote saved, copy confirmed, offline detected) without navigating away or blocking the UI.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Toast appears at bottom of viewport, 16px above tab bar, on any showToast() call from any screen
+- Only one toast visi…</div>
+      <div class="card-tags"><span class="tag">toast</span><span class="tag">feedback</span><span class="tag">notification</span><span class="tag">queue</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot draft"></span>
+          <span class="card-key">odio-2026-045</span>
+        </div>
+        <div class="card-title">BackNavSheet — Discard Confirmation When Leaving Editor with Unsaved Cuts</div>
+        <div class="card-domain">editing</div>
+      </div>
+      <div class="card-problem">If a user taps the back button in the Timeline Editor while they have unsaved cut regions, they will lose their work silently.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Sheet opens when back button tapped and hasUnsaved=true
+- &#39;Keep draft + leave&#39;: writes cutMarks to localStorage (key: odio:draft:{clipId}), then router.</div>
+      <div class="card-tags"><span class="tag">editor</span><span class="tag">back-navigation</span><span class="tag">discard</span><span class="tag">draft</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot draft"></span>
+          <span class="card-key">odio-2026-036</span>
+        </div>
+        <div class="card-title">MiniPlayer — Inline Audio Playback on Version Cards</div>
+        <div class="card-domain">versioning</div>
+      </div>
+      <div class="card-problem">On the clip detail version list, a band member wants to quickly audition a specific version to check if an edit worked — without opening the full editor or navigating to a separate playback screen.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - 40px circle play/pause button, bg-elevated color
+- Elapsed timer in ui-monospace text-xs to the right of button, shows…</div>
+      <div class="card-tags"><span class="tag">audio</span><span class="tag">playback</span><span class="tag">version-card</span><span class="tag">mini-player</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot draft"></span>
+          <span class="card-key">odio-2026-031</span>
+        </div>
+        <div class="card-title">AddNoteSheet — Inline Note Capture During Recording</div>
+        <div class="card-domain">recording</div>
+      </div>
+      <div class="card-problem">During recording, a band member sometimes wants to capture a longer thought than a stamp allows — &#39;re-record the bridge&#39;, &#39;drummer was off-tempo here&#39;, &#39;strong verse&#39;.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Sheet slides up from bottom and sits above keyboard (not hidden behind it)
+- Uses env(keyboard-inset-height) for keyboard-aware positioning on iOS and Android
+- Single-line input with placeholder &#39;What just happened?</div>
+      <div class="card-tags"><span class="tag">recording</span><span class="tag">annotation</span><span class="tag">note</span><span class="tag">sheet</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot draft"></span>
+          <span class="card-key">odio-2026-032</span>
+        </div>
+        <div class="card-title">WakeLockWarning — Screen-Lock Risk Banner Before Recording</div>
+        <div class="card-domain">recording</div>
+      </div>
+      <div class="card-problem">iOS below 16.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - On mount: check &#39;wakeLock&#39; in navigator
+- If unsupported: banner renders above record button before first recording tap
+- Banner: amber bg, dismiss × button, warning text
+- Banner does not block record button tap — it&#39;s above, not overlapping
+- On dismiss: banner hides for this session
+- During recording: visibilitychange listener active.</div>
+      <div class="card-tags"><span class="tag">recording</span><span class="tag">wake-lock</span><span class="tag">ios</span><span class="tag">warning</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#e8674a20;color:#e8674a;border-color:#e8674a40">P2</span>
+          <span class="status-dot draft"></span>
+          <span class="card-key">odio-2026-020</span>
+        </div>
+        <div class="card-title">OfflineBanner — No-Connection State Degradation</div>
+        <div class="card-domain">app shell</div>
+      </div>
+      <div class="card-problem">When a user loses their network connection mid-session, the app currently fails silently — vote buttons appear interactive but fail on submit, session lists appear to work but show stale data with no indication.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - OfflineBanner hidden when navigator.</div>
+      <div class="card-tags"><span class="tag">offline</span><span class="tag">network</span><span class="tag">resilience</span><span class="tag">banner</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#c4a25520;color:#c4a255;border-color:#c4a25540">P3</span>
+          <span class="status-dot draft"></span>
+          <span class="card-key">odio-2026-044</span>
+        </div>
+        <div class="card-title">UnsavedBadge — Unsaved Edits Indicator in Editor Top Bar</div>
+        <div class="card-domain">editing</div>
+      </div>
+      <div class="card-problem">The Timeline Editor&#39;s top bar shows the back button and the duration readout.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Renders as amber dot + &#39;Unsaved&#39; text-xs in top bar when cutMarks.</div>
+      <div class="card-tags"><span class="tag">editor</span><span class="tag">unsaved</span><span class="tag">badge</span><span class="tag">top-bar</span></div>
+    </div><div class="sprint-card">
+      <div class="card-top">
+        <div class="card-header">
+          <span class="priority-badge" style="background:#c4a25520;color:#c4a255;border-color:#c4a25540">P3</span>
+          <span class="status-dot draft"></span>
+          <span class="card-key">odio-2026-030</span>
+        </div>
+        <div class="card-title">StampHint — First-Use Tooltip for Stamp Buttons</div>
+        <div class="card-domain">recording</div>
+      </div>
+      <div class="card-problem">The StampRow buttons show emoji only (🔥⭐❓💡) with no labels for maximum recording-screen clarity.</div>
+      <div class="card-criteria"><span class="criteria-label">Done when:</span> - Shown on first visit to Recording Screen only (localStorage flag absent)
+- Label row appears beneath stamp buttons wit…</div>
+      <div class="card-tags"><span class="tag">onboarding</span><span class="tag">hint</span><span class="tag">tooltip</span><span class="tag">stamps</span></div>
+    </div>
+      </div>
+    </section>
+</main>
+</body>
+</html>

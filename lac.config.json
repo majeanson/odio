@@ -1,3 +1,136 @@
 {
-  "lintStatuses": ["active", "draft", "frozen"]
+  "lintStatuses": ["active", "draft", "frozen"],
+  "defaultAuthor": "marc",
+  "domain": "odio",
+
+  "views": {
+    "musician": {
+      "extends": "user",
+      "density": "standard",
+      "filterStatus": ["frozen", "active"],
+      "sortBy": "priority",
+      "label": "Musician Guide",
+      "description": "What band members see — plain language, no code. Only frozen+active features."
+    },
+
+    "sprint": {
+      "extends": "product",
+      "density": "summary",
+      "filterStatus": ["draft", "active"],
+      "sortBy": "priority",
+      "label": "Sprint Board",
+      "description": "Standup view — active + draft, title + first-sentence problem only, priority sorted."
+    },
+
+    "dev-deep": {
+      "extends": "dev",
+      "fields": [
+        "featureKey", "title", "domain", "status", "priority", "owner",
+        "problem", "analysis", "implementation", "implementationNotes",
+        "decisions", "successCriteria", "acceptanceCriteria", "testStrategy",
+        "knownLimitations", "tags", "annotations",
+        "componentFile", "npmPackages", "publicInterface",
+        "externalDependencies", "codeSnippets", "lineage"
+      ],
+      "density": "verbose",
+      "groupBy": "domain",
+      "label": "Dev Deep Dive",
+      "description": "Full developer context — code snippets, implementation notes, test strategy, acceptance criteria, verbose."
+    },
+
+    "code-focus": {
+      "fields": [
+        "featureKey", "title", "domain", "status",
+        "componentFile", "codeSnippets", "implementationNotes",
+        "publicInterface", "npmPackages", "tags"
+      ],
+      "density": "standard",
+      "groupBy": "domain",
+      "label": "Code Reference",
+      "description": "Code artifacts only — componentFile, codeSnippets, publicInterface, implementationNotes. For extracting patterns."
+    },
+
+    "shipped": {
+      "fields": [
+        "featureKey", "title", "domain", "status", "priority",
+        "problem", "userGuide", "pmSummary",
+        "successCriteria", "knownLimitations", "tags",
+        "decisions", "releaseVersion"
+      ],
+      "density": "standard",
+      "filterStatus": ["frozen"],
+      "groupBy": "domain",
+      "sortBy": "priority",
+      "label": "What Shipped",
+      "description": "Frozen features only — for release notes, retros, and stakeholder updates. Includes userGuide + pmSummary."
+    },
+
+    "onboarding": {
+      "extends": "dev",
+      "density": "verbose",
+      "filterStatus": ["frozen", "active"],
+      "groupBy": "domain",
+      "sortBy": "priority",
+      "label": "Dev Onboarding",
+      "description": "Everything a new engineer needs — all active+frozen features, domain grouped, verbose. Start here."
+    },
+
+    "architect": {
+      "fields": [
+        "featureKey", "title", "domain", "status", "priority",
+        "problem", "analysis", "decisions", "knownLimitations",
+        "implementationNotes", "tags", "lineage"
+      ],
+      "density": "standard",
+      "groupBy": "domain",
+      "sortBy": "priority",
+      "label": "Architecture",
+      "description": "Decisions + analysis — the 'why' layer. Good for tech debt audits and architectural review."
+    },
+
+    "support": {
+      "extends": "support",
+      "density": "standard",
+      "filterStatus": ["frozen", "active"],
+      "sortBy": "priority",
+      "label": "Support Reference",
+      "description": "Known limitations, annotations, and escalation context for support and QA teams."
+    }
+  },
+
+  "generators": {
+    "musician-guide": {
+      "type": "ai",
+      "systemPrompt": "You are writing a short guide for a musician using a collaborative recording app. The musician is NOT a developer — they just want to know what this part of the app does during a jam session or when editing recordings. Write in warm, plain language like explaining to a bandmate. Focus on: what they can do, when they'd use it, and any important thing to know. 3–5 sentences max. Do NOT mention React, TypeScript, API routes, database, or any technical term. Return only the guide text — no title, no heading.",
+      "outputFile": "./docs/musician/{featureKey}.md",
+      "filterStatus": ["frozen", "active"],
+      "scope": "feature",
+      "description": "AI musician-friendly feature guide — plain language, no code, per feature"
+    },
+
+    "domain-wiki": {
+      "type": "script",
+      "script": "./scripts/domain-wiki.js",
+      "outputFile": "./docs/domain-wiki.md",
+      "scope": "workspace",
+      "description": "Grouped domain markdown wiki — one section per domain, all features, analysis + decisions"
+    },
+
+    "ts-snippets": {
+      "type": "script",
+      "script": "./scripts/ts-snippets.js",
+      "outputFile": "./docs/snippets-reference.md",
+      "scope": "workspace",
+      "description": "TypeScript snippet reference — all codeSnippets across features, grouped by domain"
+    },
+
+    "component-map": {
+      "type": "script",
+      "script": "./scripts/component-map.js",
+      "outputFile": "./docs/component-map.md",
+      "scope": "workspace",
+      "filterStatus": ["frozen", "active"],
+      "description": "Component map — all features with their componentFile, domain, and status in one reference"
+    }
+  }
 }
