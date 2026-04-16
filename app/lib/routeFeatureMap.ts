@@ -18,6 +18,7 @@ export const ROUTE_FEATURES: Record<string, string[]> = {
   '/bands/[bandId]/sessions/[sid]/clips/[cid]':       ['odio-2026-013', 'odio-2026-012'],
   '/bands/[bandId]/sessions/[sid]/clips/[cid]/edit':  ['odio-2026-011'],
   '/share/[token]':                                   ['odio-2026-015'],
+  '/lac-hub':                                         ['odio-2026-055'],
 }
 
 /**

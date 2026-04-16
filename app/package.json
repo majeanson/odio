@@ -11,6 +11,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@majeanson/lac-react": "^1.0.0",
     "@neondatabase/serverless": "^1.0.2",
     "@prisma/adapter-neon": "^7.7.0",
     "@prisma/client": "^7.7.0",
@@ -31,7 +32,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@majeanson/lac": "^3.5.2",
+    "@majeanson/lac": "^3.5.3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

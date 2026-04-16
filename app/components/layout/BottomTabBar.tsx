@@ -202,13 +202,27 @@ export function BottomTabBar({
         })}
       </div>
 
-      {/* Desktop: bottom area — recording indicator */}
-      {isRecording && (
-        <div className="hidden md:flex items-center gap-2 px-4 py-3 border-t border-border/50 shrink-0">
-          <span className="size-2 rounded-full bg-danger animate-pulse shrink-0" />
-          <span className="text-sm font-semibold text-danger">Recording</span>
-        </div>
-      )}
+      {/* Desktop: bottom area — LAC Hub link + recording indicator */}
+      <div className="hidden md:flex flex-col border-t border-border/50 shrink-0">
+        <Link
+          href="/lac-hub"
+          className={cn(
+            "flex items-center gap-3 mx-2 my-1.5 px-3 h-9 rounded-xl text-sm transition-colors",
+            pathname.startsWith("/lac-hub")
+              ? "text-accent bg-accent/10"
+              : "text-muted hover:text-secondary hover:bg-elevated/60",
+          )}
+        >
+          <span className="text-base leading-none">⚡</span>
+          <span className="font-semibold">LAC Hub</span>
+        </Link>
+        {isRecording && (
+          <div className="flex items-center gap-2 px-4 py-3 border-t border-border/50">
+            <span className="size-2 rounded-full bg-danger animate-pulse shrink-0" />
+            <span className="text-sm font-semibold text-danger">Recording</span>
+          </div>
+        )}
+      </div>
     </nav>
   );
 }
