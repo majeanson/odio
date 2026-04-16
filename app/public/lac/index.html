@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>odio — Life-as-Code Hub</title>
+<title>Odio — Life-as-Code Hub</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -93,8 +93,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  var p = location.pathname;
-  var base = location.origin + (p.endsWith('/') ? p : p + '/');
+  var base = location.href.substring(0, location.href.lastIndexOf('/') + 1);
   document.querySelectorAll('a[href^="./"]').forEach(function(a) {
     a.href = base + a.getAttribute('href').slice(2);
   });
@@ -106,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="topbar">
   <span class="topbar-brand">lac·hub</span>
   <span class="topbar-sep">/</span>
-  <span class="topbar-title">odio</span>
+  <span class="topbar-title">Odio</span>
   <span class="topbar-date">Generated April 15, 2026</span>
 </div>
 
@@ -114,11 +113,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <div class="hero">
     <div class="hero-eyebrow">life-as-code</div>
-    <div class="hero-title">odio</div>
+    <div class="hero-title">Odio</div>
     <div class="hero-sub">Feature documentation hub — every view of the project's feature.json data in one place.</div>
     <div class="stats-row">
       <div class="stat stat-total">
-        <div class="stat-num">53</div>
+        <div class="stat-num">54</div>
         <div class="stat-lbl">features</div>
       </div>
       <div class="stat stat-frozen">
@@ -126,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="stat-lbl">frozen</div>
       </div>
       <div class="stat stat-active">
-        <div class="stat-num">28</div>
+        <div class="stat-num">29</div>
         <div class="stat-lbl">active</div>
       </div>
       <div class="stat stat-draft">

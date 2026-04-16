@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>odio · Product Story</title>
+<title>Odio · Product Story</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -292,9 +292,9 @@ body{
 <!-- Topbar -->
 <div id="topbar">
   <div id="topbar-brand">◈ lac · story</div>
-  <div id="topbar-project">odio</div>
+  <div id="topbar-project">Odio</div>
   <div id="topbar-right">
-    <div id="reading-time">70 min read · 14,004 words</div>
+    <div id="reading-time">73 min read · 14,504 words</div>
     <button id="print-btn" onclick="window.print()">⎙ Print</button>
   </div>
 </div>
@@ -306,11 +306,11 @@ body{
     <!-- Opening / Executive Summary -->
     <section class="opening-section">
       <div class="opening-eyebrow">Life as Code · Product Story</div>
-      <h1 class="opening-title">odio</h1>
-      <p class="opening-summary">odio is a system built around 53 features spanning 11 domains: app-shell, recording, editing, versioning, band, render, sessions, collaboration, storage, auth and audio/collaboration. It addresses challenges including: Audio files in Google Drive grow over time (~43MB per raw clip, ~10MB per frozen…; When a version is frozen, a real audio file must be produced — so the band can d…; A raw recording needs to evolve from v1 (messy, includes setup and dead air) to ….</p>
+      <h1 class="opening-title">Odio</h1>
+      <p class="opening-summary">Odio is a system built around 54 features spanning 11 domains: app-shell, recording, editing, versioning, band, sessions, render, collaboration, storage, auth and audio/collaboration. It addresses challenges including: Audio files in Google Drive grow over time (~43MB per raw clip, ~10MB per frozen…; When a version is frozen, a real audio file must be produced — so the band can d…; A raw recording needs to evolve from v1 (messy, includes setup and dead air) to ….</p>
       <div class="stats-row">
         <div class="stat-item">
-          <div class="stat-num">53</div>
+          <div class="stat-num">54</div>
           <div class="stat-label">Total features</div>
         </div>
         <div class="stat-item">
@@ -318,7 +318,7 @@ body{
           <div class="stat-label">Frozen (shipped)</div>
         </div>
         <div class="stat-item">
-          <div class="stat-num">28</div>
+          <div class="stat-num">29</div>
           <div class="stat-label">Active (in progress)</div>
         </div>
         <div class="stat-item">
@@ -486,7 +486,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Several screens (Session List, Clip List, Band Members) can be empty on first visit or after deletes. A blank screen gives no guidance on what to do next — users need a visual cue that emptiness is intentional plus a clear next action.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-45">
+         <div class="impl-wrap" id="impl-46">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/ui/EmptyState.tsx: props { icon: LucideIcon, heading: string, subtext?: string, actionLabel?: string, actionHref?: string, onAction?: () =&gt; void }. Renders icon via <code>&lt;Icon className='w-12 h-12 text-muted' /&gt;</code>. ButtonLink if actionHref provided; Button with onClick if onAction provided. Neither if no actionLabel.</p></span>
            </div>
@@ -515,11 +515,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Session names, clip names, and band name are all editable. Adding a separate 'Edit' icon/button next to each name clutters the UI, especially on small-screen cards. The standard pattern in mobile UIs is tap-the-text-to-edit.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-46">
+         <div class="impl-wrap" id="impl-47">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">components/ui/InlineEdit.tsx: props { value: string, onSave: (newValue: string) =&gt; Promise&lt;void&gt;, maxLength?: number, className?: string }. Internal state: editing (bool) + draft (string). On tap → setEditing(true), autofocus input. On submit/blur: if draft !== value &amp;&amp; draft.trim() !== '' → call onSave → setEditing(false) on success. Input styled to match the parent text class via <code>className</code> pro</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">components/ui/InlineEdit.tsx: props { value: string, onSave: (newValue: string) =&gt; Promise&lt;void&gt;, maxLength?: number, className?: string }. Internal state: editing (bool) + draft (string). On tap → setEditing(true), autofocus input. On submit/blur: if draft !== value &amp;&amp; draft.trim() !== '' → call onSave → setEditing(false) on success. Input styled to match the parent text class via <code>className</code> prop passthrough.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-46')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-47')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -544,7 +544,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Clip cards need to display version count, frozen status, and activity state as compact labels without consuming layout space. A shared badge component prevents inconsistent pill styling across the app.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-42">
+         <div class="impl-wrap" id="impl-43">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/ui/Badge.tsx: props { variant?: 'default'|'amber'|'success'|'danger', children }. Pure presentational — no state.</p></span>
            </div>
@@ -568,7 +568,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Destructive and important actions (freeze, delete, unfreeze, leave band, stage change) need a deliberate user confirmation step. Inline buttons can be accidentally tapped; a slide-up sheet forces a conscious second action and provides space for consequence copy.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-43">
+         <div class="impl-wrap" id="impl-44">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/ui/BottomSheet.tsx: <code>open</code> + <code>onClose</code> props. Uses React portal (document.body). CSS transition on transform: translateY(0) ↔ translateY(100%). useEffect adds/removes <code>overflow:hidden</code> on document.body. useFocusTrap hook (tab/shift-tab cycle inside sheet). Children slot for arbitrary content.</p></span>
            </div>
@@ -597,7 +597,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The app needs consistent interactive button styling across all screens with reliable touch targets (≥44px), accessible focus states, loading states, and semantic variants (primary, danger, ghost) that don't need to be reimplemented per screen.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-44">
+         <div class="impl-wrap" id="impl-45">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/ui/Button.tsx: <code>variant</code>, <code>disabled</code>, <code>loading</code>, <code>fullWidth</code>, <code>children</code>, standard button HTML props. components/ui/ButtonLink.tsx: same props + <code>href</code>, renders Next.js <code>&lt;Link&gt;</code>. Spinner: small white/dark svg rotating animation.</p></span>
            </div>
@@ -626,7 +626,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Pages that fetch data from Postgres (session list, clip list, waveform) need to show a loading state that communicates structure before content arrives. A blank screen or spinner gives no sense of what's coming.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-48">
+         <div class="impl-wrap" id="impl-49">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/ui/Skeleton.tsx: <code>className</code> prop + optional <code>width</code>/<code>height</code>. Renders <code>&lt;div className={cn('animate-pulse bg-surface rounded', className)} style={{ width, height }} /&gt;</code>.</p></span>
            </div>
@@ -649,13 +649,13 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">When a user loses their network connection mid-session, the app currently fails silently — vote buttons appear interactive but fail on submit, session lists appear to work but show stale data with no indication. This creates confusion and distrust.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-47">
+         <div class="impl-wrap" id="impl-48">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">TODO: implement after Auth Shell layout is stable.</p>
 <p class="md-p">1. components/ui/OfflineBanner/OfflineBanner.tsx: client component. <code>useOnlineStatus()</code> hook (see below). Renders fixed top-0 banner when offline. Uses CSS var <code>--offline-banner-h</code> (similar to --upload-banner-h pattern) so sticky headers can offset. 2. hooks/useOnlineStatus.ts: <code>useState(navigator.onLine)</code> + window event listeners for <code>online</code>/`o</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">TODO: implement after Auth Shell layout is stable.</p>
 <p class="md-p">1. components/ui/OfflineBanner/OfflineBanner.tsx: client component. <code>useOnlineStatus()</code> hook (see below). Renders fixed top-0 banner when offline. Uses CSS var <code>--offline-banner-h</code> (similar to --upload-banner-h pattern) so sticky headers can offset. 2. hooks/useOnlineStatus.ts: <code>useState(navigator.onLine)</code> + window event listeners for <code>online</code>/<code>offline</code>. Returns <code>{ isOnline, justReconnected }</code>. 3. AuthShell.tsx: mount OfflineBanner. 4. Mutation components (VotePanel, CommentComposer, StageSelector, SubmitVersionSheet): consume <code>useOnlineStatus().isOnline</code> and apply <code>disabled</code> when false.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-47')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-48')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -684,13 +684,13 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Multiple screens need to surface transient feedback (upload done, vote saved, copy confirmed, offline detected) without navigating away or blocking the UI. Currently each screen implements its own ad-hoc feedback UI, creating inconsistent timing, placement, and styling.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-49">
+         <div class="impl-wrap" id="impl-50">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">TODO: implement after BottomSheet and layout primitives are stable.</p>
 <p class="md-p">1. lib/toast.ts: <code>showToast({ message, type, duration? })</code> — writes to Zustand toastStore. Queue is an array; dequeue on dismiss or timeout. 2. components/ui/Toast/Toast.tsx: client component mounted in AuthShell (same level as UploadBanner). Reads from toastStore. Renders fixed bottom-0 container. Animates in/out with CSS transi</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">TODO: implement after BottomSheet and layout primitives are stable.</p>
 <p class="md-p">1. lib/toast.ts: <code>showToast({ message, type, duration? })</code> — writes to Zustand toastStore. Queue is an array; dequeue on dismiss or timeout. 2. components/ui/Toast/Toast.tsx: client component mounted in AuthShell (same level as UploadBanner). Reads from toastStore. Renders fixed bottom-0 container. Animates in/out with CSS transition (translateY + opacity). Each toast item: bg-elevated div, optional left border, message text, × button. 3. hooks/useToast.ts: helper for components to call showToast without importing the store directly.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-49')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-50')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -885,7 +885,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">During recording, the user needs visual confirmation that the microphone is picking up sound. Without a level indicator, they cannot tell if the mic is connected, if it's recording silence, or if audio is clipping.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-41">
+         <div class="impl-wrap" id="impl-42">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/ui/AudioBars.tsx: props { level: number (0-1), barCount?: number }. Pure visual component — no audio API. Level is passed in from the parent recording hook (useAudioLevel or equivalent). Bars rendered as inline flex divs with height computed as <code>min + (level * range) + noise</code>.</p></span>
            </div>
@@ -914,11 +914,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The recorder needs to capture multiple songs during a live jam — from a phone browser, one hand, dim room. Between songs the transition to the next recording must be instant. Moments worth keeping must be stampable without interrupting the performance.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-50">
+         <div class="impl-wrap" id="impl-51">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. app/record/page.tsx: full-screen recording screen — timer, level meter, stamp row, Add note link, record/stop button. Tab bar hidden via usePathname(). 2. hooks/useRecorder.ts: core hook managing MediaRecorder lifecycle, Web Audio AnalyserNode for level meter, Wake Lock API, stamps buffer, annotations buffer, device enumeration and selection, IndexedDB write on stop (via savePendingUpload), upl</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/record/page.tsx: full-screen recording screen — timer, level meter, stamp row, Add note link, record/stop button. Tab bar hidden via usePathname(). 2. hooks/useRecorder.ts: core hook managing MediaRecorder lifecycle, Web Audio AnalyserNode for level meter, Wake Lock API, stamps buffer, annotations buffer, device enumeration and selection, IndexedDB write on stop (via savePendingUpload), upload start. 3. components/recording/DevicePicker.tsx: bottom sheet listing available audio input devices. 4. app/record/post/page.tsx: post-record screen — clip name (inline edit), duration, stamp count, upload progress bar, Next Song button, Delete recording button. 5. hooks/useUploadProgress.ts: polls /api/clips/[clipId] every 3s until transcodeStatus is DONE or FAILED. 6. lib/pendingUploads.ts: IndexedDB helpers for pending upload persistence. 7. app/api/upload/init/route.ts: generates Drive resumable upload session URL using creator's stored token. 8. app/api/upload/finalize/route.ts: transcodes uploaded audio with FFmpeg, creates Clip + ClipVersion rows in Postgres. 9. STAMP<em>EMOJI and STAMP</em>COLORS constants in types/index.ts.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-50')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-51')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -955,11 +955,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">A recording is a one-time, irreplaceable event. Currently, if the internet drops during upload or the band creator's Drive token is invalid, the audio blob — which only exists in memory — is permanently lost when the user navigates away or the tab closes. A live jam session cannot be re-played. The recording must survive any upload failure and remain recoverable until it reaches Drive.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-51">
+         <div class="impl-wrap" id="impl-52">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. lib/pendingUploads.ts: IndexedDB helpers using idb library. Database 'odio-recordings', object store 'pending-uploads'. Functions: savePendingUpload(upload), getPendingUploads(), deletePendingUpload(tempId), updatePendingUpload(tempId, patch). 2. hooks/useRecorder.ts: calls savePendingUpload immediately on MediaRecorder onstop before any network request. 3. hooks/usePendingUploads.ts: checks In</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. lib/pendingUploads.ts: IndexedDB helpers using idb library. Database 'odio-recordings', object store 'pending-uploads'. Functions: savePendingUpload(upload), getPendingUploads(), deletePendingUpload(tempId), updatePendingUpload(tempId, patch). 2. hooks/useRecorder.ts: calls savePendingUpload immediately on MediaRecorder onstop before any network request. 3. hooks/usePendingUploads.ts: checks IndexedDB on mount, drives retry logic, manages upload state machine (idle/uploading/paused/error), listens to window 'online' event for auto-retry. 4. components/recording/PendingUploadsBanner.tsx: recovery banner shown when usePendingUploads reports pending items. Shows count, retry button, save-to-device button, discard button with confirmation. 5. app/(auth)/layout.tsx: renders PendingUploadsBanner at top of all authenticated pages. 6. lib/uploadAudio.ts: manages the Drive resumable upload from browser — tracks byte offset, handles chunking, updates IndexedDB with uploadSessionUrl on each successful chunk. 7. 'Save to device': URL.createObjectURL(blob) + programmatic anchor download. Extension .aac or .webm based on mimeType.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-51')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-52')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1731,6 +1731,122 @@ body{
       </section>
 <section class="domain-chapter" id="chapter-6">
         <div class="chapter-number">Chapter 6</div>
+        <h2 class="chapter-title">sessions</h2>
+        <div class="chapter-meta">4 features</div>
+        <article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">ClipCard — Clip Row in Session Clip List</h3>
+        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
+      </div>
+      <div class="feature-key-label">odio-2026-037</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">The session clip list is the primary navigation surface for the editing workflow. Each row must communicate a clip's name, duration, version count, stage, and activity state at a glance — plus support quick-delete for the Recorder without leaving the list.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-13">
+           <div class="impl-text">
+             <span class="impl-full"><p class="md-p">components/clips/ClipCard.tsx: props { clip, sessionId, bandId, canEdit, canDelete, hasNewActivity, onDelete }. Uses InlineEdit for clip name. StageSelector for stage chip. Badge for version count. Handles touch events for swipe-left (iOS) and long-press (Android/desktop) delete. Tap handler: router.push(clipDetailHref). Processing check: clip.transcodeStatus === 'PENDING'.</p></span>
+           </div>
+           
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Activity indicator is amber left border, not a dot or badge</div>
+                    <div class="pull-quote-rationale">— A dot badge competes visually with the version count badge and stage chip. An amber left border draws the eye subtly to the card without cluttering the metadata display. Border clears on clip detail visit (server marks as viewed or client tracks in sessionStorage).</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>Swipe-left gesture is iOS Safari native feel only — Android swipe-left has no gesture affordance</li><li>InlineEdit within a tappable card: tap on the name text must be captured by InlineEdit, not by the card&#39;s navigation handler — requires stopPropagation on the InlineEdit wrapper</li>
+            </ul>
+          </aside>
+    </article>
+<article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Session Management — Sessions, Clips, Naming, Stages</h3>
+        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
+      </div>
+      <div class="feature-key-label">odio-2026-007</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">A jam night produces 3-8 clips. Band members need to find, name, and navigate them easily. The recorder needs to delete mistakes. After many sessions, the band needs to track which songs are developed vs. still just ideas.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-38">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">1. app/(auth)/bands/[bandId]/sessions/[sessionId]/page.tsx: server component — loads session + clips via Prisma (includes latest version resultDurationMs for correct display on split children), renders SessionHeaderClient + ClipCard list. Uses pb-[calc(56px+env(safe-area-inset-bottom))] for correct clearance. 2. components/sessions/SessionHeaderClient.tsx: client component — inline name edit, note</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/(auth)/bands/[bandId]/sessions/[sessionId]/page.tsx: server component — loads session + clips via Prisma (includes latest version resultDurationMs for correct display on split children), renders SessionHeaderClient + ClipCard list. Uses pb-[calc(56px+env(safe-area-inset-bottom))] for correct clearance. 2. components/sessions/SessionHeaderClient.tsx: client component — inline name edit, notes bottom sheet, QR code bottom sheet. Sticky with top offset from --upload-banner-h CSS variable. Delegates to two extracted sub-components: SessionNotesSheet (owns draft+saving state, syncs to notes on open) and SessionQrSheet (renders QRCode in BottomSheet — pure UI, no state). 3. components/clips/ClipCard.tsx: clip list row — name (tap to edit inline via useClipRename hook from hooks/useClipRename.ts), shuffle button (small icon, generates new death metal name via generateDeathMetalName() from lib/clipNames.ts + direct PATCH /api/clips/{clipId} + router.refresh(); only shown when !clip.frozen), stage chip in meta row (STAGE_CHIP map: {label, className} per ClipStage; only shown when !clip.frozen), duration (latestResultDurationMs ?? sourceDurationMs so split children show correct virtual duration), version count, frozen lock, processing spinner. '···' button opens delete confirmation sheet. Long-press removed (undiscoverable pattern replaced by explicit button). hooks/useClipRename.ts: encapsulates inline rename state (name, editingName, nameInput, saving), PATCH /api/clips/{clipId} call, and keyboard handlers (Enter → confirm, Escape → cancel). 4. app/api/clips/[clipId]/route.ts: GET clip, PATCH (name, stage, generatePublicToken, removePublicToken), DELETE (RECORDER only). 5. lib/clipNames.ts: custom death metal adjective + noun word lists + generateDeathMetalName() using unique-names-generator. 6. lib/utils.ts: generateClipName() delegates to generateDeathMetalName(). formatDuration() for M:SS display. formatPosition() for H:MM:SS clock display. calcResultDuration() for virtual cut preview.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-38')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Death metal auto-names instead of &#39;Song N - time&#39;</div>
+                    <div class="pull-quote-rationale">— Sequential names (&#39;Song 1&#39;, &#39;Song 2&#39;) are useless for identifying a specific take days later. Time-based names are hard to remember. Short evocative word pairs from a curated death metal vocabulary (adjectives: Putrid, Severed, Ancient; nouns: Descent, Throne, Ritual) are memorable, distinguishable, and set the right tone for a band app.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; &#39;···&#39; overflow button replaces long-press for clip delete</div>
+                    <div class="pull-quote-rationale">— Long-press is a non-discoverable interaction pattern — users have no visual affordance to find it. Accidental long-press on a clip name (when trying to rename) could trigger a delete sheet unexpectedly. A visible &#39;···&#39; button is a universal mobile pattern and makes the delete action findable without instruction.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Sessions and clips in Postgres, audio files in Drive</div>
+                    <div class="pull-quote-rationale">— Postgres is readable by all band members without Drive folder sharing. Session/clip browsing works immediately for new members.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Song stage is separate from frozen status</div>
+                    <div class="pull-quote-rationale">— &#39;Frozen&#39; means this recording is done. Stage tracks the song&#39;s creative progress, not the file state.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>Death metal names are random — two clips in a session could get the same name (rare, detectable, user can rename)</li><li>Drive storage is under the recorder&#39;s account — ~43MB per 30-min clip, 15GB Drive free tier supports ~350 raw clips before cleanup needed</li><li>Clip delete requires two steps: Postgres record deletion + Drive file deletion — if one fails, manual reconciliation may be needed</li>
+            </ul>
+          </aside>
+    </article>
+<article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">SessionHeaderClient — Session Page Title with Inline Name Edit</h3>
+        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
+      </div>
+      <div class="feature-key-label">odio-2026-054</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">The session clip list needs a page title that shows the session name and allows inline rename (tap to edit). The rename must PATCH to Postgres immediately — no separate save button.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-39">
+           <div class="impl-text">
+             <span class="impl-full"><p class="md-p">components/sessions/SessionHeaderClient.tsx: 'use client'. Props { session, canEdit }. Uses InlineEdit for session.name with onSave calling PATCH API.</p></span>
+           </div>
+           
+         </div>
+      
+      
+    </article>
+<article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">SessionNotesSheet — Session-Level Notes Editor</h3>
+        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
+      </div>
+      <div class="feature-key-label">odio-2026-053</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">A band may want to capture session-level context — 'rehearsal at Marco's place, trying the new bridge section' — that doesn't belong on any individual clip. Session notes give the band a shared scratchpad for each jam night.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-40">
+           <div class="impl-text">
+             <span class="impl-full"><p class="md-p">components/sessions/SessionNotesSheet.tsx: props { open, onClose, sessionId, initialNotes }. Internal state: notes (string), saving (bool). Textarea with defaultValue=initialNotes. Save: PATCH → onClose(). Cancel: onClose() directly. No character counter (notes are low-frequency).</p></span>
+           </div>
+           
+         </div>
+      
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>Notes field is not collaborative — last save wins (no conflict resolution for simultaneous edits)</li>
+            </ul>
+          </aside>
+    </article>
+      </section>
+<section class="domain-chapter" id="chapter-7">
+        <div class="chapter-number">Chapter 7</div>
         <h2 class="chapter-title">render</h2>
         <div class="chapter-meta">3 features</div>
         <article class="feature-article">
@@ -1742,11 +1858,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">A frozen clip should be shareable outside the band — with a producer, a friend, or social media. The listener should not need a Google account or any signup. Only the frozen render is exposed; no session metadata, band data, or version history leaks through the public page.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-40">
+         <div class="impl-wrap" id="impl-41">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. components/share/PublicPlayer.tsx: client component. Props: token, sourceDurationMs, stamps[]. Uses useWaveSurfer({ url: /api/audio/public/{token}, interact: false — no cutMarksRef, no patchDurationUrl, public read-only }). Uses WaveformPlayButton for play/pause. Uses StampJumpRow for stamp chips (tappable, seek on tap) with custom className for layout. No WaveformCanvas overlay — no editing or</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. components/share/PublicPlayer.tsx: client component. Props: token, sourceDurationMs, stamps[]. Uses useWaveSurfer({ url: /api/audio/public/{token}, interact: false — no cutMarksRef, no patchDurationUrl, public read-only }). Uses WaveformPlayButton for play/pause. Uses StampJumpRow for stamp chips (tappable, seek on tap) with custom className for layout. No WaveformCanvas overlay — no editing or seeking via waveform drag needed (play-only). 2. app/share/[token]/page.tsx: server component. Fetches clip by publicToken from Postgres (clips table). If not found or clip.frozen=false: returns 404 page. Renders clip name, duration, PublicPlayer with stamps. 3. app/api/audio/public/[token]/route.ts: streams audio from Drive. Looks up clip by publicToken, gets finalDriveFileId, fetches recorder's token from NextAuth accounts table, proxies Drive stream with Range header support. No auth middleware — open to public traffic.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-40')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-41')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1825,81 +1941,6 @@ body{
             <div class="caveats-label">Caveats</div>
             <ul class="caveats-list">
               <li>Vercel Hobby function timeout is 10s — this may be too tight for long clips; Pro plan raises to 300s</li><li>If bundle size fails on Hobby, Vercel Pro ($20/month) is the simplest fix — breaks the $0/month cost target</li>
-            </ul>
-          </aside>
-    </article>
-      </section>
-<section class="domain-chapter" id="chapter-7">
-        <div class="chapter-number">Chapter 7</div>
-        <h2 class="chapter-title">sessions</h2>
-        <div class="chapter-meta">3 features</div>
-        <article class="feature-article">
-      <div class="feature-headline">
-        <h3 class="feature-title">ClipCard — Clip Row in Session Clip List</h3>
-        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
-      </div>
-      <div class="feature-key-label">odio-2026-037</div>
-      <div class="feature-section-label">The problem it solves</div>
-         <div class="feature-problem"><p class="md-p">The session clip list is the primary navigation surface for the editing workflow. Each row must communicate a clip's name, duration, version count, stage, and activity state at a glance — plus support quick-delete for the Recorder without leaving the list.</p></div>
-      <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-13">
-           <div class="impl-text">
-             <span class="impl-full"><p class="md-p">components/clips/ClipCard.tsx: props { clip, sessionId, bandId, canEdit, canDelete, hasNewActivity, onDelete }. Uses InlineEdit for clip name. StageSelector for stage chip. Badge for version count. Handles touch events for swipe-left (iOS) and long-press (Android/desktop) delete. Tap handler: router.push(clipDetailHref). Processing check: clip.transcodeStatus === 'PENDING'.</p></span>
-           </div>
-           
-         </div>
-      <div class="decisions-block">
-            <blockquote class="pull-quote">
-                    <div class="pull-quote-text">&#10077; Activity indicator is amber left border, not a dot or badge</div>
-                    <div class="pull-quote-rationale">— A dot badge competes visually with the version count badge and stage chip. An amber left border draws the eye subtly to the card without cluttering the metadata display. Border clears on clip detail visit (server marks as viewed or client tracks in sessionStorage).</div>
-                    <div class="pull-quote-mark">&#10078;</div>
-                  </blockquote>
-          </div>
-      <aside class="caveats-box">
-            <div class="caveats-label">Caveats</div>
-            <ul class="caveats-list">
-              <li>Swipe-left gesture is iOS Safari native feel only — Android swipe-left has no gesture affordance</li><li>InlineEdit within a tappable card: tap on the name text must be captured by InlineEdit, not by the card&#39;s navigation handler — requires stopPropagation on the InlineEdit wrapper</li>
-            </ul>
-          </aside>
-    </article>
-<article class="feature-article">
-      <div class="feature-headline">
-        <h3 class="feature-title">SessionHeaderClient — Session Page Title with Inline Name Edit</h3>
-        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
-      </div>
-      <div class="feature-key-label">odio-2026-054</div>
-      <div class="feature-section-label">The problem it solves</div>
-         <div class="feature-problem"><p class="md-p">The session clip list needs a page title that shows the session name and allows inline rename (tap to edit). The rename must PATCH to Postgres immediately — no separate save button.</p></div>
-      <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-38">
-           <div class="impl-text">
-             <span class="impl-full"><p class="md-p">components/sessions/SessionHeaderClient.tsx: 'use client'. Props { session, canEdit }. Uses InlineEdit for session.name with onSave calling PATCH API.</p></span>
-           </div>
-           
-         </div>
-      
-      
-    </article>
-<article class="feature-article">
-      <div class="feature-headline">
-        <h3 class="feature-title">SessionNotesSheet — Session-Level Notes Editor</h3>
-        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
-      </div>
-      <div class="feature-key-label">odio-2026-053</div>
-      <div class="feature-section-label">The problem it solves</div>
-         <div class="feature-problem"><p class="md-p">A band may want to capture session-level context — 'rehearsal at Marco's place, trying the new bridge section' — that doesn't belong on any individual clip. Session notes give the band a shared scratchpad for each jam night.</p></div>
-      <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-39">
-           <div class="impl-text">
-             <span class="impl-full"><p class="md-p">components/sessions/SessionNotesSheet.tsx: props { open, onClose, sessionId, initialNotes }. Internal state: notes (string), saving (bool). Textarea with defaultValue=initialNotes. Save: PATCH → onClose(). Cancel: onClose() directly. No character counter (notes are low-frequency).</p></span>
-           </div>
-           
-         </div>
-      
-      <aside class="caveats-box">
-            <div class="caveats-label">Caveats</div>
-            <ul class="caveats-list">
-              <li>Notes field is not collaborative — last save wins (no conflict resolution for simultaneous edits)</li>
             </ul>
           </aside>
     </article>
@@ -2056,11 +2097,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Musicians lose the best moments from their jam sessions. When they do record, the raw file is long, unedited, buried — nobody goes back and cleans it up. No tool lets a small band record on any device, pass the recording around in the car on the way home, each person trimming a song into its final form, and arrive with a clean versioned archive — all from a browser, no install, no DAW.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-52">
+         <div class="impl-wrap" id="impl-53">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p"><strong>Stack:</strong> Next.js (App Router) + TypeScript + Tailwind CSS, deployed on Vercel <strong>Recording:</strong> Browser MediaRecorder API + Web Audio API (level meter) + Wake Lock API (screen-on) <strong>Waveform editing:</strong> wavesurfer.js 7.x (interact:false; cut bands are pure CSS divs — no RegionsPlugin) <strong>Storage — audio:</strong> Google Drive (resumable upload bypassing Vercel 4.5MB body limit; transcoded to AAC on finalize</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p"><strong>Stack:</strong> Next.js (App Router) + TypeScript + Tailwind CSS, deployed on Vercel <strong>Recording:</strong> Browser MediaRecorder API + Web Audio API (level meter) + Wake Lock API (screen-on) <strong>Waveform editing:</strong> wavesurfer.js 7.x (interact:false; cut bands are pure CSS divs — no RegionsPlugin) <strong>Storage — audio:</strong> Google Drive (resumable upload bypassing Vercel 4.5MB body limit; transcoded to AAC on finalize) <strong>Storage — metadata:</strong> Neon Postgres free tier (sessions, clips, versions, votes, comments, stamps, bands, members) <strong>Auth:</strong> NextAuth.js + Google OAuth (drive.file scope) + NextAuth DB adapter (Prisma + Neon, required to store recorder's refresh token for audio proxy) <strong>Audio proxy:</strong> Next.js API route fetches audio from recorder's Drive using stored token, streams to client with Range support <strong>Real-time:</strong> Client-side polling every 5-10s when session active <strong>Render:</strong> fluent-ffmpeg + @ffmpeg-installer/ffmpeg in Next.js API route (triggered on freeze only) <strong>Edit safety:</strong> localStorage (cut marks saved on every change, restored on editor reopen, cleared on submit) <strong>External services: 2</strong> — Google (OAuth + Drive) + Neon (Postgres). Cost: $0/month.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-52')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-53')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
