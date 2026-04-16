@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Odio — Domain Maturity Radar</title>
+<style>
+:root {
+  --bg: #12100e;
+  --bg-card: #1a1714;
+  --bg-hover: #201d1a;
+  --border: #2a2724;
+  --border-soft: #221f1c;
+  --text: #e8e0d4;
+  --text-soft: #8a7f74;
+  --accent: #d4a853;
+  --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; }
+body { display: flex; flex-direction: column; min-height: 100vh; }
+
+.topbar {
+  display: flex; align-items: center; gap: 10px; padding: 0 20px; height: 48px;
+  background: #0e0c0a; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  font-size: 13px;
+}
+.topbar-logo { color: var(--accent); font-weight: 700; font-family: var(--mono); }
+.topbar-sep { color: var(--border); }
+.topbar-project { color: var(--text); }
+.topbar-count { margin-left: auto; color: var(--text-soft); font-size: 12px; font-family: var(--mono); }
+
+.main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 32px 24px; gap: 32px; }
+
+h1 { font-size: 20px; font-weight: 600; color: var(--text); }
+.subtitle { font-size: 13px; color: var(--text-soft); margin-top: 4px; text-align: center; }
+
+.radar-wrap {
+  display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; justify-content: center;
+}
+
+svg.radar { overflow: visible; }
+.domain-label { font-size: 11px; fill: var(--text); font-family: var(--mono); }
+.ring-label { font-size: 9px; fill: var(--text-soft); font-family: var(--mono); }
+.metric-poly { cursor: pointer; transition: fill-opacity 0.2s, stroke-width 0.2s; }
+.metric-poly:hover { fill-opacity: 0.35; stroke-width: 2.5; }
+.metric-poly.dimmed { fill-opacity: 0.04; stroke-opacity: 0.25; }
+
+.legend {
+  display: flex; flex-direction: column; gap: 10px; padding: 20px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+  min-width: 200px;
+}
+.legend-title { font-size: 11px; color: var(--text-soft); font-family: var(--mono); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+.legend-item {
+  display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+  padding: 6px 8px; border-radius: 4px; transition: background 0.15s;
+}
+.legend-item:hover { background: var(--bg-hover); }
+.legend-item.dimmed { opacity: 0.35; }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
+.legend-text { display: flex; flex-direction: column; }
+.legend-label { font-size: 13px; font-weight: 500; color: var(--text); }
+.legend-desc { font-size: 11px; color: var(--text-soft); margin-top: 1px; }
+
+.table-wrap {
+  width: 100%; max-width: 760px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+  overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  padding: 10px 14px; text-align: left; font-weight: 500; font-size: 11px;
+  color: var(--text-soft); border-bottom: 1px solid var(--border);
+  text-transform: uppercase; letter-spacing: .06em; font-family: var(--mono);
+}
+th.metric-header { cursor: pointer; }
+th.metric-header:hover { color: var(--text); }
+td { padding: 10px 14px; border-bottom: 1px solid var(--border-soft); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg-hover); }
+
+.tooltip {
+  position: fixed; pointer-events: none; z-index: 999;
+  background: #1e1b18; border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px 14px; font-size: 12px; color: var(--text); max-width: 220px;
+  display: none; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+}
+.tooltip.visible { display: block; }
+.tooltip-domain { font-weight: 600; margin-bottom: 6px; color: var(--accent); font-family: var(--mono); font-size: 11px; }
+.tooltip-row { display: flex; justify-content: space-between; gap: 16px; margin: 2px 0; }
+.tooltip-label { color: var(--text-soft); }
+.tooltip-val { font-family: var(--mono); }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="topbar-logo">◈ lac</span>
+  <span class="topbar-sep">|</span>
+  <span class="topbar-project">Odio</span>
+  <span class="topbar-count">54 features · 11 domains · Domain Maturity Radar</span>
+</div>
+
+<div class="main">
+  <div style="text-align:center">
+    <h1>Domain Maturity Radar</h1>
+    <p class="subtitle">5 quality dimensions scored per domain — hover a legend item to isolate a metric</p>
+  </div>
+
+  <div class="radar-wrap">
+    <svg class="radar" width="480" height="440" viewBox="0 0 480 440">
+      <!-- Guide rings -->
+      <polygon points="240.0,177.5 263.0,184.2 278.7,202.3 282.1,226.0 272.1,247.8 252.0,260.8 228.0,260.8 207.9,247.8 197.9,226.0 201.3,202.3 217.0,184.2" fill="none" stroke="#2a2724" stroke-width="0.8"/>
+<polygon points="240.0,135.0 286.0,148.5 317.3,184.7 324.1,232.1 304.2,275.7 263.9,301.6 216.1,301.6 175.8,275.7 155.9,232.1 162.7,184.7 194.0,148.5" fill="none" stroke="#2a2724" stroke-width="0.8"/>
+<polygon points="240.0,92.5 308.9,112.7 356.0,167.0 366.2,238.1 336.4,303.5 275.9,342.3 204.1,342.3 143.6,303.5 113.8,238.1 124.0,167.0 171.1,112.7" fill="none" stroke="#2a2724" stroke-width="0.8"/>
+<polygon points="240.0,50.0 331.9,77.0 394.6,149.4 408.3,244.2 368.5,331.3 287.9,383.1 192.1,383.1 111.5,331.3 71.7,244.2 85.4,149.4 148.1,77.0" fill="none" stroke="#2a2724" stroke-width="1.5"/>
+      <!-- Spokes -->
+      <line x1="240" y1="220" x2="240.0" y2="50.0" stroke="#2a2724" stroke-width="0.8"/>
+<line x1="240" y1="220" x2="331.9" y2="77.0" stroke="#2a2724" stroke-width="0.8"/>
+<line x1="240" y1="220" x2="394.6" y2="149.4" stroke="#2a2724" stroke-width="0.8"/>
+<line x1="240" y1="220" x2="408.3" y2="244.2" stroke="#2a2724" stroke-width="0.8"/>
+<line x1="240" y1="220" x2="368.5" y2="331.3" stroke="#2a2724" stroke-width="0.8"/>
+<line x1="240" y1="220" x2="287.9" y2="383.1" stroke="#2a2724" stroke-width="0.8"/>
+<line x1="240" y1="220" x2="192.1" y2="383.1" stroke="#2a2724" stroke-width="0.8"/>
+<line x1="240" y1="220" x2="111.5" y2="331.3" stroke="#2a2724" stroke-width="0.8"/>
+<line x1="240" y1="220" x2="71.7" y2="244.2" stroke="#2a2724" stroke-width="0.8"/>
+<line x1="240" y1="220" x2="85.4" y2="149.4" stroke="#2a2724" stroke-width="0.8"/>
+<line x1="240" y1="220" x2="148.1" y2="77.0" stroke="#2a2724" stroke-width="0.8"/>
+      <!-- Ring labels -->
+      <text x="234.0" y="180.5" text-anchor="end" class="ring-label">25%</text>
+<text x="234.0" y="138.0" text-anchor="end" class="ring-label">50%</text>
+<text x="234.0" y="95.5" text-anchor="end" class="ring-label">75%</text>
+<text x="234.0" y="53.0" text-anchor="end" class="ring-label">100%</text>
+      <!-- Metric polygons -->
+      <polygon id="poly-docs" points="240.0,50.0 331.9,77.0 394.6,149.4 408.3,244.2 368.5,331.3 287.9,383.1 192.1,383.1 111.5,331.3 71.7,244.2 85.4,149.4 148.1,77.0" fill="#5b82cc" fill-opacity="0.12" stroke="#5b82cc" stroke-width="1.8" stroke-linejoin="round" class="metric-poly" data-metric="docs"/>
+<polygon id="poly-decisions" points="240.0,177.5 331.9,77.0 394.6,149.4 273.7,224.8 304.2,275.7 250.6,256.2 218.2,294.1 154.3,294.2 197.9,226.0 240.0,220.0 184.9,134.2" fill="#9b7ecc" fill-opacity="0.12" stroke="#9b7ecc" stroke-width="1.8" stroke-linejoin="round" class="metric-poly" data-metric="decisions"/>
+<polygon id="poly-guide" points="240.0,78.3 240.0,220.0 394.6,149.4 374.6,239.4 368.5,331.3 277.3,346.9 205.2,338.6 111.5,331.3 71.7,244.2 85.4,149.4 166.5,105.6" fill="#4aad72" fill-opacity="0.12" stroke="#4aad72" stroke-width="1.8" stroke-linejoin="round" class="metric-poly" data-metric="guide"/>
+<polygon id="poly-code" points="240.0,78.3 240.0,220.0 394.6,149.4 374.6,239.4 368.5,331.3 277.3,346.9 205.2,338.6 111.5,331.3 71.7,244.2 85.4,149.4 166.5,105.6" fill="#d4a853" fill-opacity="0.12" stroke="#d4a853" stroke-width="1.8" stroke-linejoin="round" class="metric-poly" data-metric="code"/>
+<polygon id="poly-shipped" points="240.0,163.3 240.0,220.0 394.6,149.4 240.0,220.0 304.2,275.7 245.3,238.1 218.2,294.1 154.3,294.2 240.0,220.0 85.4,149.4 240.0,220.0" fill="#e07b54" fill-opacity="0.12" stroke="#e07b54" stroke-width="1.8" stroke-linejoin="round" class="metric-poly" data-metric="shipped"/>
+      <!-- Domain labels -->
+      <text x="240.0" y="26.0" text-anchor="middle" class="domain-label">app‑shell</text>
+<text x="347.0" y="57.4" text-anchor="start" class="domain-label">audio/collaboration</text>
+<text x="420.1" y="141.7" text-anchor="start" class="domain-label">auth</text>
+<text x="436.0" y="252.2" text-anchor="start" class="domain-label">band</text>
+<text x="389.6" y="353.7" text-anchor="start" class="domain-label">collaboration</text>
+<text x="295.8" y="414.0" text-anchor="start" class="domain-label">editing</text>
+<text x="184.2" y="414.0" text-anchor="end" class="domain-label">recording</text>
+<text x="90.4" y="353.7" text-anchor="end" class="domain-label">render</text>
+<text x="44.0" y="252.2" text-anchor="end" class="domain-label">sessions</text>
+<text x="59.9" y="141.7" text-anchor="end" class="domain-label">storage</text>
+<text x="133.0" y="57.4" text-anchor="end" class="domain-label">versioning</text>
+      <!-- Center dot -->
+      <circle cx="240" cy="220" r="3" fill="var(--border)"/>
+    </svg>
+
+    <div class="legend">
+      <div class="legend-title">Metric</div>
+      
+      <div class="legend-item" data-metric="docs" onclick="toggleMetric('docs')">
+        <span class="legend-dot" style="background:#5b82cc"></span>
+        <span class="legend-text">
+          <span class="legend-label">Documentation</span>
+          <span class="legend-desc">Avg fill of problem, analysis, implementation</span>
+        </span>
+      </div>
+      <div class="legend-item" data-metric="decisions" onclick="toggleMetric('decisions')">
+        <span class="legend-dot" style="background:#9b7ecc"></span>
+        <span class="legend-text">
+          <span class="legend-label">Decision Quality</span>
+          <span class="legend-desc">% features with 2+ documented decisions</span>
+        </span>
+      </div>
+      <div class="legend-item" data-metric="guide" onclick="toggleMetric('guide')">
+        <span class="legend-dot" style="background:#4aad72"></span>
+        <span class="legend-text">
+          <span class="legend-label">User Guide</span>
+          <span class="legend-desc">% features with userGuide written</span>
+        </span>
+      </div>
+      <div class="legend-item" data-metric="code" onclick="toggleMetric('code')">
+        <span class="legend-dot" style="background:#d4a853"></span>
+        <span class="legend-text">
+          <span class="legend-label">Code Reference</span>
+          <span class="legend-desc">% features with componentFile linked</span>
+        </span>
+      </div>
+      <div class="legend-item" data-metric="shipped" onclick="toggleMetric('shipped')">
+        <span class="legend-dot" style="background:#e07b54"></span>
+        <span class="legend-text">
+          <span class="legend-label">Ship Rate</span>
+          <span class="legend-desc">% features frozen / shipped</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th style="text-align:center">Features</th>
+          <th class="metric-header" style="text-align:center;color:#5b82cc" title="Avg fill of problem, analysis, implementation">Documentation</th><th class="metric-header" style="text-align:center;color:#9b7ecc" title="% features with 2+ documented decisions">Decision Quality</th><th class="metric-header" style="text-align:center;color:#4aad72" title="% features with userGuide written">User Guide</th><th class="metric-header" style="text-align:center;color:#d4a853" title="% features with componentFile linked">Code Reference</th><th class="metric-header" style="text-align:center;color:#e07b54" title="% features frozen / shipped">Ship Rate</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr>
+      <td><strong>app-shell</strong></td>
+      <td style="color:var(--text-soft);text-align:center">12</td>
+      <td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">25%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">83%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">83%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">33%</td>
+    </tr>
+<tr>
+      <td><strong>audio/collaboration</strong></td>
+      <td style="color:var(--text-soft);text-align:center">1</td>
+      <td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">0%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">0%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">0%</td>
+    </tr>
+<tr>
+      <td><strong>auth</strong></td>
+      <td style="color:var(--text-soft);text-align:center">1</td>
+      <td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td>
+    </tr>
+<tr>
+      <td><strong>band</strong></td>
+      <td style="color:var(--text-soft);text-align:center">5</td>
+      <td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">20%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">80%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">80%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">0%</td>
+    </tr>
+<tr>
+      <td><strong>collaboration</strong></td>
+      <td style="color:var(--text-soft);text-align:center">2</td>
+      <td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#c4a255;font-family:var(--mono);text-align:center">50%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#c4a255;font-family:var(--mono);text-align:center">50%</td>
+    </tr>
+<tr>
+      <td><strong>editing</strong></td>
+      <td style="color:var(--text-soft);text-align:center">9</td>
+      <td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">22%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">78%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">78%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">11%</td>
+    </tr>
+<tr>
+      <td><strong>recording</strong></td>
+      <td style="color:var(--text-soft);text-align:center">11</td>
+      <td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#c4a255;font-family:var(--mono);text-align:center">45%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">73%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">73%</td><td style="color:#c4a255;font-family:var(--mono);text-align:center">45%</td>
+    </tr>
+<tr>
+      <td><strong>render</strong></td>
+      <td style="color:var(--text-soft);text-align:center">3</td>
+      <td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#c4a255;font-family:var(--mono);text-align:center">67%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#c4a255;font-family:var(--mono);text-align:center">67%</td>
+    </tr>
+<tr>
+      <td><strong>sessions</strong></td>
+      <td style="color:var(--text-soft);text-align:center">4</td>
+      <td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">25%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">0%</td>
+    </tr>
+<tr>
+      <td><strong>storage</strong></td>
+      <td style="color:var(--text-soft);text-align:center">1</td>
+      <td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">0%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td>
+    </tr>
+<tr>
+      <td><strong>versioning</strong></td>
+      <td style="color:var(--text-soft);text-align:center">5</td>
+      <td style="color:#4aad72;font-family:var(--mono);text-align:center">100%</td><td style="color:#c4a255;font-family:var(--mono);text-align:center">60%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">80%</td><td style="color:#4aad72;font-family:var(--mono);text-align:center">80%</td><td style="color:#cc5b5b;font-family:var(--mono);text-align:center">0%</td>
+    </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const DATA = [{"domain":"app-shell","count":12,"composite":65,"scores":{"docs":100,"decisions":25,"guide":83,"code":83,"shipped":33}},{"domain":"audio/collaboration","count":1,"composite":40,"scores":{"docs":100,"decisions":100,"guide":0,"code":0,"shipped":0}},{"domain":"auth","count":1,"composite":100,"scores":{"docs":100,"decisions":100,"guide":100,"code":100,"shipped":100}},{"domain":"band","count":5,"composite":56,"scores":{"docs":100,"decisions":20,"guide":80,"code":80,"shipped":0}},{"domain":"collaboration","count":2,"composite":80,"scores":{"docs":100,"decisions":50,"guide":100,"code":100,"shipped":50}},{"domain":"editing","count":9,"composite":58,"scores":{"docs":100,"decisions":22,"guide":78,"code":78,"shipped":11}},{"domain":"recording","count":11,"composite":67,"scores":{"docs":100,"decisions":45,"guide":73,"code":73,"shipped":45}},{"domain":"render","count":3,"composite":87,"scores":{"docs":100,"decisions":67,"guide":100,"code":100,"shipped":67}},{"domain":"sessions","count":4,"composite":65,"scores":{"docs":100,"decisions":25,"guide":100,"code":100,"shipped":0}},{"domain":"storage","count":1,"composite":80,"scores":{"docs":100,"decisions":0,"guide":100,"code":100,"shipped":100}},{"domain":"versioning","count":5,"composite":64,"scores":{"docs":100,"decisions":60,"guide":80,"code":80,"shipped":0}}];
+const byDomain = new Map(DATA.map(d => [d.domain, d]));
+const METRIC_COLORS = {'docs': '#5b82cc', 'decisions': '#9b7ecc', 'guide': '#4aad72', 'code': '#d4a853', 'shipped': '#e07b54'};
+
+let activeMetrics = new Set(["docs","decisions","guide","code","shipped"]);
+
+function toggleMetric(key) {
+  if (activeMetrics.size === 5 && activeMetrics.has(key)) {
+    // Solo this metric
+    activeMetrics.clear();
+    activeMetrics.add(key);
+  } else if (activeMetrics.size === 1 && activeMetrics.has(key)) {
+    // Re-activate all
+    ["docs","decisions","guide","code","shipped"].forEach(k => activeMetrics.add(k));
+  } else {
+    if (activeMetrics.has(key)) activeMetrics.delete(key);
+    else activeMetrics.add(key);
+  }
+  updateVisibility();
+}
+
+function updateVisibility() {
+  document.querySelectorAll('.metric-poly').forEach(el => {
+    const k = el.dataset.metric;
+    el.classList.toggle('dimmed', !activeMetrics.has(k));
+  });
+  document.querySelectorAll('.legend-item').forEach(el => {
+    const k = el.dataset.metric;
+    el.classList.toggle('dimmed', !activeMetrics.has(k));
+  });
+}
+
+// Domain hover tooltip via SVG polygon hit-test approximation
+// Attach mousemove to SVG, find nearest domain spoke
+const svg = document.querySelector('svg.radar');
+const tooltip = document.getElementById('tooltip');
+const CX = 240, CY = 220;
+const domainAngles = [-90,-57.27272727272727,-24.545454545454547,8.181818181818173,40.90909090909091,73.63636363636363,106.36363636363635,139.0909090909091,171.8181818181818,204.54545454545456,237.27272727272725];
+const domainNames = ["app-shell","audio/collaboration","auth","band","collaboration","editing","recording","render","sessions","storage","versioning"];
+
+svg.addEventListener('mousemove', e => {
+  const rect = svg.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (480 / rect.width) - CX;
+  const y = (e.clientY - rect.top) * (440 / rect.height) - CY;
+  const dist = Math.sqrt(x*x + y*y);
+  if (dist < 15 || dist > 210) { tooltip.classList.remove('visible'); return; }
+
+  let angle = Math.atan2(y, x) * 180 / Math.PI + 90;
+  if (angle < 0) angle += 360;
+
+  // Find nearest domain spoke
+  const step = 360 / domainNames.length;
+  const idx = Math.round(angle / step) % domainNames.length;
+  const domain = domainNames[idx];
+  const d = byDomain.get(domain);
+  if (!d) { tooltip.classList.remove('visible'); return; }
+
+  const metricsHtml = Object.entries(d.scores).map(([k, v]) => {
+    const color = v >= 70 ? '#4aad72' : v >= 40 ? '#c4a255' : '#cc5b5b';
+    return '<div class="tooltip-row"><span class="tooltip-label">' + k + '</span><span class="tooltip-val" style="color:' + color + '">' + v + '%</span></div>';
+  }).join('');
+
+  tooltip.innerHTML = '<div class="tooltip-domain">' + domain + '</div>' +
+    '<div class="tooltip-row"><span class="tooltip-label">features</span><span class="tooltip-val">' + d.count + '</span></div>' +
+    metricsHtml;
+  tooltip.style.left = (e.clientX + 14) + 'px';
+  tooltip.style.top = (e.clientY - 10) + 'px';
+  tooltip.classList.add('visible');
+});
+
+svg.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+</script>
+</body>
+</html>

@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Odio — Success Board</title>
+<style>
+:root {
+  --bg: #12100e; --bg-card: #1a1714; --bg-hover: #201d1a;
+  --border: #2a2724; --border-soft: #221f1c;
+  --text: #e8e0d4; --text-soft: #8a7f74; --accent: #d4a853;
+  --mono: 'SF Mono','Fira Code','Cascadia Code',monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: system-ui,-apple-system,sans-serif; }
+
+.topbar {
+  display: flex; align-items: center; gap: 10px; padding: 0 20px; height: 48px;
+  background: #0e0c0a; border-bottom: 1px solid var(--border); flex-shrink: 0; font-size: 13px;
+}
+.topbar-logo { color: var(--accent); font-weight: 700; font-family: var(--mono); }
+.topbar-sep { color: var(--border); }
+.topbar-count { margin-left: auto; color: var(--text-soft); font-size: 12px; font-family: var(--mono); }
+
+.hero {
+  padding: 28px 24px 0;
+  display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 20px;
+}
+.hero-text h1 { font-size: 22px; font-weight: 600; }
+.hero-text p { font-size: 13px; color: var(--text-soft); margin-top: 4px; }
+
+.stats-row { display: flex; gap: 16px; flex-wrap: wrap; }
+.stat-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 18px; text-align: center; min-width: 90px;
+}
+.stat-num { font-size: 28px; font-weight: 700; font-family: var(--mono); color: var(--accent); }
+.stat-label { font-size: 11px; color: var(--text-soft); margin-top: 2px; }
+
+.progress-bar-wrap { padding: 16px 24px 0; }
+.progress-bar-label { font-size: 12px; color: var(--text-soft); margin-bottom: 6px; font-family: var(--mono); }
+.progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #5b82cc, #4aad72); border-radius: 3px; transition: width .6s ease; }
+
+.filters { padding: 16px 24px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+.filter-label { font-size: 11px; color: var(--text-soft); font-family: var(--mono); }
+.domain-pill {
+  font-size: 11px; padding: 4px 10px; border-radius: 12px; cursor: pointer;
+  background: var(--bg-card); border: 1px solid var(--border); color: var(--text-soft);
+  transition: all .15s; user-select: none;
+}
+.domain-pill:hover { border-color: var(--accent); color: var(--text); }
+.domain-pill.active { background: var(--accent); color: #12100e; border-color: var(--accent); font-weight: 600; }
+.pill-count { opacity: .6; }
+
+.board { display: flex; gap: 0; flex: 1; overflow: hidden; height: calc(100vh - 260px); min-height: 400px; }
+.column { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); min-width: 260px; }
+.column:last-child { border-right: none; }
+.col-header { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); border-bottom: 1px solid var(--border); flex-shrink: 0; margin: 0; padding-left: 13px; }
+.col-title { font-size: 13px; font-weight: 600; }
+.col-count { font-size: 12px; color: var(--text-soft); background: var(--border); border-radius: 10px; padding: 1px 8px; font-family: var(--mono); }
+.col-cards { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.col-empty { padding: 24px 0; text-align: center; color: var(--text-soft); font-size: 13px; font-style: italic; }
+
+.card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 14px 12px; cursor: pointer; transition: border-color .15s, background .15s;
+}
+.card:hover { border-color: var(--accent); background: var(--bg-hover); }
+.card-header { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-family: var(--mono); }
+.badge-domain { background: #2a2724; color: var(--text-soft); border: 1px solid var(--border); }
+.badge-priority { background: #1e1b12; color: var(--accent); border: 1px solid #3a2f10; }
+.card-title { font-size: 14px; font-weight: 600; line-height: 1.35; margin-bottom: 8px; }
+.card-sc {
+  font-size: 12px; color: var(--text-soft); font-style: italic; line-height: 1.5;
+  border-left: 2px solid var(--accent); padding-left: 8px; margin: 6px 0 8px;
+}
+.ac-list { list-style: none; display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+.ac-item { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; }
+.ac-check { color: var(--text-soft); flex-shrink: 0; font-size: 11px; margin-top: 1px; font-family: var(--mono); }
+.ac-done .ac-check { color: #4aad72; }
+.ac-text { color: var(--text-soft); line-height: 1.4; }
+.ac-done .ac-text { color: var(--text); text-decoration: line-through; opacity: .6; }
+.card-key { font-size: 10px; font-family: var(--mono); color: #4a4540; margin-top: 8px; }
+
+.missing-section { padding: 20px 24px; border-top: 1px solid var(--border); }
+.missing-title { font-size: 13px; font-weight: 600; color: var(--text-soft); margin-bottom: 12px; }
+.missing-grid { display: flex; flex-direction: column; gap: 6px; }
+.missing-card {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px;
+  cursor: pointer; font-size: 12px; transition: border-color .15s;
+}
+.missing-card:hover { border-color: var(--accent); }
+.missing-status { flex-shrink: 0; }
+.missing-title-text, .missing-title { flex: 1; }
+.missing-domain { color: var(--text-soft); font-family: var(--mono); font-size: 10px; }
+.missing-hint { color: #4aad72; font-size: 10px; opacity: .6; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="topbar-logo">◈ lac</span>
+  <span class="topbar-sep">|</span>
+  <span class="topbar-project">Odio — Success Board</span>
+  <span class="topbar-count">54/54 features have criteria</span>
+</div>
+
+<div class="hero">
+  <div class="hero-text">
+    <h1>What does "done" look like?</h1>
+    <p>Success criteria and acceptance criteria — organized by delivery status</p>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">15</div>
+      <div class="stat-label">criteria met</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">29</div>
+      <div class="stat-label">in progress</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">coverage</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">15</div>
+      <div class="stat-label">shipped total</div>
+    </div>
+  </div>
+</div>
+
+<div class="progress-bar-wrap">
+  <div class="progress-bar-label">100% of features have defined success criteria</div>
+  <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+</div>
+
+<div class="filters">
+  <span class="filter-label">Domain:</span>
+  <span class="domain-pill active" data-domain="__all__" onclick="toggleDomain('__all__')">All <span class="pill-count">54</span></span>
+  <span class="domain-pill" data-domain="app-shell" onclick="toggleDomain('app-shell')">app-shell <span class="pill-count">12</span></span><span class="domain-pill" data-domain="audio/collaboration" onclick="toggleDomain('audio/collaboration')">audio/collaboration <span class="pill-count">1</span></span><span class="domain-pill" data-domain="auth" onclick="toggleDomain('auth')">auth <span class="pill-count">1</span></span><span class="domain-pill" data-domain="band" onclick="toggleDomain('band')">band <span class="pill-count">5</span></span><span class="domain-pill" data-domain="collaboration" onclick="toggleDomain('collaboration')">collaboration <span class="pill-count">2</span></span><span class="domain-pill" data-domain="editing" onclick="toggleDomain('editing')">editing <span class="pill-count">9</span></span><span class="domain-pill" data-domain="recording" onclick="toggleDomain('recording')">recording <span class="pill-count">11</span></span><span class="domain-pill" data-domain="render" onclick="toggleDomain('render')">render <span class="pill-count">3</span></span><span class="domain-pill" data-domain="sessions" onclick="toggleDomain('sessions')">sessions <span class="pill-count">4</span></span><span class="domain-pill" data-domain="storage" onclick="toggleDomain('storage')">storage <span class="pill-count">1</span></span><span class="domain-pill" data-domain="versioning" onclick="toggleDomain('versioning')">versioning <span class="pill-count">5</span></span>
+</div>
+
+<div class="board">
+  <div class="column">
+      <div class="col-header" style="border-left:3px solid #5b82cc">
+        <span class="col-title">🔒 Achieved</span>
+        <span class="col-count">15</span>
+      </div>
+      <div class="col-cards" id="col-frozen">
+        <div class="card" data-domain="render" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-002','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">render</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">FFmpeg POC — Validate Bundle Size and Render Pipeline on Vercel</div>
+      <blockquote class="card-sc">- Next.js project with @ffmpeg-installer/ffmpeg + fluent-ffmpeg deploys to Vercel Hobby without bundle size error
+- Deployed function executes an atrim+concat operation on a test .aac file
+- Output f…</blockquote>
+      
+      <div class="card-key">odio-2026-002</div>
+    </div>
+<div class="card" data-domain="auth" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-003','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">auth</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">Auth — Google OAuth via NextAuth.js</div>
+      <blockquote class="card-sc">- Sign in with Google works on iOS Safari, Android Chrome, and desktop
+- Session persists across browser restarts (refresh token handled by NextAuth)
+- All private routes redirect to /login if unauth…</blockquote>
+      
+      <div class="card-key">odio-2026-003</div>
+    </div>
+<div class="card" data-domain="app-shell" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-021','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">app-shell</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">BottomSheet — Slide-Up Modal for Confirmations and Input</div>
+      <blockquote class="card-sc">- Sheet slides up from bottom on open, slides down on close
+- Backdrop tap dismisses sheet
+- Body scroll locked while sheet is open
+- Focus trapped inside sheet (Tab cycles within sheet children)
+- C…</blockquote>
+      
+      <div class="card-key">odio-2026-021</div>
+    </div>
+<div class="card" data-domain="app-shell" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-022','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">app-shell</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">Button — Shared Interactive Button Component</div>
+      <blockquote class="card-sc">- All buttons ≥ 44px tall
+- Primary variant: amber bg (#f59e0b), dark text
+- Danger variant: danger red bg, white text
+- Ghost variant: transparent, text-secondary
+- disabled prop: opacity-60, pointe…</blockquote>
+      
+      <div class="card-key">odio-2026-022</div>
+    </div>
+<div class="card" data-domain="recording" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-006','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">recording</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">Recording — Browser-Based Audio Capture</div>
+      <blockquote class="card-sc">- Record button triggers microphone permission request on first use
+- Level meter visible and responsive during recording (horizontal amber bar, 8px tall, full-width)
+- Recording screen is full-scree…</blockquote>
+      
+      <div class="card-key">odio-2026-006</div>
+    </div>
+<div class="card" data-domain="render" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-014','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">render</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">Render — Server-Side FFmpeg on Freeze + Public Share</div>
+      <blockquote class="card-sc">- Freeze triggers render within 2s of user confirmation
+- Rendered file available within 10s for a typical 2-8 min output clip
+- Clip page shows lock icon and download button after successful render
+…</blockquote>
+      
+      <div class="card-key">odio-2026-014</div>
+    </div>
+<div class="card" data-domain="recording" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-008','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">recording</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">Multi-Recorder — Any Editor Can Record Into the Band's Drive</div>
+      <blockquote class="card-sc">- Any Editor-role band member sees the Record tab in the bottom nav and can start a recording
+- Member-only role does not see Record tab and cannot access /record
+- /api/upload/init: accepts requests…</blockquote>
+      
+      <div class="card-key">odio-2026-008</div>
+    </div>
+<div class="card" data-domain="editing" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-038','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">editing</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">StampJumpRow — Tappable Stamp Chips for Waveform Seek</div>
+      <blockquote class="card-sc">- Chips rendered as &lt;button&gt; elements (keyboard accessible, screen-reader compatible)
+- Each chip: aria-label='Jump to M:SS' (time formatted in human-readable minutes:seconds)
+- Tap calls onSeek with…</blockquote>
+      
+      <div class="card-key">odio-2026-038</div>
+    </div>
+<div class="card" data-domain="recording" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-027','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">recording</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">AudioBars — Animated Audio Level Indicator</div>
+      <blockquote class="card-sc">- Bars animate responsively to audio level input
+- Silent input: bars at minimum height (not zero — they should breathe slightly)
+- Loud input: bars reach near-maximum height
+- Smooth animation (requ…</blockquote>
+      
+      <div class="card-key">odio-2026-027</div>
+    </div>
+<div class="card" data-domain="recording" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-009','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">recording</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">Recording Resilience — IndexedDB Safety Net, Upload Retry, Save-to-Device Fallb…</div>
+      <blockquote class="card-sc">- Audio blob written to IndexedDB immediately on recording stop, before upload begins
+- IndexedDB entry keyed by tempId; stores blob + recordedAt + durationMs + bandId + sessionId + uploadSessionUrl …</blockquote>
+      
+      <div class="card-key">odio-2026-009</div>
+    </div>
+<div class="card" data-domain="storage" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-017','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">storage</span>
+        <span class="badge badge-priority">P3</span>
+      </div>
+      <div class="card-title">Storage Management — Drive Quota, Cleanup, Archive</div>
+      <blockquote class="card-sc">- Band settings shows Drive storage used by Odio files (MB / GB)
+- Post-freeze: 'Clean up source audio' button removes raw .aac from Drive, keeps frozen render
+- Confirmation dialog shows exactly wha…</blockquote>
+      
+      <div class="card-key">odio-2026-017</div>
+    </div>
+<div class="card" data-domain="collaboration" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-016','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">collaboration</span>
+        <span class="badge badge-priority">P3</span>
+      </div>
+      <div class="card-title">Collaboration — Votes, Comments, Stamp Heat Map, Activity</div>
+      <blockquote class="card-sc">- Vote (Keep/Revise/Pass) per member per version; tally visible to all; changeable
+- Votes and vote tally update within 5-10s via polling
+- Timestamped comments show as pins on waveform during playba…</blockquote>
+      
+      <div class="card-key">odio-2026-016</div>
+    </div>
+<div class="card" data-domain="app-shell" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-025','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">app-shell</span>
+        <span class="badge badge-priority">P3</span>
+      </div>
+      <div class="card-title">Badge — Count and Status Label Pill</div>
+      <blockquote class="card-sc">- Renders as a rounded pill at text-xs
+- All four variants render with correct color scheme
+- Does not break layout when text is long (clips at max-w)</blockquote>
+      
+      <div class="card-key">odio-2026-025</div>
+    </div>
+<div class="card" data-domain="app-shell" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-026','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">app-shell</span>
+        <span class="badge badge-priority">P3</span>
+      </div>
+      <div class="card-title">Skeleton — Loading Placeholder Shimmer</div>
+      <blockquote class="card-sc">- Renders as a grey animated shimmer div
+- animate-pulse (Tailwind) runs on mount
+- Accepts width/height/className props for flexible sizing
+- Does not shift layout when swapped for real content (cal…</blockquote>
+      
+      <div class="card-key">odio-2026-026</div>
+    </div>
+<div class="card" data-domain="recording" data-status="frozen" onclick="window.open('lac-wiki.html#odio-2026-018','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">recording</span>
+        <span class="badge badge-priority">P4</span>
+      </div>
+      <div class="card-title">Audio Input Selection — External Mic, USB Interface, Headset</div>
+      <blockquote class="card-sc">- Before starting a recording, app calls enumerateDevices() to list available audio inputs
+- If only one audio input is available: no picker shown, record starts immediately (current behavior)
+- If m…</blockquote>
+      
+      <div class="card-key">odio-2026-018</div>
+    </div>
+      </div>
+    </div>
+<div class="column">
+      <div class="col-header" style="border-left:3px solid #4aad72">
+        <span class="col-title">🟡 In Progress</span>
+        <span class="col-count">29</span>
+      </div>
+      <div class="col-cards" id="col-active">
+        <div class="card" data-domain="band" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-005','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">band</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">Band Space — Band Creation, Invites, Drive Folder, Members</div>
+      <blockquote class="card-sc">- Create band: enter name → band record created in Postgres → invite link generated
+- Invite link opens a join page: shows band name, prompts Google sign-in
+- After joining, app shows member's Google…</blockquote>
+      
+      <div class="card-key">odio-2026-005</div>
+    </div>
+<div class="card" data-domain="band" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-050','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">band</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">JoinBandClient — Invite Link Band Join Flow</div>
+      <blockquote class="card-sc">- Renders band name and 'Join [Band Name]' button
+- Button tap: POST to join endpoint, navigates to session list on success
+- Error states: 'Invalid invite link', 'Already a member', 'Invite has expi…</blockquote>
+      
+      <div class="card-key">odio-2026-050</div>
+    </div>
+<div class="card" data-domain="editing" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-043','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">editing</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">SubmitVersionSheet — Version Description and Submission Confirmation</div>
+      <blockquote class="card-sc">- Opens as BottomSheet from 'Submit as v[N]' button
+- Description field: optional textarea, max 200ch, placeholder 'What changed? (optional)'
+- Zero-change guard: Submit blocked (inline message shown…</blockquote>
+      
+      <div class="card-key">odio-2026-043</div>
+    </div>
+<div class="card" data-domain="editing" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-039','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">editing</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">WaveformCanvas — Waveform Presenter with Cut Region Overlay</div>
+      <blockquote class="card-sc">- WaveSurfer mounts in container div with interact:false
+- Cut bands (CSS divs) render at correct positions for given cutMarks, zoom, scroll
+- pointer-events:none on cut bands — click-to-seek works t…</blockquote>
+      
+      <div class="card-key">odio-2026-039</div>
+    </div>
+<div class="card" data-domain="app-shell" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-047','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">app-shell</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">AuthShell — Authenticated Layout Wrapper</div>
+      <blockquote class="card-sc">- UploadBanner mounted and visible on all authenticated pages
+- BottomTabBar mounted at bottom of viewport
+- bandId and sessionId correctly extracted from pathname and passed to BottomTabBar
+- Offlin…</blockquote>
+      
+      <div class="card-key">odio-2026-047</div>
+    </div>
+<div class="card" data-domain="app-shell" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-046','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">app-shell</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">BottomTabBar — Four-Tab Persistent Navigation</div>
+      <blockquote class="card-sc">- Four tabs visible on all non-editor routes
+- Active tab: amber icon + label
+- Hidden on /bands/.../clips/.../edit routes
+- Record tab hidden for MEMBER role
+- Clips tab hidden when !sessionId
+- Rec…</blockquote>
+      
+      <div class="card-key">odio-2026-046</div>
+    </div>
+<div class="card" data-domain="app-shell" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-004','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">app-shell</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">App Shell — Navigation, Dark Theme, Onboarding, Empty States</div>
+      <blockquote class="card-sc">- Dark theme renders correctly everywhere; no light mode; high contrast readable in dim rehearsal room or car
+- System fonts only — no web font loading
+- Bottom tab bar: Sessions / Record / Clips / B…</blockquote>
+      
+      <div class="card-key">odio-2026-004</div>
+    </div>
+<div class="card" data-domain="app-shell" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-048','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">app-shell</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">PageLayout — Standard Page Wrapper with Back Button</div>
+      <blockquote class="card-sc">- Header renders with back button (chevron-left icon + back label) and page title
+- Back button navigates via Next.js Link (client-side, no reload)
+- Content scrollable, does not hide behind tab bar
+…</blockquote>
+      
+      <div class="card-key">odio-2026-048</div>
+    </div>
+<div class="card" data-domain="recording" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-028','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">recording</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">StampRow — One-Tap Timestamp Annotation During Recording</div>
+      <blockquote class="card-sc">- Four stamp buttons rendered in equal horizontal distribution
+- Each button: minimum 72×72px touch target
+- Tap triggers light haptic (navigator.vibrate(50) where supported) + brief scale animation …</blockquote>
+      
+      <div class="card-key">odio-2026-028</div>
+    </div>
+<div class="card" data-domain="sessions" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-007','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">sessions</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">Session Management — Sessions, Clips, Naming, Stages</div>
+      <blockquote class="card-sc">- Session auto-created on first record of the night
+- Session name is editable inline by any member
+- Clip auto-named with a memorable death metal name (adjective + noun, e.g. 'Putrid Descent')
+- Any…</blockquote>
+      
+      <div class="card-key">odio-2026-007</div>
+    </div>
+<div class="card" data-domain="versioning" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-012','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">versioning</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">Versioning — Version Chain, Waveform Editor, Waveform Player, Freeze</div>
+      <blockquote class="card-sc">- Version list shows full chain: v number, description, result duration, cut count
+- Selecting a version in the detail page updates the waveform player to skip that version's cuts
+- Click-to-seek wor…</blockquote>
+      
+      <div class="card-key">odio-2026-012</div>
+    </div>
+<div class="card" data-domain="band" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-052','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">band</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">BandShareButton — Invite Link and QR Code Generator</div>
+      <blockquote class="card-sc">- Invite link copyable with 'Copied!' feedback (2s) on tap
+- QR code rendered in dark theme (white modules on dark bg)
+- QR code scannable on physical phone screen at arm's length
+- Token generated o…</blockquote>
+      
+      <div class="card-key">odio-2026-052</div>
+    </div>
+<div class="card" data-domain="band" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-049','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">band</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">MemberRow — Band Member List Row with Role Management</div>
+      <blockquote class="card-sc">- Avatar initials + name + email rendered per row
+- Role chip: interactive for Recorder (not self), static for all others
+- Tap role chip → BottomSheet with 3 role options, current highlighted
+- Sele…</blockquote>
+      
+      <div class="card-key">odio-2026-049</div>
+    </div>
+<div class="card" data-domain="versioning" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-013','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">versioning</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">Clip Detail — Coordinator, Actions Panel, Freeze, Share, Stage, Cleanup</div>
+      <blockquote class="card-sc">- Selecting a version updates WaveformPlayer to skip that version's cuts
+- Clicking the active version keeps it selected (no deselect to null state)
+- Actions section hidden when member role + non-fr…</blockquote>
+      
+      <div class="card-key">odio-2026-013</div>
+    </div>
+<div class="card" data-domain="sessions" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-037','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">sessions</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">ClipCard — Clip Row in Session Clip List</div>
+      <blockquote class="card-sc">- Clip name editable inline (InlineEdit, max 60ch)
+- Duration shows source duration → result duration if versions exist
+- Version count badge visible
+- StageSelector chip tappable by Editor/Recorder,…</blockquote>
+      
+      <div class="card-key">odio-2026-037</div>
+    </div>
+<div class="card" data-domain="editing" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-041','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">editing</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">CutList — Cut Region List with Nudge Controls</div>
+      <blockquote class="card-sc">- All current cut regions listed in order (sorted by start time)
+- Each row: index, startMs formatted, endMs formatted, duration removed
+- Expand: shows ±10ms ±100ms nudge buttons for both start and …</blockquote>
+      
+      <div class="card-key">odio-2026-041</div>
+    </div>
+<div class="card" data-domain="editing" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-042','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">editing</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">DraftRestoreBanner — Recover Unsaved Cuts After Browser Crash</div>
+      <blockquote class="card-sc">- Banner visible only when hasDraft=true AND cutMarks.length === 0
+- 'Resume editing' button: calls onResume() which loads draft cutMarks into WaveformEditor state
+- 'Dismiss' button: calls onDismiss…</blockquote>
+      
+      <div class="card-key">odio-2026-042</div>
+    </div>
+<div class="card" data-domain="editing" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-040','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">editing</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">EditorToolbar — Trim / Clear All / Split Quick-Action Buttons</div>
+      <blockquote class="card-sc">- Trim button: adds start/end cuts at 20%/80% boundaries immediately
+- Clear All: removes all cuts, disabled when hasCuts=false
+- Split: enters split mode, shows WaveformSplitter panel, WaveformCanva…</blockquote>
+      
+      <div class="card-key">odio-2026-040</div>
+    </div>
+<div class="card" data-domain="editing" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-011','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">editing</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">Timeline Editor — WaveformPlayer, WaveformEditor, Cut Regions, Version Submit</div>
+      <blockquote class="card-sc">- Waveform renders within 3 seconds of opening on a typical 10-min clip
+- Audio plays via Drive proxied URL — seeking supported via Range requests
+- Click-to-seek works — clicking anywhere on the wav…</blockquote>
+      
+      <div class="card-key">odio-2026-011</div>
+    </div>
+<div class="card" data-domain="versioning" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-033','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">versioning</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">VersionCard — Version Row in Clip Detail Version List</div>
+      <blockquote class="card-sc">- Renders v{N}, truncated name (12ch max), relative time, duration in one line
+- Description 2-line clamped with 'Show more' if &gt; 2 lines
+- Mini-player play/pause button (40px) plays this version's a…</blockquote>
+      
+      <div class="card-key">odio-2026-033</div>
+    </div>
+<div class="card" data-domain="collaboration" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-034','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">collaboration</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">VotePanel — Keep / Revise / Pass Vote UI</div>
+      <blockquote class="card-sc">- Keep/Revise/Pass buttons rendered equally spaced
+- Current user's vote highlighted with amber border
+- Tapping another option: optimistic UI update immediately, PATCH to Postgres
+- Tally shows all …</blockquote>
+      
+      <div class="card-key">odio-2026-034</div>
+    </div>
+<div class="card" data-domain="recording" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-010','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">recording</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">Upload Banner — Persistent Upload Progress Across All Pages</div>
+      <blockquote class="card-sc">- Banner visible on every authenticated page during any upload state
+- Active upload: amber background, spinner, clip name, progress bar at bottom of banner
+- Paused upload: shows 'Upload paused — wa…</blockquote>
+      
+      <div class="card-key">odio-2026-010</div>
+    </div>
+<div class="card" data-domain="recording" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-029','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">recording</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">LiveWaveform — Real-Time Audio Level Meter During Recording</div>
+      <blockquote class="card-sc">- Horizontal bar fills proportionally to microphone input level
+- Smooth animation — no jarring jumps, natural decay on silence
+- Updates at ~60fps
+- bar height: 8px, full width
+- Amber fill on dark …</blockquote>
+      
+      <div class="card-key">odio-2026-029</div>
+    </div>
+<div class="card" data-domain="sessions" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-054','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">sessions</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">SessionHeaderClient — Session Page Title with Inline Name Edit</div>
+      <blockquote class="card-sc">- Session name rendered as tappable InlineEdit (max 40ch)
+- Tap → keyboard opens, inline input
+- Save (Return) → PATCH /api/sessions/[sessionId] { name }, page title updates immediately
+- Cancel (blu…</blockquote>
+      
+      <div class="card-key">odio-2026-054</div>
+    </div>
+<div class="card" data-domain="app-shell" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-023','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">app-shell</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">EmptyState — Zero-Content Placeholder with Action</div>
+      <blockquote class="card-sc">- Renders in center of available space (flex col, items-center, justify-center, min-h set by caller)
+- Icon: lucide icon name passed as prop, rendered at 48px, text-muted color
+- Heading: text-xl tex…</blockquote>
+      
+      <div class="card-key">odio-2026-023</div>
+    </div>
+<div class="card" data-domain="app-shell" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-024','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">app-shell</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">InlineEdit — Tap-to-Edit Text Field</div>
+      <blockquote class="card-sc">- Tap name text → input appears with same styling, keyboard opens
+- Return/Done → calls onSave(value), transitions back to text mode
+- Tap away (blur) → discards, reverts to original value
+- Escape →…</blockquote>
+      
+      <div class="card-key">odio-2026-024</div>
+    </div>
+<div class="card" data-domain="versioning" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-035','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">versioning</span>
+        <span class="badge badge-priority">P3</span>
+      </div>
+      <div class="card-title">StageSelector — Clip Development Stage Picker</div>
+      <blockquote class="card-sc">- Stage badge tappable by Recorder/Editor, static for Member
+- Tap → BottomSheet with 4 options, current highlighted in amber
+- Select → optimistic update + PATCH to Postgres + sheet dismiss
+- Stage …</blockquote>
+      
+      <div class="card-key">odio-2026-035</div>
+    </div>
+<div class="card" data-domain="sessions" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-053','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">sessions</span>
+        <span class="badge badge-priority">P3</span>
+      </div>
+      <div class="card-title">SessionNotesSheet — Session-Level Notes Editor</div>
+      <blockquote class="card-sc">- BottomSheet opens with current session notes pre-filled in textarea
+- Multi-line textarea, vertical resize, min-height 4 lines
+- Save: PATCH to Postgres, sheet dismisses, session card preview updat…</blockquote>
+      
+      <div class="card-key">odio-2026-053</div>
+    </div>
+<div class="card" data-domain="render" data-status="active" onclick="window.open('lac-wiki.html#odio-2026-015','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">render</span>
+        <span class="badge badge-priority">P3</span>
+      </div>
+      <div class="card-title">Public Share Player — Unauthenticated Clip Playback</div>
+      <blockquote class="card-sc">- /share/[token] loads without authentication
+- Waveform renders and plays the frozen render audio
+- Stamp chips displayed with correct emoji and timestamp
+- Play/pause 64px button — large touch targ…</blockquote>
+      
+      <div class="card-key">odio-2026-015</div>
+    </div>
+      </div>
+    </div>
+<div class="column">
+      <div class="col-header" style="border-left:3px solid #c4a255">
+        <span class="col-title">⚪ Planned</span>
+        <span class="col-count">10</span>
+      </div>
+      <div class="col-cards" id="col-draft">
+        <div class="card" data-domain="band" data-status="draft" onclick="window.open('lac-wiki.html#odio-2026-051','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">band</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">DriveRelink — Drive Token Expiry Detection and Re-Authorization</div>
+      <blockquote class="card-sc">- Audio proxy 503 with drive-token-expired detected in WaveformPlayer/Editor/PublicPlayer
+- Band Settings: danger banner shown when Recorder's Drive token is invalid
+- 'Reconnect' button initiates Go…</blockquote>
+      
+      <div class="card-key">odio-2026-051</div>
+    </div>
+<div class="card" data-domain="app-shell" data-status="draft" onclick="window.open('lac-wiki.html#odio-2026-019','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">app-shell</span>
+        <span class="badge badge-priority">P1</span>
+      </div>
+      <div class="card-title">Toast — Global Feedback Notification System</div>
+      <blockquote class="card-sc">- Toast appears at bottom of viewport, 16px above tab bar, on any showToast() call from any screen
+- Only one toast visible at a time; second toast queues and appears after first dismisses
+- info/suc…</blockquote>
+      
+      <div class="card-key">odio-2026-019</div>
+    </div>
+<div class="card" data-domain="editing" data-status="draft" onclick="window.open('lac-wiki.html#odio-2026-045','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">editing</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">BackNavSheet — Discard Confirmation When Leaving Editor with Unsaved Cuts</div>
+      <blockquote class="card-sc">- Sheet opens when back button tapped and hasUnsaved=true
+- 'Keep draft + leave': writes cutMarks to localStorage (key: odio:draft:{clipId}), then router.back()
+- 'Discard edits + leave': clears loca…</blockquote>
+      
+      <div class="card-key">odio-2026-045</div>
+    </div>
+<div class="card" data-domain="versioning" data-status="draft" onclick="window.open('lac-wiki.html#odio-2026-036','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">versioning</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">MiniPlayer — Inline Audio Playback on Version Cards</div>
+      <blockquote class="card-sc">- 40px circle play/pause button, bg-elevated color
+- Elapsed timer in ui-monospace text-xs to the right of button, shows while playing
+- isPlaying=true: pause icon, timer counting up
+- isPlaying=fals…</blockquote>
+      
+      <div class="card-key">odio-2026-036</div>
+    </div>
+<div class="card" data-domain="recording" data-status="draft" onclick="window.open('lac-wiki.html#odio-2026-031','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">recording</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">AddNoteSheet — Inline Note Capture During Recording</div>
+      <blockquote class="card-sc">- Sheet slides up from bottom and sits above keyboard (not hidden behind it)
+- Uses env(keyboard-inset-height) for keyboard-aware positioning on iOS and Android
+- Single-line input with placeholder '…</blockquote>
+      
+      <div class="card-key">odio-2026-031</div>
+    </div>
+<div class="card" data-domain="recording" data-status="draft" onclick="window.open('lac-wiki.html#odio-2026-032','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">recording</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">WakeLockWarning — Screen-Lock Risk Banner Before Recording</div>
+      <blockquote class="card-sc">- On mount: check 'wakeLock' in navigator
+- If unsupported: banner renders above record button before first recording tap
+- Banner: amber bg, dismiss × button, warning text
+- Banner does not block re…</blockquote>
+      
+      <div class="card-key">odio-2026-032</div>
+    </div>
+<div class="card" data-domain="app-shell" data-status="draft" onclick="window.open('lac-wiki.html#odio-2026-020','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">app-shell</span>
+        <span class="badge badge-priority">P2</span>
+      </div>
+      <div class="card-title">OfflineBanner — No-Connection State Degradation</div>
+      <blockquote class="card-sc">- OfflineBanner hidden when navigator.onLine is true
+- OfflineBanner appears within 1s of connection loss
+- Vote buttons disabled while offline (aria-disabled, tooltip 'You're offline')
+- Comment sub…</blockquote>
+      
+      <div class="card-key">odio-2026-020</div>
+    </div>
+<div class="card" data-domain="editing" data-status="draft" onclick="window.open('lac-wiki.html#odio-2026-044','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">editing</span>
+        <span class="badge badge-priority">P3</span>
+      </div>
+      <div class="card-title">UnsavedBadge — Unsaved Edits Indicator in Editor Top Bar</div>
+      <blockquote class="card-sc">- Renders as amber dot + 'Unsaved' text-xs in top bar when cutMarks.length &gt; 0
+- Hidden when cutMarks.length === 0
+- Hidden after successful submission
+- Positioned between back button and duration r…</blockquote>
+      
+      <div class="card-key">odio-2026-044</div>
+    </div>
+<div class="card" data-domain="recording" data-status="draft" onclick="window.open('lac-wiki.html#odio-2026-030','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">recording</span>
+        <span class="badge badge-priority">P3</span>
+      </div>
+      <div class="card-title">StampHint — First-Use Tooltip for Stamp Buttons</div>
+      <blockquote class="card-sc">- Shown on first visit to Recording Screen only (localStorage flag absent)
+- Label row appears beneath stamp buttons with correct emoji-label pairs
+- Auto-dismisses after 5s
+- Dismisses immediately o…</blockquote>
+      
+      <div class="card-key">odio-2026-030</div>
+    </div>
+<div class="card" data-domain="audio/collaboration" data-status="draft" onclick="window.open('lac-wiki.html#odio-2026-001','_self')">
+      <div class="card-header">
+        <span class="badge badge-domain">audio/collaboration</span>
+        
+      </div>
+      <div class="card-title">Odio — Collaborative Jam Session Recorder</div>
+      <blockquote class="card-sc">- Recorder opens browser (any device), records a session, all clips uploaded to Google Drive and metadata saved to Postgres
+- Band member opens a link in mobile browser, opens a clip in the editor wi…</blockquote>
+      
+      <div class="card-key">odio-2026-001</div>
+    </div>
+      </div>
+    </div>
+</div>
+
+
+
+<script>
+const DATA = {"total":54,"withCriteria":54,"without":0,"frozenWithCriteria":15,"criteriaPct":100};
+let activeDomain = '__all__';
+
+function toggleDomain(d) {
+  activeDomain = d;
+  document.querySelectorAll('.domain-pill').forEach(el => {
+    el.classList.toggle('active', el.dataset.domain === d);
+  });
+  document.querySelectorAll('.card').forEach(el => {
+    const match = d === '__all__' || el.dataset.domain === d;
+    el.style.display = match ? '' : 'none';
+  });
+  // Update column counts
+  ['frozen','active','draft'].forEach(status => {
+    const col = document.getElementById('col-' + status);
+    if (!col) return;
+    const visible = col.querySelectorAll('.card:not([style*="none"])').length;
+    const hdr = col.closest('.column').querySelector('.col-count');
+    if (hdr) hdr.textContent = visible;
+  });
+}
+</script>
+</body>
+</html>
