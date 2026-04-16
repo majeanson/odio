@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build:lac": "lac export --all .. --out ./public/lac --prefix lac || echo 'skipping lac (not installed or outdated)'",
+    "build:lac": "lac export --all .. --out ./public/lac --prefix lac --app-hub /lac-hub || echo 'skipping lac (not installed or outdated)'",
     "build": "npm run build:lac && prisma generate && next build",
     "start": "next start"
   },
