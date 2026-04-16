@@ -6,7 +6,15 @@
   "buildOrder": 7,
   "schemaVersion": 1,
   "domain": "band",
-  "tags": ["drive", "auth", "token", "reconnect", "resilience", "band-settings", "error-recovery"],
+  "tags": [
+    "drive",
+    "auth",
+    "token",
+    "reconnect",
+    "resilience",
+    "band-settings",
+    "error-recovery"
+  ],
   "problem": "The entire band's audio access depends on the Recorder's Google Drive token. If that token expires, is revoked, or Google account permissions change, all band members lose access to all audio — waveforms fail to load, editors error, the public share player goes dark. The Recorder needs a clear path to restore access without losing any data.",
   "analysis": "DriveRelink handles detection and recovery of Drive token failures for the Recorder's account.\n\n**Detection:** The audio proxy route (/api/audio/[clipId]) returns a 503 with `{ reason: 'drive-token-expired' }` when the stored refresh token fails. Any component that calls the audio proxy can detect this status and trigger the DriveRelink flow.\n\n**UI:** Band Settings page shows a full-width danger banner at the top of the settings screen:\n`⚠ Drive disconnected — Reconnect` (danger red bg, white text, 'Reconnect' button on the right).\n\nFor non-Settings screens where audio fails: each audio-consuming component (WaveformPlayer, WaveformEditor, PublicPlayer) shows an inline 'Audio unavailable — recorder needs to reconnect Drive' message instead of the waveform. No retry button on these components (retry would also fail until re-auth).\n\n**Recovery:** Tapping 'Reconnect' in Band Settings re-initiates Google OAuth with drive.file scope for the Recorder. On success: new tokens stored via NextAuth, audio proxy resumes. All other band members' audio access restores automatically within the next request.",
   "successCriteria": "- Audio proxy 503 with drive-token-expired detected in WaveformPlayer/Editor/PublicPlayer\n- Band Settings: danger banner shown when Recorder's Drive token is invalid\n- 'Reconnect' button initiates Google OAuth (drive.file scope) for Recorder\n- OAuth success: NextAuth stores new tokens, audio proxy works on next request\n- Audio-consuming components: 'Audio unavailable — recorder needs to reconnect Drive' shown instead of waveform when 503 detected\n- No retry button on audio components (retry would also fail)\n- Band members see 'Audio unavailable' message without a path to fix it themselves (only Recorder can reconnect)",
@@ -24,5 +32,9 @@
     "Reconnect requires the Recorder to be online and able to complete the Google OAuth flow — no offline recovery path"
   ],
   "revisions": [],
-  "statusHistory": []
+  "statusHistory": [],
+  "externalDependencies": [
+    "odio-2026-003",
+    "odio-2026-005"
+  ]
 }

@@ -137,5 +137,15 @@
       ],
       "reason": "Corrected stale architecture description: interact:false throughout (not true), RegionsPlugin removed (CSS divs only), full sub-component hierarchy documented (16 modules). Removed stale limitation about edge handles blocking — edge resize works via useCutInteraction. Added decisions for CSS-div cut bands and interact:false rationale."
     }
+  ],
+  "externalDependencies": [
+    "odio-2026-039",
+    "odio-2026-040",
+    "odio-2026-041",
+    "odio-2026-042",
+    "odio-2026-043",
+    "odio-2026-044",
+    "odio-2026-045",
+    "odio-2026-038"
   ]
 }

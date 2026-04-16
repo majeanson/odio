@@ -42,5 +42,8 @@
       "to": "frozen",
       "date": "2026-04-10"
     }
+  ],
+  "externalDependencies": [
+    "odio-2026-006"
   ]
 }

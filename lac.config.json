@@ -25,12 +25,29 @@
     "dev-deep": {
       "extends": "dev",
       "fields": [
-        "featureKey", "title", "domain", "status", "priority", "owner",
-        "problem", "analysis", "implementation", "implementationNotes",
-        "decisions", "successCriteria", "acceptanceCriteria", "testStrategy",
-        "knownLimitations", "tags", "annotations",
-        "componentFile", "npmPackages", "publicInterface",
-        "externalDependencies", "codeSnippets", "lineage"
+        "featureKey",
+        "title",
+        "domain",
+        "status",
+        "priority",
+        "owner",
+        "problem",
+        "analysis",
+        "implementation",
+        "implementationNotes",
+        "decisions",
+        "successCriteria",
+        "acceptanceCriteria",
+        "testStrategy",
+        "knownLimitations",
+        "tags",
+        "annotations",
+        "componentFile",
+        "npmPackages",
+        "publicInterface",
+        "externalDependencies",
+        "codeSnippets",
+        "lineage"
       ],
       "density": "verbose",
       "groupBy": "domain",
@@ -40,9 +57,16 @@
 
     "code-focus": {
       "fields": [
-        "featureKey", "title", "domain", "status",
-        "componentFile", "codeSnippets", "implementationNotes",
-        "publicInterface", "npmPackages", "tags"
+        "featureKey",
+        "title",
+        "domain",
+        "status",
+        "componentFile",
+        "codeSnippets",
+        "implementationNotes",
+        "publicInterface",
+        "npmPackages",
+        "tags"
       ],
       "density": "standard",
       "groupBy": "domain",
@@ -52,10 +76,19 @@
 
     "shipped": {
       "fields": [
-        "featureKey", "title", "domain", "status", "priority",
-        "problem", "userGuide", "pmSummary",
-        "successCriteria", "knownLimitations", "tags",
-        "decisions", "releaseVersion"
+        "featureKey",
+        "title",
+        "domain",
+        "status",
+        "priority",
+        "problem",
+        "userGuide",
+        "pmSummary",
+        "successCriteria",
+        "knownLimitations",
+        "tags",
+        "decisions",
+        "releaseVersion"
       ],
       "density": "standard",
       "filterStatus": ["frozen"],
@@ -77,9 +110,18 @@
 
     "architect": {
       "fields": [
-        "featureKey", "title", "domain", "status", "priority",
-        "problem", "analysis", "decisions", "knownLimitations",
-        "implementationNotes", "tags", "lineage"
+        "featureKey",
+        "title",
+        "domain",
+        "status",
+        "priority",
+        "problem",
+        "analysis",
+        "decisions",
+        "knownLimitations",
+        "implementationNotes",
+        "tags",
+        "lineage"
       ],
       "density": "standard",
       "groupBy": "domain",

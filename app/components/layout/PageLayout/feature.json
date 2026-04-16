@@ -6,7 +6,13 @@
   "buildOrder": 3,
   "schemaVersion": 1,
   "domain": "app-shell",
-  "tags": ["layout", "navigation", "back-button", "page-wrapper", "safe-area"],
+  "tags": [
+    "layout",
+    "navigation",
+    "back-button",
+    "page-wrapper",
+    "safe-area"
+  ],
   "problem": "Every deep-navigation page (clip detail, band settings, editor, band creation) needs a standard header with a back button and page title, plus correct bottom padding to clear the fixed tab bar and device safe area. Without a shared PageLayout, every page reimplements this boilerplate differently.",
   "analysis": "PageLayout renders a standard page structure:\n- Fixed header: back button (← + screen name as a Next.js `<Link>`, not `<a>`), page title\n- Scrollable content area with `pb-[calc(56px+env(safe-area-inset-bottom))]` to clear tab bar + home indicator\n- Optional right-side header action slot (e.g., '+ New Session' button)\n\nBack button uses Next.js `<Link href={backHref}>` for client-side navigation — no full page reload on back tap.",
   "successCriteria": "- Header renders with back button (chevron-left icon + back label) and page title\n- Back button navigates via Next.js Link (client-side, no reload)\n- Content scrollable, does not hide behind tab bar\n- pb-[calc(56px+env(safe-area-inset-bottom))] on content area\n- Optional right header slot rendered when provided\n- Compatible with AuthShell (does not add its own UploadBanner or BottomTabBar)",
@@ -25,7 +31,12 @@
   "componentFile": "components/layout/PageLayout.tsx",
   "userGuide": "Internal layout component. The back arrow at the top-left of each page uses this component to navigate back.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": []
 }

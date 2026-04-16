@@ -6,7 +6,13 @@
   "buildOrder": 1,
   "schemaVersion": 1,
   "domain": "app-shell",
-  "tags": ["skeleton", "loading", "shimmer", "ui-primitive", "performance"],
+  "tags": [
+    "skeleton",
+    "loading",
+    "shimmer",
+    "ui-primitive",
+    "performance"
+  ],
   "problem": "Pages that fetch data from Postgres (session list, clip list, waveform) need to show a loading state that communicates structure before content arrives. A blank screen or spinner gives no sense of what's coming.",
   "analysis": "Skeleton is a div with animate-pulse and bg-surface. Callers control width, height, and border-radius. Used for: session card skeletons, clip card skeletons, waveform loading shimmer (full-width), member row skeletons, storage indicator skeleton.",
   "successCriteria": "- Renders as a grey animated shimmer div\n- animate-pulse (Tailwind) runs on mount\n- Accepts width/height/className props for flexible sizing\n- Does not shift layout when swapped for real content (caller must match dimensions)",
@@ -18,8 +24,17 @@
   "componentFile": "components/ui/Skeleton.tsx",
   "userGuide": "Grey shimmer placeholders appear while content is loading.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": []
 }

@@ -6,7 +6,14 @@
   "buildOrder": 9,
   "schemaVersion": 1,
   "domain": "editing",
-  "tags": ["stamps", "waveform", "navigation", "playback", "accessibility", "shared-component"],
+  "tags": [
+    "stamps",
+    "waveform",
+    "navigation",
+    "playback",
+    "accessibility",
+    "shared-component"
+  ],
   "problem": "Waveform players and editors display stamps (🔥⭐❓💡) at their recorded timestamps. These stamps are most useful when tappable — jumping to the timestamp lets the band quickly find the moments that were marked during recording.",
   "analysis": "StampJumpRow renders a horizontal row of tappable stamp chips. Each chip is a `<button>` element (not a div) with aria-label='Jump to M:SS'. On tap: calls `onSeek(stamp.timestampMs / 1000)` which is passed in from the parent (WaveformPlayer, WaveformEditor, PublicPlayer). Chip colors match stamp type (fire=red, keep=yellow, uncertain=orange, idea=blue). The row accepts an optional `className` prop for layout customisation across its three usage contexts.",
   "successCriteria": "- Chips rendered as <button> elements (keyboard accessible, screen-reader compatible)\n- Each chip: aria-label='Jump to M:SS' (time formatted in human-readable minutes:seconds)\n- Tap calls onSeek with timestamp in seconds\n- Chip colors: fire=#ef4444, keep=#eab308, uncertain=#f97316, idea=#3b82f6\n- Hidden when stamps array is empty (returns null)\n- className prop accepted for layout context (WaveformPlayer vs. Editor vs. PublicPlayer)",
@@ -25,8 +32,17 @@
   "componentFile": "components/clips/StampJumpRow.tsx",
   "userGuide": "Colored dots along the bottom of the waveform mark moments stamped during recording. Tap any dot to jump to that moment in the audio.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-11" },
-    { "from": "active", "to": "frozen", "date": "2026-04-11" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-11"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-11"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": []
 }

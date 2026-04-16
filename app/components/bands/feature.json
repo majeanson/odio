@@ -94,5 +94,13 @@
       ],
       "reason": "Drive management page: DriveFilesClient with sync, delete-source, and delete-clip actions. check-file and delete-source API routes added."
     }
+  ],
+  "externalDependencies": [
+    "odio-2026-003",
+    "odio-2026-021",
+    "odio-2026-023",
+    "odio-2026-049",
+    "odio-2026-051",
+    "odio-2026-052"
   ]
 }

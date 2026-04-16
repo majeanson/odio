@@ -6,7 +6,13 @@
   "buildOrder": 8,
   "schemaVersion": 1,
   "domain": "sessions",
-  "tags": ["session", "header", "inline-edit", "rename", "navigation"],
+  "tags": [
+    "session",
+    "header",
+    "inline-edit",
+    "rename",
+    "navigation"
+  ],
   "problem": "The session clip list needs a page title that shows the session name and allows inline rename (tap to edit). The rename must PATCH to Postgres immediately — no separate save button.",
   "analysis": "SessionHeaderClient renders the page header for the session clip list page. Uses InlineEdit component for the session name. Session name is the h1/page title. Renders as a client component because InlineEdit requires interactivity.\n\nAlso renders the '+ New Clip' or session-level action buttons in the header right slot (passed to PageLayout's headerRight prop).",
   "successCriteria": "- Session name rendered as tappable InlineEdit (max 40ch)\n- Tap → keyboard opens, inline input\n- Save (Return) → PATCH /api/sessions/[sessionId] { name }, page title updates immediately\n- Cancel (blur/Escape) → reverts to original name\n- Header right slot: '+ New Clip' for Recorder/Editor, absent for Member",
@@ -16,7 +22,14 @@
   "componentFile": "components/sessions/SessionHeaderClient.tsx",
   "userGuide": "Tap the session name at the top of a session to rename it. Changes are saved automatically when you press Return.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": [
+    "odio-2026-024"
+  ]
 }

@@ -6,7 +6,13 @@
   "buildOrder": 4,
   "schemaVersion": 1,
   "domain": "band",
-  "tags": ["band", "onboarding", "invite", "join", "first-run"],
+  "tags": [
+    "band",
+    "onboarding",
+    "invite",
+    "join",
+    "first-run"
+  ],
   "problem": "Most users arrive in Odio as joiners — they received an invite link from a band creator. The join flow must be frictionless: one tap to join, then immediately into the band's session list. No Drive authorization needed for joiners (they don't upload).",
   "analysis": "JoinBandClient renders the joiner first-run screen: band name at top, 'Join [Band Name]' amber primary button, brief description 'You've been invited to join this band's recording sessions.'\n\nOn 'Join': POST /api/bands/[bandId]/join with the invite token. On success: router.push to band session list. On error (invalid token, already a member, token expired): error message inline.\n\nThe invite token is in the URL (/invite/[token]) and was stored in a session cookie through the OAuth redirect flow. JoinBandClient reads the token from the URL or cookie.",
   "successCriteria": "- Renders band name and 'Join [Band Name]' button\n- Button tap: POST to join endpoint, navigates to session list on success\n- Error states: 'Invalid invite link', 'Already a member', 'Invite has expired'\n- No Drive authorization step (joiners are MEMBER or EDITOR role — no drive.file scope requested)\n- Loading state on join button while POST in-flight",
@@ -25,7 +31,14 @@
   "componentFile": "components/bands/JoinBandClient.tsx",
   "userGuide": "When you follow a band invite link, you'll see the band name and a Join button. Tap it to get immediate access to the band's sessions and clips.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": [
+    "odio-2026-003"
+  ]
 }

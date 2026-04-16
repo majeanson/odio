@@ -6,7 +6,15 @@
   "buildOrder": 11,
   "schemaVersion": 1,
   "domain": "collaboration",
-  "tags": ["votes", "collaboration", "polling", "keep", "revise", "pass", "clip-detail"],
+  "tags": [
+    "votes",
+    "collaboration",
+    "polling",
+    "keep",
+    "revise",
+    "pass",
+    "clip-detail"
+  ],
   "problem": "After editing, the band needs to converge on which version is ready. A lightweight vote (Keep/Revise/Pass) scoped per version gives structure to 'should we ship this cut?' without requiring a group call or a long comment thread.",
   "analysis": "VotePanel renders three vote buttons (Keep / Revise / Pass) and the current vote tally. It appears both in VersionCard rows (compact inline layout) and in the CollaborationSection Team tab (full-width layout).\n\nVotes are per-version per-member. The current user's active vote is highlighted (amber border on selected button). Tapping a different option immediately replaces the previous vote (optimistic update via PATCH /api/clips/[clipId]/votes). Tally shown as `2 Keep · 1 Revise` in text-xs text-secondary.\n\nFrozen clips: VotePanel hidden entirely (isFrozen prop).\n\nAll-voted-Keep detection: CollaborationSection (not VotePanel) checks if all members have voted Keep on the same version and shows the auto-freeze prompt.",
   "successCriteria": "- Keep/Revise/Pass buttons rendered equally spaced\n- Current user's vote highlighted with amber border\n- Tapping another option: optimistic UI update immediately, PATCH to Postgres\n- Tally shows all vote counts in text-xs below buttons\n- Votes can be cast on any version (not just latest)\n- Hidden (returns null) when isFrozen\n- Disabled (aria-disabled) when offline (isOnline=false prop)",
@@ -25,7 +33,14 @@
   "componentFile": "components/clips/VotePanel.tsx",
   "userGuide": "Tap Keep, Revise, or Pass to vote on a version. You can change your vote anytime. The tally below shows what everyone thinks.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": [
+    "odio-2026-016"
+  ]
 }

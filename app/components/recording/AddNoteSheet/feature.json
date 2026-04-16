@@ -6,7 +6,14 @@
   "buildOrder": 6,
   "schemaVersion": 1,
   "domain": "recording",
-  "tags": ["recording", "annotation", "note", "sheet", "keyboard", "ios"],
+  "tags": [
+    "recording",
+    "annotation",
+    "note",
+    "sheet",
+    "keyboard",
+    "ios"
+  ],
   "problem": "During recording, a band member sometimes wants to capture a longer thought than a stamp allows — 're-record the bridge', 'drummer was off-tempo here', 'strong verse'. Stamps are single-emoji; notes allow free text. But the note input must not disrupt the recording or require navigating away.",
   "analysis": "AddNoteSheet is a lightweight bottom sheet that appears in response to the 'Add note' tap on the Recording screen. It slides up with the keyboard using `env(keyboard-inset-height)` for positioning — the sheet sits directly above the keyboard, not behind it.\n\nContent:\n- Single-line text input, placeholder 'What just happened?'\n- Character counter appears at 100+ chars (text-xs text-muted, right-aligned). Max: 120 chars\n- 'Save' and 'Cancel' buttons above the keyboard (within the sheet, ~44px tall)\n\nOn Save: annotation object `{ text, timestampMs }` appended to local state (flushed to Postgres on recording stop). Sheet dismisses. Recording continues uninterrupted. No haptic on save (avoid disrupting the take).\n\nOn Cancel or swipe-down: discards, recording continues.",
   "successCriteria": "- Sheet slides up from bottom and sits above keyboard (not hidden behind it)\n- Uses env(keyboard-inset-height) for keyboard-aware positioning on iOS and Android\n- Single-line input with placeholder 'What just happened?'\n- Character counter visible at 100+ chars, max 120\n- Save button calls onSave(text, currentTimestampMs), dismisses sheet\n- Cancel button dismisses, discards\n- Swipe-down gesture dismisses, discards\n- No haptic on save\n- Recording (MediaRecorder) continues without interruption during sheet interaction",
@@ -24,5 +31,8 @@
     "120-char limit is a UX spec requirement — notes longer than 120 chars are not supported"
   ],
   "revisions": [],
-  "statusHistory": []
+  "statusHistory": [],
+  "externalDependencies": [
+    "odio-2026-021"
+  ]
 }

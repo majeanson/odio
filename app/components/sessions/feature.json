@@ -97,8 +97,22 @@
     {
       "date": "2026-04-15",
       "author": "marc+claude",
-      "fields_changed": ["analysis", "implementation", "successCriteria", "userGuide"],
+      "fields_changed": [
+        "analysis",
+        "implementation",
+        "successCriteria",
+        "userGuide"
+      ],
       "reason": "ClipCard: added stage chip in meta row (colored pill per ClipStage, hidden when frozen). Added shuffle button next to clip name (re-rolls death metal name via generateDeathMetalName + PATCH, non-frozen only)."
     }
+  ],
+  "externalDependencies": [
+    "odio-2026-005",
+    "odio-2026-003",
+    "odio-2026-037",
+    "odio-2026-023",
+    "odio-2026-024",
+    "odio-2026-053",
+    "odio-2026-054"
   ]
 }

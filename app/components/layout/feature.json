@@ -100,5 +100,11 @@
       ],
       "reason": "Back button <a>→<Link>, Clips tab hidden without sessionId, pb-safe→pb-[56px+safe-area] session page fix, removed duplicate + Record button from session page"
     }
+  ],
+  "externalDependencies": [
+    "odio-2026-003",
+    "odio-2026-046",
+    "odio-2026-047",
+    "odio-2026-048"
   ]
 }

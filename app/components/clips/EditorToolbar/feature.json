@@ -6,7 +6,14 @@
   "buildOrder": 9,
   "schemaVersion": 1,
   "domain": "editing",
-  "tags": ["editor", "toolbar", "trim", "split", "cut-regions", "quick-action"],
+  "tags": [
+    "editor",
+    "toolbar",
+    "trim",
+    "split",
+    "cut-regions",
+    "quick-action"
+  ],
   "problem": "Creating cut regions by dragging is precise but slow for the most common editing tasks: trimming dead air from the start and end (80% of edits), and splitting a clip at a specific time. Quick-action buttons accelerate these workflows without requiring manual dragging.",
   "analysis": "EditorToolbar renders three action buttons: Trim, Clear All, Split.\n\n- **Trim:** pre-seeds start cut (0 → 20% of duration) + end cut (80% → 100%). Replaces any existing start/end cuts. Gives immediate region handles the user can then drag to fine-tune. No dialog.\n- **Clear All:** removes all cut regions. Button disabled when no cuts exist (hasCuts=false prop). Immediate — no confirmation (operation is undoable via undo stack).\n- **Split:** enters split mode. Opens WaveformSplitter controls. The waveform enters split mode — a cyan split marker appears that the user positions. Confirm splits the clip into Part A and Part B via API.\n\nPosition: below the waveform area, above the cut list.",
   "successCriteria": "- Trim button: adds start/end cuts at 20%/80% boundaries immediately\n- Clear All: removes all cuts, disabled when hasCuts=false\n- Split: enters split mode, shows WaveformSplitter panel, WaveformCanvas shows split marker\n- All buttons: minimum 44px touch target\n- Trim and Clear All do not require confirmation\n- Split requires confirmation (in WaveformSplitter sheet before API call)",
@@ -25,7 +32,14 @@
   "componentFile": "components/clips/EditorToolbar.tsx",
   "userGuide": "Tap Trim to automatically mark the start and end of the recording for trimming — then drag the region handles to adjust. Tap Clear All to start over. Tap Split to cut a song into two separate clips.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-11" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-11"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": [
+    "odio-2026-021"
+  ]
 }

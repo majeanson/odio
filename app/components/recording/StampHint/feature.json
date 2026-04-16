@@ -6,7 +6,14 @@
   "buildOrder": 6,
   "schemaVersion": 1,
   "domain": "recording",
-  "tags": ["onboarding", "hint", "tooltip", "stamps", "first-use", "localstorage"],
+  "tags": [
+    "onboarding",
+    "hint",
+    "tooltip",
+    "stamps",
+    "first-use",
+    "localstorage"
+  ],
   "problem": "The StampRow buttons show emoji only (🔥⭐❓💡) with no labels for maximum recording-screen clarity. First-time users don't know what each stamp means. A permanent label row would clutter the recording screen; a one-time hint achieves onboarding without ongoing noise.",
   "analysis": "StampHint renders a label row directly beneath the StampRow buttons:\n`🔥 Hot  ⭐ Keep  ❓ Unsure  💡 Idea` — text-xs text-secondary, equally spaced.\n\nBehavior:\n- On mount: check localStorage for `odio-stamps-hint-shown`\n- If NOT set: render the label row, start a 5s auto-dismiss timer\n- On first stamp tap (detected via `onStampFired` event from parent) OR on timer expiry: fade out (opacity 0, 300ms), then set `odio-stamps-hint-shown: 1` in localStorage, unmount\n- If already set: return null immediately — never shown again\n\nPositioning: absolute, below StampRow, above the record button. Must not push the record button below the thumb zone — z-index overlay, not block-flow.",
   "successCriteria": "- Shown on first visit to Recording Screen only (localStorage flag absent)\n- Label row appears beneath stamp buttons with correct emoji-label pairs\n- Auto-dismisses after 5s\n- Dismisses immediately on first stamp tap\n- Sets localStorage flag on dismiss — never shown again on subsequent visits\n- Does not shift record button position (absolute positioning, not in normal flow)\n- Fade-out animation on dismiss",
@@ -24,5 +31,8 @@
     "hint timing is hardcoded to 5s — not configurable"
   ],
   "revisions": [],
-  "statusHistory": []
+  "statusHistory": [],
+  "externalDependencies": [
+    "odio-2026-028"
+  ]
 }

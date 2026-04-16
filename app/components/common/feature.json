@@ -59,5 +59,8 @@
       ],
       "reason": "Fixed React '0' render bug (byteOffset short-circuit), added desktop sidebar offset (md:left-[220px]), added progress % label, added dismiss button for error states, documented Zustand store sync via refresh() in PostRecordScreen.doUpload(). Updated decisions to reflect error-only dismiss button."
     }
+  ],
+  "externalDependencies": [
+    "odio-2026-009"
   ]
 }

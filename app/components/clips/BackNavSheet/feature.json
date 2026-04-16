@@ -6,7 +6,14 @@
   "buildOrder": 10,
   "schemaVersion": 1,
   "domain": "editing",
-  "tags": ["editor", "back-navigation", "discard", "draft", "localstorage", "ux"],
+  "tags": [
+    "editor",
+    "back-navigation",
+    "discard",
+    "draft",
+    "localstorage",
+    "ux"
+  ],
   "problem": "If a user taps the back button in the Timeline Editor while they have unsaved cut regions, they will lose their work silently. The UX spec v2.0 requires an explicit confirmation with three options: keep the draft for later, discard, or cancel.",
   "analysis": "BackNavSheet is a BottomSheet triggered by the editor's back button handler when `hasUnsaved` is true (UnsavedBadge is visible). Content:\n\n1. **'Keep draft + leave'** (default, elevated button) — saves current cutMarks to localStorage as draft, then navigates back. Draft will be offered for restoration next time the editor opens for this clip. Clip card in Clip List shows a 'Draft saved' indicator.\n2. **'Discard edits + leave'** (danger text link, not a full button) — clears localStorage draft, navigates back without saving.\n3. **'Cancel'** (ghost, small) — closes sheet, returns to editor with cuts intact.\n\nIf `hasUnsaved` is false (no cuts), back button navigates directly without showing this sheet.",
   "successCriteria": "- Sheet opens when back button tapped and hasUnsaved=true\n- 'Keep draft + leave': writes cutMarks to localStorage (key: odio:draft:{clipId}), then router.back()\n- 'Discard edits + leave': clears localStorage draft, router.back()\n- 'Cancel': closes sheet, stays in editor\n- Sheet NOT shown when hasUnsaved=false (clean state)\n- Danger option uses text link style, not a full-width red button (reduces accidental taps)",
@@ -23,5 +30,8 @@
     "localStorage draft key is per-clipId — if the user has multiple browser tabs open editing the same clip, drafts may conflict"
   ],
   "revisions": [],
-  "statusHistory": []
+  "statusHistory": [],
+  "externalDependencies": [
+    "odio-2026-021"
+  ]
 }

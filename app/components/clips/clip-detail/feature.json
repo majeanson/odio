@@ -64,14 +64,31 @@
     {
       "date": "2026-04-15",
       "author": "marc+claude",
-      "fields_changed": ["analysis", "implementation", "successCriteria", "userGuide"],
+      "fields_changed": [
+        "analysis",
+        "implementation",
+        "successCriteria",
+        "userGuide"
+      ],
       "reason": "Vote tab: 'Voting on v{N}' context card with change link (makes vote-version coupling visible). ClipActionsClient: justFrozen state triggers post-freeze callout banner directing user to generate a share link."
     },
     {
       "date": "2026-04-15",
       "author": "marc+claude",
-      "fields_changed": ["analysis", "implementation", "successCriteria", "userGuide"],
+      "fields_changed": [
+        "analysis",
+        "implementation",
+        "successCriteria",
+        "userGuide"
+      ],
       "reason": "Major UI restructure: 3-tab (versions/vote/chat) → 2-tab (Edit/Team). Edit tab: actions CTA first, then version chain newest-to-oldest, then lifecycle actions. Team tab: vote + comments unified in one view (CollaborationSection scope=full), secondary priority for post-edit review phase. Version ordering reversed to newest-first."
     }
+  ],
+  "externalDependencies": [
+    "odio-2026-012",
+    "odio-2026-016",
+    "odio-2026-033",
+    "odio-2026-035",
+    "odio-2026-011"
   ]
 }

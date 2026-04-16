@@ -175,5 +175,8 @@
       "odio-2026-053",
       "odio-2026-054"
     ]
-  }
+  },
+  "externalDependencies": [
+    "odio-2026-004"
+  ]
 }

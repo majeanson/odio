@@ -6,7 +6,14 @@
   "buildOrder": 9,
   "schemaVersion": 1,
   "domain": "editing",
-  "tags": ["editor", "cut-list", "nudge", "precision", "cut-regions", "accessibility"],
+  "tags": [
+    "editor",
+    "cut-list",
+    "nudge",
+    "precision",
+    "cut-regions",
+    "accessibility"
+  ],
   "problem": "Dragging cut region handles on a waveform on mobile is imprecise for fine adjustments (±100ms range). Users need a fallback precision control for exact trimming without requiring zooming in and dragging handles at the pixel level.",
   "analysis": "CutList renders a collapsible list of all current cut regions below the EditorToolbar. Each cut row shows: cut index (Cut 1, Cut 2…), start time, end time, duration removed (`–M:SS`), and four nudge buttons (±10ms, ±100ms for each edge).\n\nExpand/collapse per row: tapping a row header expands it to show the nudge controls. Expanded row also provides: 'Zoom to cut' (scrolls+zooms the waveform to show the cut region full-screen), 'Jump to start' (seeks playhead to cut start), remove button (×).\n\nExpandedCutId is controlled externally by WaveformEditor (not local state) so WaveformEditor can also programmatically expand a cut on drag-select.",
   "successCriteria": "- All current cut regions listed in order (sorted by start time)\n- Each row: index, startMs formatted, endMs formatted, duration removed\n- Expand: shows ±10ms ±100ms nudge buttons for both start and end edges\n- Nudge: updates cut boundary, respects 1s minimum region size and overlap constraints\n- 'Remove' × button: removes this cut region, adds to undo stack\n- 'Zoom to cut': calls parent's applyZoom + scroll to position cut region full-width in viewport\n- ExpandedCutId prop (controlled) — parent manages which row is open",
@@ -26,7 +33,12 @@
   "componentFile": "components/clips/CutList.tsx",
   "userGuide": "The cut list below the waveform shows all your marked cuts. Tap any cut to expand it and fine-tune the start or end time with the nudge buttons. Tap the × to remove a cut.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-11" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-11"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": []
 }

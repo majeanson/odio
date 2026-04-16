@@ -59,5 +59,9 @@
       ],
       "reason": "Stamp chips in PublicPlayer are now tappable (StampJumpRow, same as WaveformPlayer). WaveformPlayButton extracted as shared component. Updated interact:false. Removed stale limitation about non-tappable stamps. Added limitation about no waveform-click seeking (no overlay div in PublicPlayer)."
     }
+  ],
+  "externalDependencies": [
+    "odio-2026-014",
+    "odio-2026-038"
   ]
 }

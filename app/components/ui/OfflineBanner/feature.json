@@ -6,7 +6,14 @@
   "buildOrder": 3,
   "schemaVersion": 1,
   "domain": "app-shell",
-  "tags": ["offline", "network", "resilience", "banner", "degradation", "ui-primitive"],
+  "tags": [
+    "offline",
+    "network",
+    "resilience",
+    "banner",
+    "degradation",
+    "ui-primitive"
+  ],
   "problem": "When a user loses their network connection mid-session, the app currently fails silently — vote buttons appear interactive but fail on submit, session lists appear to work but show stale data with no indication. This creates confusion and distrust.",
   "analysis": "A fixed top banner mounts in AuthShell and listens to `navigator.onLine` + `online`/`offline` browser events. When offline:\n\n- Banner appears: `bg-elevated`, amber left border, `⚡ No connection — showing last loaded data.` text, full-width, fixed below the system status bar area\n- Interactive mutation elements (vote buttons, comment submit, stage chip, submit version) become `disabled` with `aria-disabled` and a `title`/`tooltip`: \"You're offline\"\n- Read-only actions (play audio, browse versions, read comments) remain available if data is loaded\n- The Recording Screen is an **exception** — recording itself continues offline; the upload banner handles the upload queue\n\nOn reconnection (`online` event):\n- Banner auto-dismisses with a brief success state: `✓ Back online` (2s) then disappears\n- Polling resumes; queued mutations (if any) retry",
   "successCriteria": "- OfflineBanner hidden when navigator.onLine is true\n- OfflineBanner appears within 1s of connection loss\n- Vote buttons disabled while offline (aria-disabled, tooltip 'You're offline')\n- Comment submit disabled while offline\n- Stage chip tap blocked while offline\n- Submit version button disabled while offline\n- Play audio, read sessions/clips/versions, browse comments: unaffected by offline state\n- Recording screen: no OfflineBanner; upload queue handles separately\n- On reconnect: banner shows 'Back online' for 2s then dismisses\n- Banner does not shift page layout (fixed positioning, content has top padding = banner height)",
@@ -30,5 +37,6 @@
     "Queued mutations are not persisted — if the user navigates away and back while offline, pending votes/comments are lost"
   ],
   "revisions": [],
-  "statusHistory": []
+  "statusHistory": [],
+  "externalDependencies": []
 }

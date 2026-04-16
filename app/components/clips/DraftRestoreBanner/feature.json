@@ -6,7 +6,14 @@
   "buildOrder": 9,
   "schemaVersion": 1,
   "domain": "editing",
-  "tags": ["editor", "draft", "localstorage", "resilience", "recovery", "banner"],
+  "tags": [
+    "editor",
+    "draft",
+    "localstorage",
+    "resilience",
+    "recovery",
+    "banner"
+  ],
   "problem": "If a user's browser crashes or the page reloads mid-edit, all cut regions are lost — the editor opens blank. The user may not realise their work was saved in localStorage and abandon the session assuming the work is gone.",
   "analysis": "DraftRestoreBanner appears at the top of the editor when two conditions are true:\n1. `hasDraft` from useCutDraft (localStorage key `odio:draft:{clipId}` exists and has content)\n2. `cutMarks.length === 0` (editor currently has no cuts — so draft isn't already loaded)\n\nWhen both are true: shows a banner — 'You have unsaved edits from a previous session.' with two buttons: 'Resume editing' (loads saved cuts into editor) and 'Dismiss' (clears localStorage draft).\n\nOnce the user taps 'Resume' or 'Dismiss', banner unmounts and doesn't reappear (hasDraft becomes false).",
   "successCriteria": "- Banner visible only when hasDraft=true AND cutMarks.length === 0\n- 'Resume editing' button: calls onResume() which loads draft cutMarks into WaveformEditor state\n- 'Dismiss' button: calls onDismiss() which clears localStorage draft + hasDraft becomes false\n- Banner does not appear when editor already has cuts (user navigated back with live state)\n- Banner does not reappear after dismissal in same session",
@@ -25,7 +32,12 @@
   "componentFile": "components/clips/DraftRestoreBanner.tsx",
   "userGuide": "If your browser closed unexpectedly while you were editing cuts, a banner appears when you return offering to restore your work. Tap 'Resume' to get your cuts back, or 'Dismiss' to start fresh.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-11" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-11"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": []
 }

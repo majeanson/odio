@@ -6,7 +6,14 @@
   "buildOrder": 11,
   "schemaVersion": 1,
   "domain": "versioning",
-  "tags": ["stage", "clip-detail", "clip-list", "picker", "bottom-sheet", "metadata"],
+  "tags": [
+    "stage",
+    "clip-detail",
+    "clip-list",
+    "picker",
+    "bottom-sheet",
+    "metadata"
+  ],
   "problem": "A band tracks each clip's creative stage (idea / sketch / developing / demo-ready) to know which songs are close to done vs. just started. This needs to be changeable from both the clip list (quick update inline) and the clip detail page without navigating.",
   "analysis": "StageSelector renders the current stage as a tappable badge/chip. On tap → opens a BottomSheet with four stage options (idea, sketch, developing, demo-ready), current stage highlighted in amber. Tapping a stage saves via PATCH /api/sessions/[sessionId]/clips/[clipId] and dismisses the sheet.\n\nAvailable to Recorder and Editor roles. Member role sees a static badge (same visual, no tap response).\n\nUsed in: ClipCard (compact chip), ClipDetailClient (in Team tab or actions section).",
   "successCriteria": "- Stage badge tappable by Recorder/Editor, static for Member\n- Tap → BottomSheet with 4 options, current highlighted in amber\n- Select → optimistic update + PATCH to Postgres + sheet dismiss\n- Stage chip colors: idea (muted), sketch (blue-dim), developing (amber-dim), demo-ready (green-dim)\n- Accessible: aria-label 'Change stage' on button, aria-checked on active option",
@@ -25,7 +32,14 @@
   "componentFile": "components/clips/StageSelector.tsx",
   "userGuide": "Tap the stage chip (Idea, Sketch, Developing, Demo-Ready) on any clip to update where the song is in the creative process. Changes are visible to all band members immediately.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": [
+    "odio-2026-021"
+  ]
 }

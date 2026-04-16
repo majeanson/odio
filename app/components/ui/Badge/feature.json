@@ -6,7 +6,12 @@
   "buildOrder": 1,
   "schemaVersion": 1,
   "domain": "app-shell",
-  "tags": ["badge", "pill", "label", "ui-primitive"],
+  "tags": [
+    "badge",
+    "pill",
+    "label",
+    "ui-primitive"
+  ],
   "problem": "Clip cards need to display version count, frozen status, and activity state as compact labels without consuming layout space. A shared badge component prevents inconsistent pill styling across the app.",
   "analysis": "Small pill component: rounded-full, text-xs, px-2 py-0.5, font-medium. Variants: `default` (bg-elevated, text-secondary), `amber` (amber-tinted bg, amber text), `success` (green-tinted), `danger` (red-tinted). Used for: version count ('v3'), frozen status (🔒 Frozen), processing status, stage chips on clip cards.",
   "successCriteria": "- Renders as a rounded pill at text-xs\n- All four variants render with correct color scheme\n- Does not break layout when text is long (clips at max-w)",
@@ -23,8 +28,17 @@
   "componentFile": "components/ui/Badge.tsx",
   "userGuide": "Small labels on clip cards show version count, frozen status, and processing state.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": []
 }

@@ -6,7 +6,13 @@
   "buildOrder": 8,
   "schemaVersion": 1,
   "domain": "sessions",
-  "tags": ["session", "notes", "bottom-sheet", "metadata", "text-input"],
+  "tags": [
+    "session",
+    "notes",
+    "bottom-sheet",
+    "metadata",
+    "text-input"
+  ],
   "problem": "A band may want to capture session-level context — 'rehearsal at Marco's place, trying the new bridge section' — that doesn't belong on any individual clip. Session notes give the band a shared scratchpad for each jam night.",
   "analysis": "SessionNotesSheet is a BottomSheet that opens from a 'Notes' action on the session list card (or session header). Contains a multi-line textarea (no character limit shown, but reasonable max ~1000ch enforced on input). Save: PATCH /api/sessions/[sessionId] { notes: text }. Cancel: dismisses without saving. Notes are displayed as a 1-line preview on the Session List card (truncated).",
   "successCriteria": "- BottomSheet opens with current session notes pre-filled in textarea\n- Multi-line textarea, vertical resize, min-height 4 lines\n- Save: PATCH to Postgres, sheet dismisses, session card preview updates\n- Cancel: discards changes, sheet dismisses\n- Empty notes: allowed (blanks the notes field)\n- Loading state on Save button while PATCH in-flight",
@@ -18,7 +24,14 @@
   "componentFile": "components/sessions/SessionNotesSheet.tsx",
   "userGuide": "Tap the notes icon on a session to add shared notes for the whole band — 'great energy on song 3', 'fix the chorus next time'. Notes are visible to everyone in the band.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": [
+    "odio-2026-021"
+  ]
 }

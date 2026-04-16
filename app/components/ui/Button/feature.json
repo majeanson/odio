@@ -6,7 +6,12 @@
   "buildOrder": 1,
   "schemaVersion": 1,
   "domain": "app-shell",
-  "tags": ["button", "ui-primitive", "accessibility", "interaction"],
+  "tags": [
+    "button",
+    "ui-primitive",
+    "accessibility",
+    "interaction"
+  ],
   "problem": "The app needs consistent interactive button styling across all screens with reliable touch targets (≥44px), accessible focus states, loading states, and semantic variants (primary, danger, ghost) that don't need to be reimplemented per screen.",
   "analysis": "Shared Button component with variant system. All buttons: minimum 44px touch target height, font-weight 500, system font, cursor-pointer. Variants: `primary` (amber bg, dark text), `danger` (red bg, white text), `ghost` (transparent bg, text-secondary), `icon` (square, no text). `disabled` and `loading` states built-in (opacity 60%, pointer-events-none when disabled; spinner replaces label when loading). ButtonLink is the same styles applied to a Next.js `<Link>` for navigation actions.",
   "successCriteria": "- All buttons ≥ 44px tall\n- Primary variant: amber bg (#f59e0b), dark text\n- Danger variant: danger red bg, white text\n- Ghost variant: transparent, text-secondary\n- disabled prop: opacity-60, pointer-events-none, aria-disabled\n- loading prop: spinner replaces label, button remains disabled\n- Full-width option via `fullWidth` prop\n- ButtonLink renders a Next.js Link with same styling",
@@ -25,8 +30,17 @@
   "componentFile": "components/ui/Button.tsx",
   "userGuide": "Buttons throughout the app use a consistent amber (primary), red (danger), or subtle (ghost) style. All buttons are large enough to tap comfortably on mobile.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-10" },
-    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-10"
+    },
+    {
+      "from": "active",
+      "to": "frozen",
+      "date": "2026-04-10"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": []
 }

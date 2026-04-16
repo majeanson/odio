@@ -148,5 +148,11 @@
       ],
       "reason": "Corrected stale waveform architecture: interact:false (not true), RegionsPlugin removed (CSS divs via WaveformCanvas), useCutInteraction handles drag/resize. Removed stale limitation about edge handles blocking resize. Merged duplicate pointerEvents:none decision into single interact:false decision."
     }
+  ],
+  "externalDependencies": [
+    "odio-2026-014",
+    "odio-2026-003",
+    "odio-2026-038",
+    "odio-2026-021"
   ]
 }

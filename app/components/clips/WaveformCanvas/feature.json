@@ -6,7 +6,15 @@
   "buildOrder": 9,
   "schemaVersion": 1,
   "domain": "editing",
-  "tags": ["waveform", "canvas", "cut-regions", "overlay", "pointer-events", "wavesurfer", "css-divs"],
+  "tags": [
+    "waveform",
+    "canvas",
+    "cut-regions",
+    "overlay",
+    "pointer-events",
+    "wavesurfer",
+    "css-divs"
+  ],
   "problem": "The waveform display needs to show the audio waveform, cut regions (red or dark overlays), stamp dots, annotation pins, and a drag-interaction overlay — all layered correctly without WaveSurfer's built-in interactions (which conflict with custom cut region handling).",
   "analysis": "WaveformCanvas is a pure presenter with no internal state and no WaveSurfer API access. It receives all data via props and renders the layered canvas area:\n\n1. WaveSurfer mount div (interact:false — all built-in pointer events disabled)\n2. Cut band CSS divs (absolute positioned, pointer-events:none — display cuts but never block seek)\n3. Preview cut band during drag-create (semi-transparent, not yet committed)\n4. Edge grip indicators (24px zones as visual markers for resize hit detection)\n5. Single overlay div (absolute inset-0, z-20) — intercepts all pointer events, delegates to the caller's hook via passed event handlers\n6. Split marker (cyan vertical line + drag handle) — visible only in split mode\n7. Suggested-cut overlays (orange dashed) from collaborator suggestions\n\nTwo variants: `variant='edit'` (red cut bands, edge handles, overlay div active) and `variant='player'` (dark masking bands, no handles, no overlay — pointer events fall through to WaveSurfer seek).\n\nCut band positions are computed from `(ms / effectiveDurationMs) * waveTotalWidth - waveScrollLeft` to account for zoom and scroll. Props update when waveScrollLeft or waveTotalWidth change.",
   "successCriteria": "- WaveSurfer mounts in container div with interact:false\n- Cut bands (CSS divs) render at correct positions for given cutMarks, zoom, scroll\n- pointer-events:none on cut bands — click-to-seek works through them\n- Overlay div at z-20 intercepts all pointer events in edit variant\n- Player variant: no overlay, no handles, dark masking bands (not red)\n- Suggested-cut overlays render in orange dashed style, distinct from user cuts\n- Edge grip indicators visible as visual affordance at 24px from each cut edge\n- Preview cut band renders during drag-create (before release)\n- Stamp dots render at computed timestamp positions\n- Waveform loads progressively — shimmer shown on unrendered segments",
@@ -26,7 +34,12 @@
   "componentFile": "components/clips/WaveformCanvas.tsx",
   "userGuide": "The waveform display shows your audio as a wave. Red (or dark) bands show cut regions. Colored dots show moments stamped during recording. In the editor, drag on the waveform to add a cut.",
   "statusHistory": [
-    { "from": "draft", "to": "active", "date": "2026-04-11" }
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-11"
+    }
   ],
-  "revisions": []
+  "revisions": [],
+  "externalDependencies": []
 }
