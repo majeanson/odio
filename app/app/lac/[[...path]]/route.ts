@@ -25,10 +25,11 @@ const ALLOWED = new Set([
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ path: string[] }> },
+  { params }: { params: Promise<{ path?: string[] }> },
 ) {
   const { path: segments } = await params;
-  const filename = segments.join("/");
+  // /lac with no trailing segments → serve the hub index
+  const filename = segments && segments.length > 0 ? segments.join("/") : "index.html";
 
   if (!ALLOWED.has(filename)) {
     return new NextResponse("Not Found", { status: 404 });

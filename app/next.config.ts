@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   // Bundle lac-views/ HTML files with the /lac/* Lambda so they're
   // readable at runtime via fs.readFile (not served from public/).
   outputFileTracingIncludes: {
-    "/lac/(.*)": ["./lac-views/**"],
+    "/lac/**": ["./lac-views/**"],
   },
 };
 
