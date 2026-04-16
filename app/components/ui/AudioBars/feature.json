@@ -1,0 +1,33 @@
+{
+  "featureKey": "odio-2026-027",
+  "title": "AudioBars — Animated Audio Level Indicator",
+  "status": "frozen",
+  "priority": 2,
+  "buildOrder": 2,
+  "schemaVersion": 1,
+  "domain": "recording",
+  "tags": ["audio", "level-meter", "animation", "recording", "ui-primitive"],
+  "problem": "During recording, the user needs visual confirmation that the microphone is picking up sound. Without a level indicator, they cannot tell if the mic is connected, if it's recording silence, or if audio is clipping.",
+  "analysis": "AnimatedAudioBars renders a row of N vertical bars (default 5) that animate in height proportional to the current audio level (0.0–1.0). Used as the level meter on the Recording Screen. Receives a `level` prop (0–1, updated from Web Audio API AnalyserNode at ~60fps). Bar heights computed from `level` with some randomization per bar for a natural look. Colors: amber (#f59e0b) when level > 0, muted when silent.",
+  "successCriteria": "- Bars animate responsively to audio level input\n- Silent input: bars at minimum height (not zero — they should breathe slightly)\n- Loud input: bars reach near-maximum height\n- Smooth animation (requestAnimationFrame update from parent, no internal interval)\n- Amber color when active, text-muted when silent\n- Accessible: aria-hidden (purely decorative, level confirmed by text elsewhere)",
+  "implementation": "components/ui/AudioBars.tsx: props { level: number (0-1), barCount?: number }. Pure visual component — no audio API. Level is passed in from the parent recording hook (useAudioLevel or equivalent). Bars rendered as inline flex divs with height computed as `min + (level * range) + noise`.",
+  "decisions": [
+    {
+      "decision": "AudioBars is purely presentational — receives level as a prop",
+      "rationale": "Audio level computation (Web Audio API AnalyserNode, getByteFrequencyData) belongs in a hook, not a UI component. The component stays pure and reusable; the hook handles the browser API.",
+      "recommendation": "useAudioLevel hook computes level (0-1) from AnalyserNode and passes it to AudioBars via prop.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Level computation is frequency-averaged — clipping (levels > 1.0 from Web Audio) is clamped to 1.0 without a visual warning",
+    "Bar count is fixed at construction — responsive reflow not supported"
+  ],
+  "componentFile": "components/ui/AudioBars.tsx",
+  "userGuide": "The animated bars on the recording screen show that your microphone is working. If they don't move when you speak, check your mic permissions.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

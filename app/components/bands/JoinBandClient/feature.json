@@ -1,0 +1,31 @@
+{
+  "featureKey": "odio-2026-050",
+  "title": "JoinBandClient — Invite Link Band Join Flow",
+  "status": "active",
+  "priority": 1,
+  "buildOrder": 4,
+  "schemaVersion": 1,
+  "domain": "band",
+  "tags": ["band", "onboarding", "invite", "join", "first-run"],
+  "problem": "Most users arrive in Odio as joiners — they received an invite link from a band creator. The join flow must be frictionless: one tap to join, then immediately into the band's session list. No Drive authorization needed for joiners (they don't upload).",
+  "analysis": "JoinBandClient renders the joiner first-run screen: band name at top, 'Join [Band Name]' amber primary button, brief description 'You've been invited to join this band's recording sessions.'\n\nOn 'Join': POST /api/bands/[bandId]/join with the invite token. On success: router.push to band session list. On error (invalid token, already a member, token expired): error message inline.\n\nThe invite token is in the URL (/invite/[token]) and was stored in a session cookie through the OAuth redirect flow. JoinBandClient reads the token from the URL or cookie.",
+  "successCriteria": "- Renders band name and 'Join [Band Name]' button\n- Button tap: POST to join endpoint, navigates to session list on success\n- Error states: 'Invalid invite link', 'Already a member', 'Invite has expired'\n- No Drive authorization step (joiners are MEMBER or EDITOR role — no drive.file scope requested)\n- Loading state on join button while POST in-flight",
+  "implementation": "components/bands/JoinBandClient.tsx: 'use client'. Props { bandName, bandId, inviteToken }. Internal: joining (bool), error (string|null). On join: POST /api/bands/[bandId]/members { inviteToken } → router.push(/bands/[bandId]).",
+  "decisions": [
+    {
+      "decision": "Joiners are not prompted for Drive scope",
+      "rationale": "Audio upload and Drive access belong to the Recorder's account only. Joiners (Editor/Member) never upload audio. Requesting drive.file from joiners is unnecessary and increases friction — it adds an extra OAuth consent screen for a permission they'll never use.",
+      "recommendation": "Invite flow: sign in with profile+email scope only. No drive.file. Drive scope is only requested from band creators (Recorder role) during first-run.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Invite tokens are single-use or time-limited — expired tokens show an error with no way to request a new one from this screen"
+  ],
+  "componentFile": "components/bands/JoinBandClient.tsx",
+  "userGuide": "When you follow a band invite link, you'll see the band name and a Join button. Tap it to get immediate access to the band's sessions and clips.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

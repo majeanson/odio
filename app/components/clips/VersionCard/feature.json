@@ -1,0 +1,38 @@
+{
+  "featureKey": "odio-2026-033",
+  "title": "VersionCard — Version Row in Clip Detail Version List",
+  "status": "active",
+  "priority": 2,
+  "buildOrder": 10,
+  "schemaVersion": 1,
+  "domain": "versioning",
+  "tags": ["version", "clip-detail", "mini-player", "playback", "selection", "truncation"],
+  "problem": "The clip detail page lists all versions of a clip newest-first. Each row must communicate: which version it is, who made it, when, and how long the result is — plus allow selecting it for playback and jumping into the editor. This is the highest-frequency interaction on the clip detail screen.",
+  "analysis": "VersionCard renders one version row. Layout: single-line header `v{N} · {name} · {relativeTime} · {duration}`, description line (2-line clamp, 'Show more' if long), mini-player (play/pause 40px circle + elapsed timer), vote row (Keep/Revise/Pass + tally), 'Edit from this version' link.\n\nTruncation: display name max 12ch + ellipsis. Timestamp and duration always visible. Result duration in ui-monospace.\n\nSelection: tapping the card (outside mini-player) sets this version as the selected version in ClipDetailClient → syncs WaveformPlayer's activeCuts. Selected card: amber left border.\n\nFrozen state: 'Edit from this version' hidden entirely (not greyed). Vote buttons hidden entirely. Lock icon (🔒) visible on the version header if this version is the frozen one.",
+  "successCriteria": "- Renders v{N}, truncated name (12ch max), relative time, duration in one line\n- Description 2-line clamped with 'Show more' if > 2 lines\n- Mini-player play/pause button (40px) plays this version's audio from start\n- Only one mini-player active at a time (controlled by parent)\n- Vote row: Keep/Revise/Pass buttons, tally visible below\n- Votes are mutable (tapping another option replaces)\n- 'Edit from this version' links to /edit?fromVersionId={id}\n- On frozen clip: 'Edit from this version' hidden, vote buttons hidden, lock icon on frozen version\n- Selected card: amber left border (4px)\n- Tap outside mini-player selects card and notifies parent",
+  "implementation": "components/clips/VersionCard.tsx: props { version, isSelected, isFrozen, isTheFrozenVersion, isPlaying, onSelect, onPlayToggle, onVote, currentUserVote, voteTally, canEdit }. Renders in flex-col. Tap handler on wrapping div calls onSelect. Mini-player calls onPlayToggle. Vote buttons call onVote(value). 'Edit from this version': <Link href={editHref} /> hidden when isFrozen.",
+  "decisions": [
+    {
+      "decision": "Vote buttons hidden (not disabled) on frozen clips",
+      "rationale": "A frozen clip is decided — voting UI has no purpose and adds visual noise. Hiding it entirely keeps the frozen version card clean. Non-frozen versions on a frozen clip should also not show vote buttons — the versioning workflow is over.",
+      "recommendation": "Render vote row only when !isFrozen.",
+      "date": "2026-04-15"
+    },
+    {
+      "decision": "Mini-player controlled by parent (isPlaying, onPlayToggle props)",
+      "rationale": "Only one mini-player can be active at a time. If each VersionCard owned its own audio element, multiple could play simultaneously. Parent ClipDetailClient tracks activePlayingVersionId and passes isPlaying=true to the correct card only.",
+      "recommendation": "ClipDetailClient owns activePlayingVersionId state. VersionCard receives isPlaying + onPlayToggle. No audio state inside VersionCard.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Relative time ('5 min ago') uses client-side date computation — may be stale between polls",
+    "Description 'Show more' expands in-place — no animation"
+  ],
+  "componentFile": "components/clips/VersionCard.tsx",
+  "userGuide": "Each row in the clip's version list represents one edit. Tap the row to hear that version in the waveform player above. Tap the play button to listen to just that version inline. Vote Keep, Revise, or Pass to share your opinion with the band.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-11" }
+  ],
+  "revisions": []
+}

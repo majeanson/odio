@@ -1,0 +1,34 @@
+{
+  "featureKey": "odio-2026-020",
+  "title": "OfflineBanner — No-Connection State Degradation",
+  "status": "draft",
+  "priority": 2,
+  "buildOrder": 3,
+  "schemaVersion": 1,
+  "domain": "app-shell",
+  "tags": ["offline", "network", "resilience", "banner", "degradation", "ui-primitive"],
+  "problem": "When a user loses their network connection mid-session, the app currently fails silently — vote buttons appear interactive but fail on submit, session lists appear to work but show stale data with no indication. This creates confusion and distrust.",
+  "analysis": "A fixed top banner mounts in AuthShell and listens to `navigator.onLine` + `online`/`offline` browser events. When offline:\n\n- Banner appears: `bg-elevated`, amber left border, `⚡ No connection — showing last loaded data.` text, full-width, fixed below the system status bar area\n- Interactive mutation elements (vote buttons, comment submit, stage chip, submit version) become `disabled` with `aria-disabled` and a `title`/`tooltip`: \"You're offline\"\n- Read-only actions (play audio, browse versions, read comments) remain available if data is loaded\n- The Recording Screen is an **exception** — recording itself continues offline; the upload banner handles the upload queue\n\nOn reconnection (`online` event):\n- Banner auto-dismisses with a brief success state: `✓ Back online` (2s) then disappears\n- Polling resumes; queued mutations (if any) retry",
+  "successCriteria": "- OfflineBanner hidden when navigator.onLine is true\n- OfflineBanner appears within 1s of connection loss\n- Vote buttons disabled while offline (aria-disabled, tooltip 'You're offline')\n- Comment submit disabled while offline\n- Stage chip tap blocked while offline\n- Submit version button disabled while offline\n- Play audio, read sessions/clips/versions, browse comments: unaffected by offline state\n- Recording screen: no OfflineBanner; upload queue handles separately\n- On reconnect: banner shows 'Back online' for 2s then dismisses\n- Banner does not shift page layout (fixed positioning, content has top padding = banner height)",
+  "implementation": "TODO: implement after Auth Shell layout is stable.\n\n1. components/ui/OfflineBanner/OfflineBanner.tsx: client component. `useOnlineStatus()` hook (see below). Renders fixed top-0 banner when offline. Uses CSS var `--offline-banner-h` (similar to --upload-banner-h pattern) so sticky headers can offset.\n2. hooks/useOnlineStatus.ts: `useState(navigator.onLine)` + window event listeners for `online`/`offline`. Returns `{ isOnline, justReconnected }`.\n3. AuthShell.tsx: mount OfflineBanner.\n4. Mutation components (VotePanel, CommentComposer, StageSelector, SubmitVersionSheet): consume `useOnlineStatus().isOnline` and apply `disabled` when false.",
+  "decisions": [
+    {
+      "decision": "Recording screen is exempt from OfflineBanner",
+      "rationale": "MediaRecorder is fully local — recording works without a connection. Showing an offline banner on the recording screen would alarm the user mid-take when there's nothing actually wrong with their workflow. Upload queuing (UploadBanner + IndexedDB) handles the connectivity issue for uploads.",
+      "recommendation": "OfflineBanner checks `usePathname()` and returns null on /record routes.",
+      "date": "2026-04-15"
+    },
+    {
+      "decision": "Disable mutations, not navigation, while offline",
+      "rationale": "Full app lockdown while offline (preventing navigation) is hostile — the user may be browsing session history or reviewing versions while waiting to reconnect. Only block writes; reads from cached state remain available.",
+      "recommendation": "isOnline prop/hook propagated to mutation components only. No router.push() restrictions.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "navigator.onLine is unreliable in some environments (can report online while behind a captive portal) — OfflineBanner is best-effort",
+    "Queued mutations are not persisted — if the user navigates away and back while offline, pending votes/comments are lost"
+  ],
+  "revisions": [],
+  "statusHistory": []
+}

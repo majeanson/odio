@@ -1,0 +1,38 @@
+{
+  "featureKey": "odio-2026-028",
+  "title": "StampRow — One-Tap Timestamp Annotation During Recording",
+  "status": "active",
+  "priority": 1,
+  "buildOrder": 5,
+  "schemaVersion": 1,
+  "domain": "recording",
+  "tags": ["stamps", "annotation", "recording", "haptic", "touch", "one-tap"],
+  "problem": "During a live recording, a band member wants to mark interesting moments (a great riff, an uncertain section, an idea) without interrupting the take. Any UI with confirmation dialogs or text input is too slow and disruptive mid-jam.",
+  "analysis": "Four large buttons equally spaced across the recording screen: 🔥 (fire/hot, stamp-fire red), ⭐ (keep, stamp-keep yellow), ❓ (uncertain, stamp-uncertain orange), 💡 (idea, stamp-idea blue). Each button is 72px minimum tap target. One tap:\n1. Triggers light haptic feedback\n2. Records the current `recordingElapsedMs` as a timestamp\n3. Saves a `{ stampType, timestampMs }` to local state (flushed to Postgres on recording stop)\n\nNo confirmation, no text, no visual feedback beyond a brief button scale animation. Zero friction is the goal.\n\nFirst-use: the StampHint component (sibling) shows labels beneath the buttons for 5s on first visit.",
+  "successCriteria": "- Four stamp buttons rendered in equal horizontal distribution\n- Each button: minimum 72×72px touch target\n- Tap triggers light haptic (navigator.vibrate(50) where supported) + brief scale animation (0.95 → 1.0, 100ms)\n- Stamp saved with correct currentTimestampMs at moment of tap (not on release)\n- No confirmation step\n- First-use hint labels shown by StampHint (separate component) — StampRow itself has no hint logic",
+  "implementation": "components/recording/StampRow.tsx: props { onStamp: (type: StampType, timestampMs: number) => void }. StampType = 'FIRE' | 'KEEP' | 'UNCERTAIN' | 'IDEA'. Renders 4 buttons in flex-row gap-4. Each button: rounded-full, 72px, emoji centered, colored ring. onPointerDown (not onClick) fires for minimum tap latency. Scale animation via CSS class toggle.",
+  "decisions": [
+    {
+      "decision": "onPointerDown instead of onClick for minimum latency",
+      "rationale": "onClick fires after both pointerdown + pointerup (adds ~100-150ms vs pointerdown). For a live musical timestamp, 100ms earlier capture is meaningful — the beat has moved on. StampType annotation is written on pointerdown.",
+      "recommendation": "onPointerDown fires stamp + haptic. onClick not used on stamp buttons.",
+      "date": "2026-04-15"
+    },
+    {
+      "decision": "Stamps flushed to Postgres on recording stop, not per-stamp",
+      "rationale": "One Postgres write per stamp during recording creates N roundtrips mid-take, each competing with the audio recording thread. Batch write on stop: one POST /api/clips/[clipId]/stamps with all stamps collected during the session.",
+      "recommendation": "Stamps held in parent recording page state during recording. On stop: POST all at once after clip is created.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "navigator.vibrate() not supported on iOS — no haptic on Apple devices",
+    "Stamp timestamps are relative to recording start (elapsedMs) — if recording is paused (e.g., wake lock interruption), timestamps after the pause will be offset"
+  ],
+  "componentFile": "components/recording/StampRow.tsx",
+  "userGuide": "Tap any of the four icons while recording to mark that moment — 🔥 for something hot, ⭐ to flag a keeper, ❓ for uncertainty, 💡 for an idea. Your marks appear as colored dots on the waveform later.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

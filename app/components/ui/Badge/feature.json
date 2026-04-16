@@ -1,0 +1,30 @@
+{
+  "featureKey": "odio-2026-025",
+  "title": "Badge — Count and Status Label Pill",
+  "status": "frozen",
+  "priority": 3,
+  "buildOrder": 1,
+  "schemaVersion": 1,
+  "domain": "app-shell",
+  "tags": ["badge", "pill", "label", "ui-primitive"],
+  "problem": "Clip cards need to display version count, frozen status, and activity state as compact labels without consuming layout space. A shared badge component prevents inconsistent pill styling across the app.",
+  "analysis": "Small pill component: rounded-full, text-xs, px-2 py-0.5, font-medium. Variants: `default` (bg-elevated, text-secondary), `amber` (amber-tinted bg, amber text), `success` (green-tinted), `danger` (red-tinted). Used for: version count ('v3'), frozen status (🔒 Frozen), processing status, stage chips on clip cards.",
+  "successCriteria": "- Renders as a rounded pill at text-xs\n- All four variants render with correct color scheme\n- Does not break layout when text is long (clips at max-w)",
+  "implementation": "components/ui/Badge.tsx: props { variant?: 'default'|'amber'|'success'|'danger', children }. Pure presentational — no state.",
+  "decisions": [
+    {
+      "decision": "Badge is purely presentational — no click handling",
+      "rationale": "Interactive badges (e.g., stage chip that opens a picker) are handled by the caller wrapping Badge in a <button>. Badge itself never manages interaction state.",
+      "recommendation": "StageSelector wraps Badge in a button; VotePanel uses raw Badge for tallies.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [],
+  "componentFile": "components/ui/Badge.tsx",
+  "userGuide": "Small labels on clip cards show version count, frozen status, and processing state.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

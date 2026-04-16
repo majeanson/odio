@@ -1,0 +1,31 @@
+{
+  "featureKey": "odio-2026-034",
+  "title": "VotePanel — Keep / Revise / Pass Vote UI",
+  "status": "active",
+  "priority": 2,
+  "buildOrder": 11,
+  "schemaVersion": 1,
+  "domain": "collaboration",
+  "tags": ["votes", "collaboration", "polling", "keep", "revise", "pass", "clip-detail"],
+  "problem": "After editing, the band needs to converge on which version is ready. A lightweight vote (Keep/Revise/Pass) scoped per version gives structure to 'should we ship this cut?' without requiring a group call or a long comment thread.",
+  "analysis": "VotePanel renders three vote buttons (Keep / Revise / Pass) and the current vote tally. It appears both in VersionCard rows (compact inline layout) and in the CollaborationSection Team tab (full-width layout).\n\nVotes are per-version per-member. The current user's active vote is highlighted (amber border on selected button). Tapping a different option immediately replaces the previous vote (optimistic update via PATCH /api/clips/[clipId]/votes). Tally shown as `2 Keep · 1 Revise` in text-xs text-secondary.\n\nFrozen clips: VotePanel hidden entirely (isFrozen prop).\n\nAll-voted-Keep detection: CollaborationSection (not VotePanel) checks if all members have voted Keep on the same version and shows the auto-freeze prompt.",
+  "successCriteria": "- Keep/Revise/Pass buttons rendered equally spaced\n- Current user's vote highlighted with amber border\n- Tapping another option: optimistic UI update immediately, PATCH to Postgres\n- Tally shows all vote counts in text-xs below buttons\n- Votes can be cast on any version (not just latest)\n- Hidden (returns null) when isFrozen\n- Disabled (aria-disabled) when offline (isOnline=false prop)",
+  "implementation": "components/clips/VotePanel.tsx: props { versionId, currentUserVote: VoteValue|null, tallies: {KEEP:n, REVISE:n, PASS:n}, onVote: (value: VoteValue) => void, isFrozen: boolean, isOnline?: boolean }. Three button elements, aria-pressed on active. Tally below. Calls onVote on tap (parent handles optimistic update + API call).",
+  "decisions": [
+    {
+      "decision": "Votes are mutable — tapping a different option replaces current vote",
+      "rationale": "Band opinions evolve as new versions are submitted. A member who voted Revise on v2 should be able to change to Keep on v3 without a delete-then-create flow. PATCH endpoint upserts on (clipId, userEmail) unique constraint.",
+      "recommendation": "PATCH /api/clips/[clipId]/votes with { versionId, value } — upserts by user email.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Vote button layout is cramped on narrow screens when all three labels are shown — consider icon-only mode below 320px"
+  ],
+  "componentFile": "components/clips/VotePanel.tsx",
+  "userGuide": "Tap Keep, Revise, or Pass to vote on a version. You can change your vote anytime. The tally below shows what everyone thinks.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

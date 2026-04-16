@@ -1,0 +1,28 @@
+{
+  "featureKey": "odio-2026-036",
+  "title": "MiniPlayer — Inline Audio Playback on Version Cards",
+  "status": "draft",
+  "priority": 2,
+  "buildOrder": 12,
+  "schemaVersion": 1,
+  "domain": "versioning",
+  "tags": ["audio", "playback", "version-card", "mini-player", "inline", "clip-detail"],
+  "problem": "On the clip detail version list, a band member wants to quickly audition a specific version to check if an edit worked — without opening the full editor or navigating to a separate playback screen. They need a play button directly on the version card.",
+  "analysis": "MiniPlayer renders a compact play/pause button (40px circle, bg-elevated) and an elapsed timer in monospace (text-xs) to the right. Audio plays via the same `/api/audio/[clipId]` proxy as the full WaveformPlayer, but applies the version's cutMarks server-side or via virtual seek (same skip-cuts logic).\n\nOne active at a time: controlled externally (isPlaying + onToggle props). Parent ClipDetailClient tracks activePlayingVersionId. Starting a new MiniPlayer stops any other active one.\n\nAudio plays from start — no seek bar on the mini-player. Elapsed timer counts up from 0. Tapping play/pause calls onToggle. Tapping the card area (outside the button) does nothing (selection is handled by the card itself).\n\nThis is distinct from WaveformPlayButton (which is the 80px amber button used in WaveformPlayer/WaveformEditor/PublicPlayer). MiniPlayer is 40px, elevated bg, not amber.",
+  "successCriteria": "- 40px circle play/pause button, bg-elevated color\n- Elapsed timer in ui-monospace text-xs to the right of button, shows while playing\n- isPlaying=true: pause icon, timer counting up\n- isPlaying=false: play icon, timer at last position or 0\n- onToggle called on button tap\n- Audio plays from start on first play; resumes from paused position if paused mid-play\n- Card area tap does not trigger play (event not propagated from card tap to mini-player)\n- Disabled state when clip is still processing (transcodeStatus = PENDING)",
+  "implementation": "TODO:\n1. components/clips/MiniPlayer/MiniPlayer.tsx: props { clipId, versionId, cutMarks, isPlaying, onToggle, disabled }. Internal: audioRef (HTMLAudioElement), elapsedMs (for timer). On isPlaying change: audio.play() / audio.pause(). Audio src: `/api/audio/${clipId}`. Skip-cuts via timeupdate handler (same approach as WaveformPlayer in useWaveSurfer). Elapsed timer: setInterval when playing, clears on pause/unmount.",
+  "decisions": [
+    {
+      "decision": "No seek bar on MiniPlayer",
+      "rationale": "The MiniPlayer is for quick auditioning — 'does this edit sound right?' A seek bar implies the user wants fine-grained listening control. That level of attention belongs in the full WaveformPlayer (clip detail top) or WaveformEditor. MiniPlayer is listen-from-start only.",
+      "recommendation": "No seek controls. Play from start, pause, resume. For detailed listening: select the version in the version list to sync it to the full WaveformPlayer above.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Audio proxy adds server-side latency vs. direct URL — first play may take 500-1000ms to start on cold connection",
+    "Skip-cuts during playback is client-side virtual preview — very short cuts (<200ms) may not be accurately skipped due to timeupdate resolution"
+  ],
+  "revisions": [],
+  "statusHistory": []
+}

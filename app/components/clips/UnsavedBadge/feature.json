@@ -1,0 +1,27 @@
+{
+  "featureKey": "odio-2026-044",
+  "title": "UnsavedBadge — Unsaved Edits Indicator in Editor Top Bar",
+  "status": "draft",
+  "priority": 3,
+  "buildOrder": 10,
+  "schemaVersion": 1,
+  "domain": "editing",
+  "tags": ["editor", "unsaved", "badge", "top-bar", "draft", "indicator"],
+  "problem": "The Timeline Editor's top bar shows the back button and the duration readout. When the user has added cut regions that haven't been submitted yet, there's no clear visual indicator. Tapping the back button with unsaved cuts would silently discard them — but the user doesn't know they're unsaved.",
+  "analysis": "UnsavedBadge renders in the editor top bar between the back button and the duration readout. It's a small amber dot + 'Unsaved' label in text-xs, inline.\n\nBehavior:\n- Appears as soon as any cut region is added (cutMarks.length > 0 AND version not yet submitted)\n- Disappears when: all cut regions are removed (cutMarks back to 0), OR submission completes successfully\n- Does NOT disappear just because a localStorage draft exists — badge reflects live editor state\n\nThe badge's purpose is to trigger the back-navigation discard prompt in the editor's back button handler. When the badge is visible (hasUnsaved=true), the back button shows the BackNavSheet instead of navigating directly.",
+  "successCriteria": "- Renders as amber dot + 'Unsaved' text-xs in top bar when cutMarks.length > 0\n- Hidden when cutMarks.length === 0\n- Hidden after successful submission\n- Positioned between back button and duration readout in top bar\n- aria-live='polite' (announces state to screen readers when it appears)",
+  "implementation": "TODO:\n1. components/clips/UnsavedBadge/UnsavedBadge.tsx: props { visible: boolean }. Returns null when !visible. Renders: amber dot (w-2 h-2 rounded-full bg-accent) + 'Unsaved' text-xs text-secondary, inline flex items-center gap-1.5.",
+  "decisions": [
+    {
+      "decision": "Badge is purely display — no click action",
+      "rationale": "The badge is a state indicator, not a button. The back-navigation action is on the back button. Clicking the badge directly should do nothing — it would be confusing if tapping 'Unsaved' opened a save dialog.",
+      "recommendation": "UnsavedBadge: no onClick, no pointer cursor. Back button's onClick handles the BackNavSheet trigger.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Badge relies on cutMarks.length being the source of truth — if cutMarks state drifts from localStorage draft, badge may show incorrect state"
+  ],
+  "revisions": [],
+  "statusHistory": []
+}

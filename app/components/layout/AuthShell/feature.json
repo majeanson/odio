@@ -1,0 +1,31 @@
+{
+  "featureKey": "odio-2026-047",
+  "title": "AuthShell — Authenticated Layout Wrapper",
+  "status": "active",
+  "priority": 1,
+  "buildOrder": 3,
+  "schemaVersion": 1,
+  "domain": "app-shell",
+  "tags": ["layout", "auth", "shell", "upload-banner", "offline-banner", "bottom-tab-bar"],
+  "problem": "All authenticated pages need shared layout elements: the BottomTabBar, the UploadBanner (persistent upload progress), and eventually the OfflineBanner (global offline indicator). These cannot live at the page level — they'd need to be duplicated on every route. A single client-side shell mounts them once.",
+  "analysis": "AuthShell is a client component mounted in the `app/(auth)/layout.tsx` server layout (which handles auth checks). AuthShell renders:\n1. UploadBanner (fixed top, always present when uploads are active)\n2. OfflineBanner (fixed top, when offline) — planned\n3. Main content slot (`{children}`)\n4. BottomTabBar (fixed bottom)\n\nAuthShell extracts `bandId` and `sessionId` from `usePathname()` to pass to BottomTabBar (for Clips tab visibility logic) and to other global components that need routing context.\n\nDoes not handle auth redirect itself — that's the responsibility of the server layout using `getServerSession`.",
+  "successCriteria": "- UploadBanner mounted and visible on all authenticated pages\n- BottomTabBar mounted at bottom of viewport\n- bandId and sessionId correctly extracted from pathname and passed to BottomTabBar\n- OfflineBanner slot ready for mounting (even if component not yet implemented)\n- Children content renders between top (banners) and bottom (tab bar) sections",
+  "implementation": "components/layout/AuthShell.tsx: 'use client'. Uses usePathname() to extract bandId/sessionId from URL segments. Renders: <UploadBanner />, <OfflineBanner /> (when ready), <div className='flex-1'>{children}</div>, <BottomTabBar bandId={...} sessionId={...} />.",
+  "decisions": [
+    {
+      "decision": "AuthShell is a client component even though most of its content is static",
+      "rationale": "usePathname() requires a client component. Without usePathname(), BottomTabBar cannot determine which tabs to show or hide, and routing context cannot be passed down. The cost of a client boundary here is minimal — AuthShell itself renders no heavy content.",
+      "recommendation": "AuthShell: 'use client'. Its parent (app/(auth)/layout.tsx) is a server component that handles auth, then renders AuthShell as the client boundary.",
+      "date": "2026-04-11"
+    }
+  ],
+  "knownLimitations": [
+    "bandId/sessionId extraction is regex-based on pathname — URL structure changes require updating the extraction logic"
+  ],
+  "componentFile": "components/layout/AuthShell.tsx",
+  "userGuide": "AuthShell is an internal layout component — users don't interact with it directly. It ensures the upload progress bar and tab navigation are always visible.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

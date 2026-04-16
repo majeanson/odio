@@ -1,0 +1,32 @@
+{
+  "featureKey": "odio-2026-037",
+  "title": "ClipCard — Clip Row in Session Clip List",
+  "status": "active",
+  "priority": 2,
+  "buildOrder": 8,
+  "schemaVersion": 1,
+  "domain": "sessions",
+  "tags": ["clip", "clip-list", "card", "navigation", "stage", "activity-indicator", "delete"],
+  "problem": "The session clip list is the primary navigation surface for the editing workflow. Each row must communicate a clip's name, duration, version count, stage, and activity state at a glance — plus support quick-delete for the Recorder without leaving the list.",
+  "analysis": "ClipCard renders one row in the clip list. Layout: clip name (InlineEdit), duration (raw → result if versions exist), version badge, StageSelector chip, frozen lock icon, activity indicator (amber left border if new activity), 'Processing…' state.\n\nProcessing state: card at 60% opacity, spinner replaces duration, no version badge, no stage chip. Tapping a processing card shows a Toast.\n\nActivity indicator: amber 4px left border when new votes/comments exist since last viewed. Clears when clip detail is opened.\n\nDelete (Recorder only): iOS swipe-left → 'Delete' button. Android/desktop: long-press → context menu. Both → BottomSheet confirmation.\n\nTap navigates to /bands/[bandId]/sessions/[sessionId]/clips/[clipId].",
+  "successCriteria": "- Clip name editable inline (InlineEdit, max 60ch)\n- Duration shows source duration → result duration if versions exist\n- Version count badge visible\n- StageSelector chip tappable by Editor/Recorder, static for Member\n- Frozen lock icon visible when frozen\n- amber left border when new activity since last visit\n- Processing state: 60% opacity, spinner, no edit/stage controls, toast on tap\n- Swipe-left delete on iOS → danger button → BottomSheet confirm\n- Long-press delete on Android/desktop → context menu → BottomSheet confirm\n- Tap navigates to clip detail",
+  "implementation": "components/clips/ClipCard.tsx: props { clip, sessionId, bandId, canEdit, canDelete, hasNewActivity, onDelete }. Uses InlineEdit for clip name. StageSelector for stage chip. Badge for version count. Handles touch events for swipe-left (iOS) and long-press (Android/desktop) delete. Tap handler: router.push(clipDetailHref). Processing check: clip.transcodeStatus === 'PENDING'.",
+  "decisions": [
+    {
+      "decision": "Activity indicator is amber left border, not a dot or badge",
+      "rationale": "A dot badge competes visually with the version count badge and stage chip. An amber left border draws the eye subtly to the card without cluttering the metadata display. Border clears on clip detail visit (server marks as viewed or client tracks in sessionStorage).",
+      "recommendation": "4px left border, bg-accent, on cards where hasNewActivity=true. CSS: border-l-4 border-accent.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Swipe-left gesture is iOS Safari native feel only — Android swipe-left has no gesture affordance",
+    "InlineEdit within a tappable card: tap on the name text must be captured by InlineEdit, not by the card's navigation handler — requires stopPropagation on the InlineEdit wrapper"
+  ],
+  "componentFile": "components/clips/ClipCard.tsx",
+  "userGuide": "Each row in a session's clip list shows a recording. Tap a clip to open it. Tap the stage chip to update where the song is at. Tap the clip name to rename it. Swipe left to delete (only if you're the recorder).",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

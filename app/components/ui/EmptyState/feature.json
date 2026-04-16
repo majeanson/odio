@@ -1,0 +1,31 @@
+{
+  "featureKey": "odio-2026-023",
+  "title": "EmptyState — Zero-Content Placeholder with Action",
+  "status": "active",
+  "priority": 2,
+  "buildOrder": 2,
+  "schemaVersion": 1,
+  "domain": "app-shell",
+  "tags": ["empty-state", "onboarding", "zero-state", "ui-primitive", "accessibility"],
+  "problem": "Several screens (Session List, Clip List, Band Members) can be empty on first visit or after deletes. A blank screen gives no guidance on what to do next — users need a visual cue that emptiness is intentional plus a clear next action.",
+  "analysis": "Centered layout: icon (large, text-muted), heading (text-xl text-primary), subtext (text-sm text-secondary), optional primary CTA button. Used by:\n- Session List empty: icon=mic, heading='No sessions yet', subtext='Tap Record to capture your first jam', CTA='Record'\n- Clip List empty: icon=music-note, heading='No clips', subtext='Start a new session to record'\n- Member list empty: icon=users, heading='Just you', subtext='Share the invite link to bring your bandmates'\nThe `actionHref` prop uses ButtonLink for client-side navigation. `onAction` callback prop available for non-navigation actions (e.g., opening the tab).",
+  "successCriteria": "- Renders in center of available space (flex col, items-center, justify-center, min-h set by caller)\n- Icon: lucide icon name passed as prop, rendered at 48px, text-muted color\n- Heading: text-xl text-primary font-semibold\n- Subtext: text-sm text-secondary mt-2\n- CTA button: amber primary variant, shown only when actionLabel prop is provided\n- Role-conditional CTA: Record button hidden for MEMBER-role users on Session List empty state (caller handles role check before passing actionLabel prop)",
+  "implementation": "components/ui/EmptyState.tsx: props { icon: LucideIcon, heading: string, subtext?: string, actionLabel?: string, actionHref?: string, onAction?: () => void }. Renders icon via `<Icon className='w-12 h-12 text-muted' />`. ButtonLink if actionHref provided; Button with onClick if onAction provided. Neither if no actionLabel.",
+  "decisions": [
+    {
+      "decision": "Role-based CTA filtering is the caller's responsibility, not EmptyState's",
+      "rationale": "EmptyState is a generic UI primitive — it should not know about band roles. The caller (Session List page) passes actionLabel only when the current user is allowed to take that action. EmptyState renders whatever it receives.",
+      "recommendation": "In the Session List page server component: pass actionLabel='Record' only when role !== 'MEMBER'. EmptyState remains role-agnostic.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Only supports a single CTA — multi-action empty states (e.g., 'Create band' or 'Join band') must be handled with custom layouts"
+  ],
+  "componentFile": "components/ui/EmptyState.tsx",
+  "userGuide": "When a list has no items, a helpful message appears explaining the empty state and offering the next action to take.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

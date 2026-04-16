@@ -1,0 +1,34 @@
+{
+  "featureKey": "odio-2026-019",
+  "title": "Toast — Global Feedback Notification System",
+  "status": "draft",
+  "priority": 1,
+  "buildOrder": 2,
+  "schemaVersion": 1,
+  "domain": "app-shell",
+  "tags": ["toast", "feedback", "notification", "queue", "ui-primitive", "accessibility"],
+  "problem": "Multiple screens need to surface transient feedback (upload done, vote saved, copy confirmed, offline detected) without navigating away or blocking the UI. Currently each screen implements its own ad-hoc feedback UI, creating inconsistent timing, placement, and styling.",
+  "analysis": "A single shared Toast provider (React context + Zustand or reducer) renders one visible toast at a time from a FIFO queue. Positioned fixed at the bottom of the viewport, 16px above the tab bar (or 16px above safe-area if tab bar is hidden). Max 1 visible at a time — queue drains sequentially.\n\nThree visual types:\n- `info`: bg-elevated, no border accent\n- `success`: bg-elevated + 4px amber-left border\n- `error`: bg-elevated + 4px danger-red left border\n\nAuto-dismiss: info/success after 3s, error after 5s. Manual dismiss × button always present (32px tap target). Text: text-sm text-primary, max 2 lines (no truncation — wraps). No action buttons in toasts — actions live in sheets.\n\nZ-index: above tab bar and all screen content, below modals and bottom sheets. Max width 360px on wide viewports, full-width on mobile.",
+  "successCriteria": "- Toast appears at bottom of viewport, 16px above tab bar, on any showToast() call from any screen\n- Only one toast visible at a time; second toast queues and appears after first dismisses\n- info/success dismiss after 3s; error dismisses after 5s\n- × dismiss button always present and functional (32px min tap target)\n- Three visual types render correctly with correct border accent\n- Text wraps up to 2 lines — does not truncate\n- No action buttons in toasts — any action triggers a bottom sheet instead\n- Toast does not overlap tab bar or bottom safe area\n- Works on all screens including those where tab bar is hidden (recording, editor)",
+  "implementation": "TODO: implement after BottomSheet and layout primitives are stable.\n\n1. lib/toast.ts: `showToast({ message, type, duration? })` — writes to Zustand toastStore. Queue is an array; dequeue on dismiss or timeout.\n2. components/ui/Toast/Toast.tsx: client component mounted in AuthShell (same level as UploadBanner). Reads from toastStore. Renders fixed bottom-0 container. Animates in/out with CSS transition (translateY + opacity). Each toast item: bg-elevated div, optional left border, message text, × button.\n3. hooks/useToast.ts: helper for components to call showToast without importing the store directly.",
+  "decisions": [
+    {
+      "decision": "No action buttons in toasts",
+      "rationale": "Toasts are purely informational — they confirm that something happened or failed. Actions (Retry, Undo, Confirm) require deliberate user intent and should live in bottom sheets where they have more visual weight and cannot be accidentally tapped during auto-dismiss.",
+      "recommendation": "If a toast-level action is needed (e.g., 'Retry upload'), show a toast with the error message and a separate persistent UI element (like UploadBanner) that contains the action.",
+      "date": "2026-04-15"
+    },
+    {
+      "decision": "FIFO queue, max 1 visible",
+      "rationale": "Stacking toasts creates visual clutter and competes with the tab bar. A queue ensures all toasts are seen without overlapping. FIFO is natural — the first error fired is the most contextually relevant.",
+      "recommendation": "Zustand toastStore: { queue: ToastItem[], current: ToastItem | null }. On enqueue: if queue empty and no current, show immediately. Otherwise append to queue. On dismiss: shift queue, show next.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "No persistence — toasts are lost on page reload",
+    "Cannot be triggered from server components — only from client components via showToast()"
+  ],
+  "revisions": [],
+  "statusHistory": []
+}

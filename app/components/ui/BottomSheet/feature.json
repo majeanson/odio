@@ -1,0 +1,33 @@
+{
+  "featureKey": "odio-2026-021",
+  "title": "BottomSheet — Slide-Up Modal for Confirmations and Input",
+  "status": "frozen",
+  "priority": 1,
+  "buildOrder": 1,
+  "schemaVersion": 1,
+  "domain": "app-shell",
+  "tags": ["bottom-sheet", "modal", "confirmation", "sheet", "ui-primitive", "accessibility"],
+  "problem": "Destructive and important actions (freeze, delete, unfreeze, leave band, stage change) need a deliberate user confirmation step. Inline buttons can be accidentally tapped; a slide-up sheet forces a conscious second action and provides space for consequence copy.",
+  "analysis": "Fixed-position overlay with dark backdrop (rgba(0,0,0,0.6)). Sheet panel slides up from the bottom on mount (CSS translateY transition, 200ms ease-out). Content area: white/elevated rounded-t-2xl, safe-area-inset-bottom padding. Dismiss via: backdrop tap, swipe-down gesture, programmatic close, or Cancel button. Trap focus inside sheet when open (accessibility). Scroll lock on body while open. Children are passed as React nodes — sheet is a generic container.",
+  "successCriteria": "- Sheet slides up from bottom on open, slides down on close\n- Backdrop tap dismisses sheet\n- Body scroll locked while sheet is open\n- Focus trapped inside sheet (Tab cycles within sheet children)\n- Cancel button always present at bottom of sheet content\n- Swipe-down gesture dismisses\n- z-index above all page content and tab bar",
+  "implementation": "components/ui/BottomSheet.tsx: `open` + `onClose` props. Uses React portal (document.body). CSS transition on transform: translateY(0) ↔ translateY(100%). useEffect adds/removes `overflow:hidden` on document.body. useFocusTrap hook (tab/shift-tab cycle inside sheet). Children slot for arbitrary content.",
+  "decisions": [
+    {
+      "decision": "All actions that mutate data open a BottomSheet for confirmation",
+      "rationale": "Irreversible operations (freeze, delete, cleanup, unfreeze) need a deliberate second step. Bottom sheets allow showing contextual consequences (e.g., 'What gets deleted / What stays') that inline buttons cannot accommodate.",
+      "recommendation": "Every action that mutates data uses BottomSheet. Sheets contain consequence text + danger Button + ghost Cancel.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "Nested sheets are not supported — opening a sheet from within another sheet will break focus trap",
+    "Swipe-down gesture uses touch events only — no mouse drag to dismiss on desktop"
+  ],
+  "componentFile": "components/ui/BottomSheet.tsx",
+  "userGuide": "Bottom sheets appear as a slide-up panel when you tap a destructive or important action. Tap outside the sheet or swipe it down to cancel. Tap Cancel inside the sheet to close without taking action.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" },
+    { "from": "active", "to": "frozen", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

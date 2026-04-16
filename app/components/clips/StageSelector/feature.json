@@ -1,0 +1,31 @@
+{
+  "featureKey": "odio-2026-035",
+  "title": "StageSelector — Clip Development Stage Picker",
+  "status": "active",
+  "priority": 3,
+  "buildOrder": 11,
+  "schemaVersion": 1,
+  "domain": "versioning",
+  "tags": ["stage", "clip-detail", "clip-list", "picker", "bottom-sheet", "metadata"],
+  "problem": "A band tracks each clip's creative stage (idea / sketch / developing / demo-ready) to know which songs are close to done vs. just started. This needs to be changeable from both the clip list (quick update inline) and the clip detail page without navigating.",
+  "analysis": "StageSelector renders the current stage as a tappable badge/chip. On tap → opens a BottomSheet with four stage options (idea, sketch, developing, demo-ready), current stage highlighted in amber. Tapping a stage saves via PATCH /api/sessions/[sessionId]/clips/[clipId] and dismisses the sheet.\n\nAvailable to Recorder and Editor roles. Member role sees a static badge (same visual, no tap response).\n\nUsed in: ClipCard (compact chip), ClipDetailClient (in Team tab or actions section).",
+  "successCriteria": "- Stage badge tappable by Recorder/Editor, static for Member\n- Tap → BottomSheet with 4 options, current highlighted in amber\n- Select → optimistic update + PATCH to Postgres + sheet dismiss\n- Stage chip colors: idea (muted), sketch (blue-dim), developing (amber-dim), demo-ready (green-dim)\n- Accessible: aria-label 'Change stage' on button, aria-checked on active option",
+  "implementation": "components/clips/StageSelector.tsx: props { clipId, sessionId, currentStage, canEdit, onStageChange? }. Internal state: sheetOpen. Renders badge-button if canEdit; static Badge if not. BottomSheet contains 4 option rows. On select: call PATCH API → update state → onStageChange callback for parent to refresh.",
+  "decisions": [
+    {
+      "decision": "Stage change happens in a bottom sheet, not an inline dropdown",
+      "rationale": "An inline dropdown (select element) on a dark mobile UI is hard to style consistently across browsers. A BottomSheet provides native-feeling interaction with full control over appearance, matching the app's bottom-sheet-for-all-choices pattern.",
+      "recommendation": "BottomSheet with 4 full-width option rows. No select element used.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Stage change is not versioned — no history of stage transitions stored"
+  ],
+  "componentFile": "components/clips/StageSelector.tsx",
+  "userGuide": "Tap the stage chip (Idea, Sketch, Developing, Demo-Ready) on any clip to update where the song is in the creative process. Changes are visible to all band members immediately.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

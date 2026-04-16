@@ -1,0 +1,28 @@
+{
+  "featureKey": "odio-2026-032",
+  "title": "WakeLockWarning — Screen-Lock Risk Banner Before Recording",
+  "status": "draft",
+  "priority": 2,
+  "buildOrder": 6,
+  "schemaVersion": 1,
+  "domain": "recording",
+  "tags": ["recording", "wake-lock", "ios", "warning", "resilience", "banner"],
+  "problem": "iOS below 16.4 and any browser where Wake Lock API is denied will allow the screen to lock during recording. When the screen locks, iOS stops MediaRecorder — the recording silently ends. The user doesn't know until they look at their phone and find a partial clip. This warning must appear BEFORE recording starts, not mid-session.",
+  "analysis": "WakeLockWarning checks Wake Lock API availability on mount. Two cases require a warning:\n1. `'wakeLock' in navigator === false` — API not available (iOS < 16.4, some Android browsers)\n2. Wake Lock permission denied (detected after attempting to acquire)\n\nWhen a warning is needed: render a dismissible amber banner ABOVE the record button, before any recording starts:\n`⚠ Your screen may lock during recording. Keep your phone awake manually.`\nAmber background (bg-accent-dim), text-primary, text-sm. Dismiss × button (right side, 32px).\n\nThe banner is informational — it does not block recording. Tap × to dismiss (does not persist dismissal — shows again on next visit since the risk is always present on unsupported devices).\n\nTabSwitch/AppSwitch handling: WakeLockWarning also listens for `visibilitychange`. If `document.hidden` becomes true mid-recording, emit a `recordingInterrupted` event to the parent recording page. Parent shows the Post-Record screen (see recording page for full interrupt handling).",
+  "successCriteria": "- On mount: check 'wakeLock' in navigator\n- If unsupported: banner renders above record button before first recording tap\n- Banner: amber bg, dismiss × button, warning text\n- Banner does not block record button tap — it's above, not overlapping\n- On dismiss: banner hides for this session\n- During recording: visibilitychange listener active. On page hidden: emit onInterrupt()\n- onInterrupt() handled by recording page (shows post-record screen with partial clip)",
+  "implementation": "TODO:\n1. components/recording/WakeLockWarning/WakeLockWarning.tsx: props { recording: boolean, onInterrupt: () => void }. Checks `'wakeLock' in navigator` on mount. State: visible (bool), dismissed (bool). When !dismissed && !supported: render banner. useEffect on recording: when recording = true, add visibilitychange listener → if hidden, call onInterrupt().",
+  "decisions": [
+    {
+      "decision": "Warning appears before first tap, not on Wake Lock acquisition failure",
+      "rationale": "Wake Lock can only be acquired after recording starts (or after a user gesture). Waiting until acquisition to show a warning means the user may already be mid-take when they learn their screen can lock. Showing the banner on mount (before any tap) gives them time to read and prepare.",
+      "recommendation": "Check `'wakeLock' in navigator` synchronously on mount — no async needed for this check. Acquisition attempt happens in the parent recording page.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Wake Lock availability check (`'wakeLock' in navigator`) does not guarantee successful acquisition — even supported browsers may deny Wake Lock in low-power mode",
+    "No re-show after dismiss: if user dismisses and then the screen locks, they may be confused"
+  ],
+  "revisions": [],
+  "statusHistory": []
+}

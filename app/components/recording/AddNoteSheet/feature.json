@@ -1,0 +1,28 @@
+{
+  "featureKey": "odio-2026-031",
+  "title": "AddNoteSheet — Inline Note Capture During Recording",
+  "status": "draft",
+  "priority": 2,
+  "buildOrder": 6,
+  "schemaVersion": 1,
+  "domain": "recording",
+  "tags": ["recording", "annotation", "note", "sheet", "keyboard", "ios"],
+  "problem": "During recording, a band member sometimes wants to capture a longer thought than a stamp allows — 're-record the bridge', 'drummer was off-tempo here', 'strong verse'. Stamps are single-emoji; notes allow free text. But the note input must not disrupt the recording or require navigating away.",
+  "analysis": "AddNoteSheet is a lightweight bottom sheet that appears in response to the 'Add note' tap on the Recording screen. It slides up with the keyboard using `env(keyboard-inset-height)` for positioning — the sheet sits directly above the keyboard, not behind it.\n\nContent:\n- Single-line text input, placeholder 'What just happened?'\n- Character counter appears at 100+ chars (text-xs text-muted, right-aligned). Max: 120 chars\n- 'Save' and 'Cancel' buttons above the keyboard (within the sheet, ~44px tall)\n\nOn Save: annotation object `{ text, timestampMs }` appended to local state (flushed to Postgres on recording stop). Sheet dismisses. Recording continues uninterrupted. No haptic on save (avoid disrupting the take).\n\nOn Cancel or swipe-down: discards, recording continues.",
+  "successCriteria": "- Sheet slides up from bottom and sits above keyboard (not hidden behind it)\n- Uses env(keyboard-inset-height) for keyboard-aware positioning on iOS and Android\n- Single-line input with placeholder 'What just happened?'\n- Character counter visible at 100+ chars, max 120\n- Save button calls onSave(text, currentTimestampMs), dismisses sheet\n- Cancel button dismisses, discards\n- Swipe-down gesture dismisses, discards\n- No haptic on save\n- Recording (MediaRecorder) continues without interruption during sheet interaction",
+  "implementation": "TODO:\n1. components/recording/AddNoteSheet/AddNoteSheet.tsx: props { open, onSave: (text: string, timestampMs: number) => void, onClose: () => void, currentTimestampMs: number }. Uses CSS `env(keyboard-inset-height)` via inline style or Tailwind arbitrary value for bottom positioning. Internal state: text (string). Save button disabled if text.trim() === ''.",
+  "decisions": [
+    {
+      "decision": "env(keyboard-inset-height) not a BottomSheet — custom positioning",
+      "rationale": "The shared BottomSheet component positions itself fixed at the bottom of the viewport. With a keyboard open, 'bottom of viewport' is behind the keyboard on many browsers. env(keyboard-inset-height) (part of the CSS Visual Viewport API, supported on iOS 15.4+, Chrome 110+) allows the sheet to sit above the keyboard exactly. This cannot be achieved with the generic BottomSheet component without adding keyboard-awareness to it.",
+      "recommendation": "AddNoteSheet is a custom component that implements its own keyboard-aware positioning. Generic BottomSheet not used here.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "env(keyboard-inset-height) not supported on iOS < 15.4 or Chrome < 110 — sheet may appear partially behind keyboard on older browsers",
+    "120-char limit is a UX spec requirement — notes longer than 120 chars are not supported"
+  ],
+  "revisions": [],
+  "statusHistory": []
+}

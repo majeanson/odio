@@ -1,0 +1,32 @@
+{
+  "featureKey": "odio-2026-024",
+  "title": "InlineEdit — Tap-to-Edit Text Field",
+  "status": "active",
+  "priority": 2,
+  "buildOrder": 2,
+  "schemaVersion": 1,
+  "domain": "app-shell",
+  "tags": ["inline-edit", "rename", "input", "ui-primitive", "accessibility"],
+  "problem": "Session names, clip names, and band name are all editable. Adding a separate 'Edit' icon/button next to each name clutters the UI, especially on small-screen cards. The standard pattern in mobile UIs is tap-the-text-to-edit.",
+  "analysis": "InlineEdit renders as text in view mode. On tap: transitions to an `<input>` with the same text styling (no visual reflow — same font size, weight, color). Keyboard opens. Return/Done key saves to Postgres via `onSave(value)` callback (async). Tap away (blur) discards. Escape discards. Character limit enforced via `maxLength`. Empty value is not saved — reverts to previous value.\n\nUsed by: session name (max 40ch), clip name (max 60ch), band name (max 40ch).",
+  "successCriteria": "- Tap name text → input appears with same styling, keyboard opens\n- Return/Done → calls onSave(value), transitions back to text mode\n- Tap away (blur) → discards, reverts to original value\n- Escape → discards, reverts to original value\n- Empty string not saveable — reverts to previous on submit\n- maxLength enforced (no characters beyond limit accepted)\n- Loading state while onSave is in-flight (input disabled, subtle spinner)\n- Error state if onSave throws (brief inline error text, reverts to text mode after 2s)",
+  "implementation": "components/ui/InlineEdit.tsx: props { value: string, onSave: (newValue: string) => Promise<void>, maxLength?: number, className?: string }. Internal state: editing (bool) + draft (string). On tap → setEditing(true), autofocus input. On submit/blur: if draft !== value && draft.trim() !== '' → call onSave → setEditing(false) on success. Input styled to match the parent text class via `className` prop passthrough.",
+  "decisions": [
+    {
+      "decision": "Tap away (blur) discards rather than saves",
+      "rationale": "On mobile, the keyboard dismiss gesture triggers a blur event. If blur = save, accidentally dismissing the keyboard would commit an incomplete name. Explicit Return/Done is the save gesture — blur is always a cancel.",
+      "recommendation": "onBlur: setEditing(false), setDraft(value) — always discard on blur. Only save on onKeyDown Return or explicit submit.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "No multi-line support — clip names limited to single line",
+    "On iOS, tapping away on certain screen areas may not reliably fire blur — user must tap Return to save"
+  ],
+  "componentFile": "components/ui/InlineEdit.tsx",
+  "userGuide": "Tap any session name, clip name, or band name to rename it directly. Type the new name and press Done or Return to save. Tap anywhere else to cancel without saving.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

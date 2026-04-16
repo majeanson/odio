@@ -1,0 +1,32 @@
+{
+  "featureKey": "odio-2026-049",
+  "title": "MemberRow — Band Member List Row with Role Management",
+  "status": "active",
+  "priority": 2,
+  "buildOrder": 7,
+  "schemaVersion": 1,
+  "domain": "band",
+  "tags": ["band", "members", "role", "settings", "role-picker", "remove-member"],
+  "problem": "Band Settings lists all members with their roles. The Recorder needs to change roles and remove members from within the same row — without navigating to a separate member-management screen.",
+  "analysis": "MemberRow renders one member: avatar (initials, colored circle), display name, email (text-secondary), role chip (Badge).\n\nRole chip behavior:\n- **Recorder**: chip is a `<button>` → taps to open a BottomSheet picker with Recorder/Editor/Member options (current highlighted in amber). Saves via PATCH.\n- **Members/Editors**: chip is a static Badge — no tap response.\n- **Self-role chip**: always disabled (tooltip 'Can't change your own role'), regardless of role.\n\nDelete (Recorder only): iOS swipe-left → 'Remove' danger button. Android/desktop: long-press → context menu. Both → BottomSheet confirmation: 'Remove [Name]? They'll lose access immediately.' Cancel / Remove (danger).",
+  "successCriteria": "- Avatar initials + name + email rendered per row\n- Role chip: interactive for Recorder (not self), static for all others\n- Tap role chip → BottomSheet with 3 role options, current highlighted\n- Select role → PATCH to Postgres, chip updates optimistically\n- Self-role chip: disabled, tooltip text\n- Delete: swipe-left (iOS) or long-press (Android/desktop) → confirm sheet → DELETE membership\n- After delete: member row removed from list immediately",
+  "implementation": "components/bands/MemberRow.tsx: props { member, isSelf, canManage (=isRecorder), onRoleChange, onRemove }. Role chip: Button (canManage && !isSelf) or Badge (others). Delete: touch event handling for swipe/long-press. Both delete paths call onRemove(memberId) after confirmation.",
+  "decisions": [
+    {
+      "decision": "Self-role is always non-editable",
+      "rationale": "A Recorder downgrading themselves to Member with no other Recorder would leave the band with no one able to create sessions or freeze clips. Blocking self-role change prevents accidental lockout.",
+      "recommendation": "isSelf prop disables role chip regardless of canManage. UI: disabled badge with tooltip.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Role change is immediate with no undo — if Recorder accidentally changes another member's role, they must manually change it back",
+    "Drive access (if any) is not revoked when a member is removed — audio files on Drive are unaffected"
+  ],
+  "componentFile": "components/bands/MemberRow.tsx",
+  "userGuide": "In Band Settings, each member row shows their role. As the band creator (Recorder), you can tap a member's role chip to change it or swipe to remove them from the band.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

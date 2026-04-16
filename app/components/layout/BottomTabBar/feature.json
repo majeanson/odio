@@ -1,0 +1,32 @@
+{
+  "featureKey": "odio-2026-046",
+  "title": "BottomTabBar — Four-Tab Persistent Navigation",
+  "status": "active",
+  "priority": 1,
+  "buildOrder": 3,
+  "schemaVersion": 1,
+  "domain": "app-shell",
+  "tags": ["navigation", "tab-bar", "routing", "bottom-nav", "mobile-first", "role-based"],
+  "problem": "The app has four distinct areas (Sessions, Record, Clips, Band) that need to be reachable in one tap from anywhere in the app. Hierarchical-only navigation (back buttons) would require 3+ taps to switch from editing a clip to starting a new recording mid-jam.",
+  "analysis": "BottomTabBar renders four tabs fixed at the bottom of the viewport: Sessions (calendar icon), Record (mic icon), Clips (music-note icon), Band (users icon). 56px tall + safe-area-inset-bottom.\n\nActive tab: amber text + icon, label visible. Inactive tabs: text-muted, label hidden on tight viewports.\n\nHiding rules:\n- Tab bar hidden entirely on /edit routes (full-screen editor)\n- Record tab hidden for MEMBER-role users (members cannot initiate recording)\n- Clips tab hidden when no sessionId context (prevents duplicate tab pointing to same URL as Sessions)\n\nRecord tab accent ring pulses amber when a recording is actively in progress (detects via global recording state from Zustand).",
+  "successCriteria": "- Four tabs visible on all non-editor routes\n- Active tab: amber icon + label\n- Hidden on /bands/.../clips/.../edit routes\n- Record tab hidden for MEMBER role\n- Clips tab hidden when !sessionId\n- Record tab shows pulsing amber ring when recording is active\n- 44×56px touch target per tab\n- Content never hidden behind tab bar (pb-[calc(56px+env(safe-area-inset-bottom))] on pages)",
+  "implementation": "components/layout/BottomTabBar.tsx: client component. usePathname() to detect /edit routes + extract sessionId. useBandRole() hook for role check. useRecordingStore() for active-recording ring. Renders fixed bottom-0 flex-row nav with 4 items.",
+  "decisions": [
+    {
+      "decision": "Tab bar hidden during editor, not just partially visible",
+      "rationale": "The timeline editor is near-full-screen — the waveform, cut list, and submit button need all available vertical space. A partial tab bar would either cover content or require the editor to shrink. Full hide keeps the editing surface clean.",
+      "recommendation": "usePathname().includes('/edit') → return null from BottomTabBar.",
+      "date": "2026-04-10"
+    }
+  ],
+  "knownLimitations": [
+    "Clips tab disappears when navigating from session to band settings — the sessionId context is not preserved in the URL and is lost",
+    "Tab bar height is hardcoded at 56px — not responsive to font size settings"
+  ],
+  "componentFile": "components/layout/BottomTabBar.tsx",
+  "userGuide": "The tab bar at the bottom of the screen lets you switch between Sessions, Record, Clips, and Band settings with a single tap from anywhere in the app.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

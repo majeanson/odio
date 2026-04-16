@@ -1,0 +1,32 @@
+{
+  "featureKey": "odio-2026-052",
+  "title": "BandShareButton — Invite Link and QR Code Generator",
+  "status": "active",
+  "priority": 2,
+  "buildOrder": 7,
+  "schemaVersion": 1,
+  "domain": "band",
+  "tags": ["band", "invite", "qr-code", "share", "settings", "onboarding"],
+  "problem": "Band creators need to bring bandmates into the app quickly — ideally by showing a QR code that others can scan, or by sharing a link. The invite mechanism must work in a rehearsal space (QR scan) and asynchronously (link via message).",
+  "analysis": "BandShareButton renders in two contexts:\n1. **First-run success screen** — large QR code + copyable link, prominent, after band creation\n2. **Band Settings** — invite link + QR code in a collapsed section\n\nTap 'Copy link' → copies /invite/[token] URL to clipboard → button label changes to 'Copied!' for 2 seconds.\nQR code: generated client-side from the invite URL using a QR library (qrcode.react). Dark bg with white QR modules to match dark theme.\n\nInvite tokens are stored in Postgres (invite_tokens table). Token is scoped to the band but not single-use by default (Recorder can revoke via Band Settings to invalidate all pending invites).",
+  "successCriteria": "- Invite link copyable with 'Copied!' feedback (2s) on tap\n- QR code rendered in dark theme (white modules on dark bg)\n- QR code scannable on physical phone screen at arm's length\n- Token generated on band creation, persisted in Postgres\n- Token revoke option in Band Settings (generates a new token, old links stop working)\n- Large QR display mode for first-run (150x150px minimum)",
+  "implementation": "components/bands/BandShareButton.tsx: props { inviteUrl, onRevoke? }. Renders QR (qrcode.react) + copy button. Copy: navigator.clipboard.writeText(inviteUrl) → setCopied(true) → setTimeout 2s → setCopied(false). Revoke: calls onRevoke() which POSTs to /api/bands/[bandId]/invite/revoke.",
+  "decisions": [
+    {
+      "decision": "Invite tokens are band-scoped (not single-use or per-person)",
+      "rationale": "A single-use token breaks the 'show the QR code in a rehearsal room and everyone scans it' use case. A band-scoped token allows unlimited joins from the same link until the Recorder revokes it. Revocation is explicit and requires a deliberate action.",
+      "recommendation": "One active token per band. Revoke = generate new token. Old token is immediately invalid.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "QR code is generated client-side — requires JavaScript to render; no SSR fallback",
+    "navigator.clipboard.writeText() requires HTTPS (standard for production, may fail in development without HTTPS)"
+  ],
+  "componentFile": "components/bands/BandShareButton.tsx",
+  "userGuide": "In Band Settings, tap 'Copy link' to copy your band invite link and share it with bandmates. They can also scan the QR code directly from your screen to join instantly.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

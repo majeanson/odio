@@ -1,0 +1,31 @@
+{
+  "featureKey": "odio-2026-042",
+  "title": "DraftRestoreBanner — Recover Unsaved Cuts After Browser Crash",
+  "status": "active",
+  "priority": 2,
+  "buildOrder": 9,
+  "schemaVersion": 1,
+  "domain": "editing",
+  "tags": ["editor", "draft", "localstorage", "resilience", "recovery", "banner"],
+  "problem": "If a user's browser crashes or the page reloads mid-edit, all cut regions are lost — the editor opens blank. The user may not realise their work was saved in localStorage and abandon the session assuming the work is gone.",
+  "analysis": "DraftRestoreBanner appears at the top of the editor when two conditions are true:\n1. `hasDraft` from useCutDraft (localStorage key `odio:draft:{clipId}` exists and has content)\n2. `cutMarks.length === 0` (editor currently has no cuts — so draft isn't already loaded)\n\nWhen both are true: shows a banner — 'You have unsaved edits from a previous session.' with two buttons: 'Resume editing' (loads saved cuts into editor) and 'Dismiss' (clears localStorage draft).\n\nOnce the user taps 'Resume' or 'Dismiss', banner unmounts and doesn't reappear (hasDraft becomes false).",
+  "successCriteria": "- Banner visible only when hasDraft=true AND cutMarks.length === 0\n- 'Resume editing' button: calls onResume() which loads draft cutMarks into WaveformEditor state\n- 'Dismiss' button: calls onDismiss() which clears localStorage draft + hasDraft becomes false\n- Banner does not appear when editor already has cuts (user navigated back with live state)\n- Banner does not reappear after dismissal in same session",
+  "implementation": "components/clips/DraftRestoreBanner.tsx: props { show: boolean, onResume: () => void, onDismiss: () => void }. show = hasDraft && cutMarks.length === 0 (computed in WaveformEditor). Renders an amber-bordered info banner with two buttons. Returns null when show=false.",
+  "decisions": [
+    {
+      "decision": "Show=false when cutMarks.length > 0",
+      "rationale": "If the editor already has cuts (e.g., user navigated Edit from a version that had cuts), the draft is irrelevant — the current state IS the working set. Showing the draft banner when cuts already exist would confuse the user and potentially overwrite valid in-flight edits.",
+      "recommendation": "WaveformEditor passes show = hasDraft && cutMarks.length === 0. DraftRestoreBanner is purely controlled.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Draft key is per-clipId, not per-clipId+versionId — if the user edits a different version, the same draft key is used and may restore mismatched cuts"
+  ],
+  "componentFile": "components/clips/DraftRestoreBanner.tsx",
+  "userGuide": "If your browser closed unexpectedly while you were editing cuts, a banner appears when you return offering to restore your work. Tap 'Resume' to get your cuts back, or 'Dismiss' to start fresh.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-11" }
+  ],
+  "revisions": []
+}

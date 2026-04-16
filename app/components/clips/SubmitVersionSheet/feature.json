@@ -1,0 +1,37 @@
+{
+  "featureKey": "odio-2026-043",
+  "title": "SubmitVersionSheet — Version Description and Submission Confirmation",
+  "status": "active",
+  "priority": 1,
+  "buildOrder": 9,
+  "schemaVersion": 1,
+  "domain": "editing",
+  "tags": ["editor", "submit", "version", "bottom-sheet", "description", "zero-change-guard"],
+  "problem": "Submitting a new version is the final step of the editing workflow. The sheet provides one last chance to add a description ('removed setup noise', 'trimmed to 3:20') before committing. It also guards against submitting a version with no cuts.",
+  "analysis": "SubmitVersionSheet is a BottomSheet opened from the 'Submit as v[N]' button in WaveformEditor. Content:\n- Description textarea (optional): placeholder 'What changed? (optional)'\n- Character count (max 200ch)\n- Submit button (amber primary) labeled 'Submit as v[N]'\n- Cancel button (ghost)\n- Zero-change guard: if no cut regions exist, Submit button shows inline message 'No cuts made — add a cut region to submit' and is blocked\n\nSubmit calls onSubmit(description): Promise<void> passed by parent. Sheet owns submitting/error state — shows spinner on submit, inline error text if the promise throws. Does not navigate on success — parent (WaveformEditor) handles navigation.",
+  "successCriteria": "- Opens as BottomSheet from 'Submit as v[N]' button\n- Description field: optional textarea, max 200ch, placeholder 'What changed? (optional)'\n- Zero-change guard: Submit blocked (inline message shown) when no cut regions exist\n- Submit with cuts: calls onSubmit(description), shows spinner, error inline on failure\n- Cancel button: closes sheet, returns to editor with cuts intact\n- 'v[N]' in the button label correctly reflects next version number",
+  "implementation": "components/clips/SubmitVersionSheet.tsx: props { open, onClose, onSubmit: (desc: string) => Promise<void>, nextVersionNumber: number, hasCuts: boolean }. Internal state: description, submitting, error. Submit button disabled when submitting or !hasCuts. Shows inline error message when error is set. Calls onSubmit(description.trim()) on submit tap — throws = shows error inline; resolves = parent closes sheet + navigates.",
+  "decisions": [
+    {
+      "decision": "Description is optional — submit allowed with empty description",
+      "rationale": "Forcing a description adds friction to the most common case (quick trim edit where 'what changed?' is obvious from the cut marks). The description field exists for when the editor wants to explain a non-obvious choice. It should never block submission.",
+      "recommendation": "Submit button active when hasCuts=true, regardless of description content.",
+      "date": "2026-04-15"
+    },
+    {
+      "decision": "Sheet owns submitting/error state, not WaveformEditor",
+      "rationale": "The submission spinner and error state are only relevant during the sheet interaction. WaveformEditor should not need to know about these transient UI states. The sheet is a contained async flow.",
+      "recommendation": "SubmitVersionSheet: submitting/error internal state. Parent only provides onSubmit() that throws on error.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "Error messages from onSubmit() are shown raw — no user-friendly error mapping"
+  ],
+  "componentFile": "components/clips/SubmitVersionSheet.tsx",
+  "userGuide": "After marking your cuts, tap 'Submit edit' to save a new version. You can optionally describe what changed. Tap Submit to confirm — your version will be visible to the whole band within seconds.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-11" }
+  ],
+  "revisions": []
+}

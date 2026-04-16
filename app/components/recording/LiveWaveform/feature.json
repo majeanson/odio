@@ -1,0 +1,32 @@
+{
+  "featureKey": "odio-2026-029",
+  "title": "LiveWaveform — Real-Time Audio Level Meter During Recording",
+  "status": "active",
+  "priority": 2,
+  "buildOrder": 5,
+  "schemaVersion": 1,
+  "domain": "recording",
+  "tags": ["recording", "audio", "level-meter", "waveform", "real-time", "web-audio"],
+  "problem": "The recorder needs immediate visual confirmation that their microphone is active and capturing audio. A static screen during recording creates anxiety — is it actually recording? Is the mic too quiet? Is anything happening?",
+  "analysis": "LiveWaveform renders a horizontal level meter bar (8px tall, full-width) that responds to real-time audio input level. Uses the Web Audio API: `getUserMedia` → `AudioContext` → `AnalyserNode` → `getByteFrequencyData` → RMS level computation → bar fill width as percentage.\n\nBar colors: amber fill (`bg-accent`) on dark background (`bg-surface`). Updates at ~60fps via `requestAnimationFrame` loop. Smooth trailing: current displayed level decays to actual level at ~80% per frame (prevents jarring jumps on silence).\n\nDistinct from AudioBars: LiveWaveform is a horizontal bar (level meter convention on recording screens), AudioBars is a vertical bars decoration for other contexts.",
+  "successCriteria": "- Horizontal bar fills proportionally to microphone input level\n- Smooth animation — no jarring jumps, natural decay on silence\n- Updates at ~60fps\n- bar height: 8px, full width\n- Amber fill on dark background\n- Bar does not flicker to zero between frames on normal speech",
+  "implementation": "components/recording/LiveWaveform.tsx: receives `analyserNode: AnalyserNode | null` prop. Internal requestAnimationFrame loop reads frequency data, computes RMS → sets level state with decay. Renders a div with `width: ${level * 100}%` inline style. When analyserNode is null (mic not yet acquired): bar stays at 0.",
+  "decisions": [
+    {
+      "decision": "LiveWaveform receives analyserNode as a prop — does not own getUserMedia",
+      "rationale": "A single MediaStream and AudioContext must be shared between LiveWaveform (for visualization) and MediaRecorder (for recording). If LiveWaveform owned getUserMedia, there would be two mic permission requests and two separate streams. The parent recording page owns the stream and passes the analyserNode down.",
+      "recommendation": "Parent page: getUserMedia → MediaRecorder + AudioContext(stream) → AnalyserNode → pass to LiveWaveform.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "AudioContext is suspended on iOS until a user gesture — level meter may start at 0 even after mic permission is granted; parent must call audioContext.resume() on first user tap",
+    "Decay rate is hardcoded to 0.8x per frame — not configurable"
+  ],
+  "componentFile": "components/recording/LiveWaveform.tsx",
+  "userGuide": "The amber bar at the top of the recording screen moves in response to sound. If it stays still while you're speaking, your microphone may not be working.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

@@ -1,0 +1,31 @@
+{
+  "featureKey": "odio-2026-048",
+  "title": "PageLayout — Standard Page Wrapper with Back Button",
+  "status": "active",
+  "priority": 1,
+  "buildOrder": 3,
+  "schemaVersion": 1,
+  "domain": "app-shell",
+  "tags": ["layout", "navigation", "back-button", "page-wrapper", "safe-area"],
+  "problem": "Every deep-navigation page (clip detail, band settings, editor, band creation) needs a standard header with a back button and page title, plus correct bottom padding to clear the fixed tab bar and device safe area. Without a shared PageLayout, every page reimplements this boilerplate differently.",
+  "analysis": "PageLayout renders a standard page structure:\n- Fixed header: back button (← + screen name as a Next.js `<Link>`, not `<a>`), page title\n- Scrollable content area with `pb-[calc(56px+env(safe-area-inset-bottom))]` to clear tab bar + home indicator\n- Optional right-side header action slot (e.g., '+ New Session' button)\n\nBack button uses Next.js `<Link href={backHref}>` for client-side navigation — no full page reload on back tap.",
+  "successCriteria": "- Header renders with back button (chevron-left icon + back label) and page title\n- Back button navigates via Next.js Link (client-side, no reload)\n- Content scrollable, does not hide behind tab bar\n- pb-[calc(56px+env(safe-area-inset-bottom))] on content area\n- Optional right header slot rendered when provided\n- Compatible with AuthShell (does not add its own UploadBanner or BottomTabBar)",
+  "implementation": "components/layout/PageLayout.tsx: props { title, backHref, backLabel?: string, headerRight?: ReactNode, children }. Renders <header> (sticky top-0 bg-elevated z-10), <main className='pb-[calc(56px+env(safe-area-inset-bottom))]'>{children}</main>.",
+  "decisions": [
+    {
+      "decision": "Back button uses Next.js Link, not <a href> or router.back()",
+      "rationale": "<a href> triggers full page reload. router.back() goes to the previous history entry which may not be the intended parent page. An explicit backHref with <Link> is predictable and SSR-compatible.",
+      "recommendation": "PageLayout requires explicit backHref prop. Callers provide the logical parent URL.",
+      "date": "2026-04-11"
+    }
+  ],
+  "knownLimitations": [
+    "pageTitle and backLabel are static — no dynamic updates after mount (e.g., updating the title as clip name is edited requires the caller to update props)"
+  ],
+  "componentFile": "components/layout/PageLayout.tsx",
+  "userGuide": "Internal layout component. The back arrow at the top-left of each page uses this component to navigate back.",
+  "statusHistory": [
+    { "from": "draft", "to": "active", "date": "2026-04-10" }
+  ],
+  "revisions": []
+}

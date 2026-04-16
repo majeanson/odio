@@ -1,0 +1,77 @@
+{
+  "featureKey": "odio-2026-013",
+  "title": "Clip Detail — Coordinator, Actions Panel, Freeze, Share, Stage, Cleanup",
+  "status": "active",
+  "priority": 2,
+  "buildOrder": 10,
+  "schemaVersion": 1,
+  "domain": "versioning",
+  "tags": [
+    "clip-detail",
+    "coordinator",
+    "freeze",
+    "share",
+    "stage",
+    "cleanup",
+    "actions",
+    "version-selection"
+  ],
+  "problem": "The clip detail page must coordinate multiple independent concerns — playback, version selection, actions, and collaboration — without letting any one section own state that another needs. A band member should be able to select a version, hear exactly that version's cuts, vote on it, and trigger lifecycle actions (stage change, freeze, share, cleanup) all from one screen.",
+  "analysis": "**ClipDetailClient** is the coordinator. Two-tab layout — Edit and Team — with the waveform player always pinned above the tab bar.\n\n**Edit tab (default):** Concerns are ordered by workflow priority: (1) Edit cuts CTA at top (canEdit && !frozen only); (2) version chain newest-first (vN → … → v1 'Original'), each card is tappable and syncs the player to that version's cuts; (3) lifecycle actions (ClipActionsClient: freeze/share/cleanup) at the bottom. This order means the band's first tap is always 'Edit' or the latest version — the most common actions.\n\n**Team tab:** Collaboration features in a single view — voting context card ('Voting on v{N}' with 'change' link back to Edit tab), VotePanel + StageSelector, then a divider and the comments thread. This tab is secondary; it becomes relevant once editing is done and the band is reviewing for approval or freeze. CollaborationSection handles scope='full' to render both vote and comments from one hook instance.\n\n**ClipActionsClient** renders action rows with bottom-sheet confirmations:\n- **Freeze** — tap to open freeze picker (version selector). Sets justFrozen=true on success — triggers a post-freeze callout banner directing the user to generate a share link.\n- **Frozen status + Unfreeze** — shown when clip.frozen. Recorder only can unfreeze.\n- **Share link** — shown when frozen. Toggle public share via PATCH /api/clips/[clipId]. Copies /share/[token] URL to clipboard.\n- **Clean up source audio** — shown when frozen && driveFileId exists.\n- **Processing** — shown when transcodeStatus === 'PENDING'.",
+  "successCriteria": "- Selecting a version updates WaveformPlayer to skip that version's cuts\n- Clicking the active version keeps it selected (no deselect to null state)\n- Actions section hidden when member role + non-frozen (no phantom whitespace)\n- Stage picker opens as bottom sheet with 4 options; current stage highlighted\n- Freeze picker shows version list; pre-selects latest version; on confirm: renders clip, updates UI\n- Freeze error shown inline in freeze sheet; dismiss-able\n- Post-freeze callout banner appears after a successful freeze in the same session\n- Frozen status row shows Unfreeze option for RECORDER, lock icon for non-Recorder\n- Share toggle generates /share/[token] URL and copies to clipboard\n- Copy feedback: button label changes to 'Copied!' for 2 seconds\n- Cleanup sheet shows exactly what gets deleted and what remains before confirming\n- Processing row visible while transcodeStatus is PENDING; disappears when DONE\n- All bottom sheets have consistent Cancel button\n- Edit cuts link visible when canEdit && !frozen — navigates to /edit page\n- Vote tab shows 'Voting on v{N}' context card with version description; tapping 'change' switches to Versions tab",
+  "implementation": "1. components/clips/ClipDetailClient.tsx: coordinator. TabId = 'edit' | 'team'. Owns selectedVersionId (useState: auto-selects versions[last].id). Derives activeCuts from selectedVersion.cutMarks → WaveformPlayer. Edit tab: Edit cuts <Link> first (canEdit && !frozen), then versionsNewestFirst ([...versions].reverse()).map(VersionCard), then ClipActionsClient at bottom. Team tab: 'Voting on v{N}' context card (version number + description, 'change' button → setTab('edit')), then CollaborationSection scope='full'. No chat badge (comments merged into Team tab).\n2. components/clips/CollaborationSection.tsx: added scope='full' — renders both vote-stage and comments sections from a single hook instance, separated by a divider (h-px bg-white/10).\n3. components/clips/ClipActionsClient.tsx: actions panel. justFrozen state set on successful freeze → shows post-freeze callout banner. Share, cleanup, unfreeze unchanged.\n4. app/(auth)/bands/[bandId]/sessions/[sessionId]/clips/[clipId]/page.tsx: server component — loads clip, versions (ordered), stamps, votes, comments, membership via Prisma. Passes canEdit (role !== 'MEMBER' && !frozen), currentUserRole, editHref. Renders PageLayout + ClipDetailClient.",
+  "decisions": [
+    {
+      "decision": "No version deselect — clicking active version keeps it selected",
+      "rationale": "Deselecting a version set selectedVersionId to null, which caused the player to show 'no cuts' (raw audio). This 'null = raw audio' state had no UI label and was visually identical to a version with no cuts. Confusing. Clicking the active version now keeps it selected — the player always reflects a known version.",
+      "recommendation": "onChange={() => setSelectedVersionId(v.id)} — no toggle. To hear raw audio, select v1 (which has no cuts unless the clip was split).",
+      "date": "2026-04-11"
+    },
+    {
+      "decision": "Actions section hidden when !canEdit && !frozen",
+      "rationale": "MEMBER-role users on non-frozen clips have no available actions (they can't edit, can't freeze, can't share, can't clean up). Rendering an empty Actions section produces phantom whitespace between the Versions section and the Collaboration section. Hiding it entirely keeps the layout clean.",
+      "recommendation": "Wrap the Actions <section> in {(canEdit || frozen) && ...}. Frozen clips always show the Actions section because all roles can see the frozen status, share link, and the Recorder can unfreeze.",
+      "date": "2026-04-11"
+    },
+    {
+      "decision": "Freeze picker lets user select which version to freeze, not locked to latest",
+      "rationale": "The band may have decided version 3 was better than version 4 (which went too far). Locking to 'latest version only' would force them to create a v5 that reverts v4 just to freeze it. The picker lets any Editor choose any version as the final render.",
+      "recommendation": "Freeze sheet lists all versions in order; pre-selects the latest. User can tap any version row to select it before confirming. selectedVersionId state in ClipActionsClient is separate from the selectedVersionId in ClipDetailClient.",
+      "date": "2026-04-11"
+    },
+    {
+      "decision": "All actions use bottom-sheet confirmation, not inline destructive buttons",
+      "rationale": "Freeze, cleanup, and unfreeze are irreversible or hard-to-reverse operations. A confirmation sheet with clear consequence text (what gets deleted, what stays) gives the user one more mental checkpoint before committing. Bottom sheets also allow showing contextual info (e.g., the cleanup sheet's 'Will be deleted / Will remain' info boxes).",
+      "recommendation": "Every action that mutates data opens a BottomSheet. Sheet contains consequence description + confirm Button (danger variant for destructive) + ghost Cancel button.",
+      "date": "2026-04-11"
+    }
+  ],
+  "knownLimitations": [
+    "Share link generation requires clip to be frozen — members cannot share a clip-in-progress",
+    "publicToken is stored in Postgres; if the tokens table is cleared, existing share links break",
+    "Unfreeze does not delete the rendered Drive file — it simply sets frozen=false. The rendered file remains in Drive until cleanup or clip delete."
+  ],
+  "componentFile": "components/clips/ClipDetailClient.tsx",
+  "userGuide": "Open a clip from the session list. The waveform player at the top always plays the selected version. The Edit tab is your main workspace: tap 'Edit cuts' at the top to open the full-screen editor; tap any version card to switch what you hear (latest version is listed first, original at the bottom). Once you're happy with a version, tap Freeze to lock it — you'll be prompted to generate a share link right away. The Team tab is for post-edit collaboration: it shows who voted for what on the current version and the full comment thread. Tap 'change' in the voting header to switch which version the band is voting on.",
+  "statusHistory": [
+    {
+      "from": "draft",
+      "to": "active",
+      "date": "2026-04-11"
+    }
+  ],
+  "revisions": [
+    {
+      "date": "2026-04-15",
+      "author": "marc+claude",
+      "fields_changed": ["analysis", "implementation", "successCriteria", "userGuide"],
+      "reason": "Vote tab: 'Voting on v{N}' context card with change link (makes vote-version coupling visible). ClipActionsClient: justFrozen state triggers post-freeze callout banner directing user to generate a share link."
+    },
+    {
+      "date": "2026-04-15",
+      "author": "marc+claude",
+      "fields_changed": ["analysis", "implementation", "successCriteria", "userGuide"],
+      "reason": "Major UI restructure: 3-tab (versions/vote/chat) → 2-tab (Edit/Team). Edit tab: actions CTA first, then version chain newest-to-oldest, then lifecycle actions. Team tab: vote + comments unified in one view (CollaborationSection scope=full), secondary priority for post-edit review phase. Version ordering reversed to newest-first."
+    }
+  ]
+}

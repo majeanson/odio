@@ -1,0 +1,28 @@
+{
+  "featureKey": "odio-2026-030",
+  "title": "StampHint — First-Use Tooltip for Stamp Buttons",
+  "status": "draft",
+  "priority": 3,
+  "buildOrder": 6,
+  "schemaVersion": 1,
+  "domain": "recording",
+  "tags": ["onboarding", "hint", "tooltip", "stamps", "first-use", "localstorage"],
+  "problem": "The StampRow buttons show emoji only (🔥⭐❓💡) with no labels for maximum recording-screen clarity. First-time users don't know what each stamp means. A permanent label row would clutter the recording screen; a one-time hint achieves onboarding without ongoing noise.",
+  "analysis": "StampHint renders a label row directly beneath the StampRow buttons:\n`🔥 Hot  ⭐ Keep  ❓ Unsure  💡 Idea` — text-xs text-secondary, equally spaced.\n\nBehavior:\n- On mount: check localStorage for `odio-stamps-hint-shown`\n- If NOT set: render the label row, start a 5s auto-dismiss timer\n- On first stamp tap (detected via `onStampFired` event from parent) OR on timer expiry: fade out (opacity 0, 300ms), then set `odio-stamps-hint-shown: 1` in localStorage, unmount\n- If already set: return null immediately — never shown again\n\nPositioning: absolute, below StampRow, above the record button. Must not push the record button below the thumb zone — z-index overlay, not block-flow.",
+  "successCriteria": "- Shown on first visit to Recording Screen only (localStorage flag absent)\n- Label row appears beneath stamp buttons with correct emoji-label pairs\n- Auto-dismisses after 5s\n- Dismisses immediately on first stamp tap\n- Sets localStorage flag on dismiss — never shown again on subsequent visits\n- Does not shift record button position (absolute positioning, not in normal flow)\n- Fade-out animation on dismiss",
+  "implementation": "TODO:\n1. components/recording/StampHint/StampHint.tsx: reads `odio-stamps-hint-shown` from localStorage on mount. Returns null if set. Otherwise: render label row, setTimeout(5000) → dismiss. Receives `onStampFired` prop from parent — on first call, dismiss early.\n2. Recording page passes `onStampFired` callback that also calls StampHint dismiss ref.",
+  "decisions": [
+    {
+      "decision": "StampHint is a separate component from StampRow",
+      "rationale": "StampRow is a pure interaction component — it should not contain any onboarding logic. StampHint is the onboarding layer. Separating them keeps StampRow clean and allows StampHint to be removed or replaced independently.",
+      "recommendation": "Recording page renders <StampRow /> and <StampHint /> as siblings. StampHint listens for stamp events via prop callback.",
+      "date": "2026-04-15"
+    }
+  ],
+  "knownLimitations": [
+    "localStorage is per-browser — hint will show again if user switches to a different browser or device",
+    "hint timing is hardcoded to 5s — not configurable"
+  ],
+  "revisions": [],
+  "statusHistory": []
+}
