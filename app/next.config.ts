@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "frame-ancestors 'self' https://marc-portal.pages.dev https://*.marc-portal.pages.dev",
+              "frame-ancestors 'self' https://marc-portal.pages.dev https://*.marc-portal.pages.dev https://marcportal.com https://*.marcportal.com",
           },
         ],
       },
