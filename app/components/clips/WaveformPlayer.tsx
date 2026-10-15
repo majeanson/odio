@@ -20,6 +20,13 @@ export interface WaveformPlayerProps {
   sourceDurationMs: number;
   activeCuts?: Array<{ startMs: number; endMs: number }>;
   stamps?: Stamp[];
+  /**
+   * Override the audio source. The default is the authed Drive stream for
+   * this clip; the public /apercu demo points at a static file instead.
+   * When set, the duration-sync PATCH is skipped too — there is no real
+   * clip row behind a static file to patch.
+   */
+  audioUrl?: string;
 }
 
 export function WaveformPlayer({
@@ -27,6 +34,7 @@ export function WaveformPlayer({
   sourceDurationMs,
   activeCuts = [],
   stamps = [],
+  audioUrl,
 }: WaveformPlayerProps) {
   // Keep a ref to activeCuts so the timeupdate handler (cut-skipping) and the
   // pointer handler (seek-snap) always see the latest value without re-subscribing.
@@ -34,10 +42,10 @@ export function WaveformPlayer({
   useEffect(() => { cutsRef.current = activeCuts; }, [activeCuts]);
 
   const ws = useWaveSurfer({
-    url: `/api/audio/${clipId}`,
+    url: audioUrl ?? `/api/audio/${clipId}`,
     sourceDurationMs,
     cutMarksRef: cutsRef,
-    patchDurationUrl: `/api/clips/${clipId}`,
+    patchDurationUrl: audioUrl ? undefined : `/api/clips/${clipId}`,
   });
 
   const containerWidthPx = ws.containerRef.current?.clientWidth ?? 300;

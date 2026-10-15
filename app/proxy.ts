@@ -30,9 +30,10 @@ export const config = {
     // Protect everything except:
     // - /login, /auth-error (auth pages)
     // - /share/* (public frozen clip pages)
+    // - /apercu + /demo/* (public canned demo for the marcportal.com gallery)
     // - /_next/* (Next.js internals)
     // - /api/auth/* (NextAuth routes)
     // - Static files (favicon, icons, etc.)
-    "/((?!login|auth-error|share|lac|_next/static|_next/image|api/auth|api/debug|favicon.ico).*)",
+    "/((?!login|auth-error|share|apercu|demo|lac|_next/static|_next/image|api/auth|favicon.ico).*)",
   ],
 };

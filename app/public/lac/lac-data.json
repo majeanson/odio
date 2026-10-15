@@ -1,9 +1,9 @@
 {
   "meta": {
     "projectName": "Odio",
-    "generatedAt": "2026-04-16T21:30:03.929Z",
+    "generatedAt": "2026-10-15T19:04:58.581Z",
     "lacVersion": "3.5.0",
-    "featureCount": 55,
+    "featureCount": 56,
     "domains": [
       "app-shell",
       "audio/collaboration",
@@ -11,6 +11,7 @@
       "band",
       "collaboration",
       "editing",
+      "public",
       "recording",
       "render",
       "sessions",
@@ -33,6 +34,332 @@
     ]
   },
   "features": [
+    {
+      "featureKey": "odio-2026-056",
+      "title": "Public demo page (/apercu)",
+      "status": "active",
+      "domain": "public",
+      "tags": [
+        "demo",
+        "public",
+        "showcase",
+        "marcportal"
+      ],
+      "priority": 4,
+      "externalDependencies": [
+        "odio-2026-013"
+      ],
+      "views": {
+        "user": {
+          "problem": "The marcportal.com project gallery embeds this app in a sandboxed iframe, but every anonymous visit 307s to /login — the portfolio card only ever showed a login form. Strangers had no way to feel the core loop (stamp, trim, version) without a Google sign-in and a band.",
+          "tags": [
+            "demo",
+            "public",
+            "showcase",
+            "marcportal"
+          ],
+          "successCriteria": "An anonymous visit to /apercu (direct or inside the marcportal.com card iframe) plays the jam, jumps to stamps, and switching Riff in E to v2 audibly skips the masked intro — with zero 3xx/4xx/5xx requests on the page.",
+          "userGuide": "Open /apercu (no account needed). Pick a clip, tap a stamp chip to jump to that moment, and switch between versions to hear cut regions get skipped. The real app adds recording, Drive storage, voting and frozen shareable mixes — sign in from the button at the bottom."
+        },
+        "dev": {
+          "problem": "The marcportal.com project gallery embeds this app in a sandboxed iframe, but every anonymous visit 307s to /login — the portfolio card only ever showed a login form. Strangers had no way to feel the core loop (stamp, trim, version) without a Google sign-in and a band.",
+          "owner": "marc",
+          "analysis": "Every clip view already takes serializable props, and useWaveSurfer accepts any URL. A static page can therefore feed the REAL WaveformPlayer canned data plus a bundled audio file, with zero reach into auth, Prisma, Drive or FFmpeg. The only blockers were the hardcoded /api/audio/:id URL (now an optional audioUrl prop), the proxy matcher, and avoiding ClipDetailClient's polling Team tab.",
+          "decisions": [
+            {
+              "decision": "Compose safe primitives instead of reusing ClipDetailClient",
+              "rationale": "ClipDetailClient's Team tab polls votes/comments every few seconds and its action bar PATCHes — all of which 307 to /login for an anonymous visitor and fail JSON parsing. A thin page over WaveformPlayer keeps the demo path free of any network call that can fail.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "Generated audio instead of a licensed sample",
+              "rationale": "public/demo/jam.mp3 is synthesized by a throwaway script (bass riff, kick, hats, late lead) — recognizably a jam, zero license baggage, ~1.1 MB.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "audioUrl prop on WaveformPlayer, duration-PATCH skipped when set",
+              "rationale": "The player hardcoded /api/audio/:id and PATCHed the clip row when durations drifted. A static file has no row to patch; the prop keeps the authed path byte-identical while letting the demo (and any future static use) point elsewhere.",
+              "date": "2026-10-15"
+            }
+          ],
+          "implementation": "app/apercu/page.tsx (outside app/(auth)) renders components/apercu/ApercuClient.tsx: three canned clips from lib/apercuDemo.ts over one generated 72s jam (public/demo/jam.mp3 — synthesized, license-free), each with stamps and a version chain whose cutMarks drive the real cut-masking playback. proxy.ts excludes apercu|demo from the session check. Static vote tallies; the sign-in CTA routes to /login.",
+          "knownLimitations": [
+            "The demo audio is one shared file across the three fake clips; only stamps and cuts differ",
+            "Votes and comments are static tallies — the collaboration loop is described, not simulated",
+            "The record screen is not represented; a sandboxed iframe cannot get mic permission anyway"
+          ],
+          "tags": [
+            "demo",
+            "public",
+            "showcase",
+            "marcportal"
+          ],
+          "successCriteria": "An anonymous visit to /apercu (direct or inside the marcportal.com card iframe) plays the jam, jumps to stamps, and switching Riff in E to v2 audibly skips the masked intro — with zero 3xx/4xx/5xx requests on the page.",
+          "priority": 4,
+          "userGuide": "Open /apercu (no account needed). Pick a clip, tap a stamp chip to jump to that moment, and switch between versions to hear cut regions get skipped. The real app adds recording, Drive storage, voting and frozen shareable mixes — sign in from the button at the bottom.",
+          "componentFile": "components/apercu/ApercuClient.tsx",
+          "externalDependencies": [
+            "odio-2026-013"
+          ]
+        },
+        "product": {
+          "problem": "The marcportal.com project gallery embeds this app in a sandboxed iframe, but every anonymous visit 307s to /login — the portfolio card only ever showed a login form. Strangers had no way to feel the core loop (stamp, trim, version) without a Google sign-in and a band.",
+          "owner": "marc",
+          "analysis": "Every clip view already takes serializable props, and useWaveSurfer accepts any URL. A static page can therefore feed the REAL WaveformPlayer canned data plus a bundled audio file, with zero reach into auth, Prisma, Drive or FFmpeg. The only blockers were the hardcoded /api/audio/:id URL (now an optional audioUrl prop), the proxy matcher, and avoiding ClipDetailClient's polling Team tab.",
+          "decisions": [
+            {
+              "decision": "Compose safe primitives instead of reusing ClipDetailClient",
+              "rationale": "ClipDetailClient's Team tab polls votes/comments every few seconds and its action bar PATCHes — all of which 307 to /login for an anonymous visitor and fail JSON parsing. A thin page over WaveformPlayer keeps the demo path free of any network call that can fail.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "Generated audio instead of a licensed sample",
+              "rationale": "public/demo/jam.mp3 is synthesized by a throwaway script (bass riff, kick, hats, late lead) — recognizably a jam, zero license baggage, ~1.1 MB.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "audioUrl prop on WaveformPlayer, duration-PATCH skipped when set",
+              "rationale": "The player hardcoded /api/audio/:id and PATCHed the clip row when durations drifted. A static file has no row to patch; the prop keeps the authed path byte-identical while letting the demo (and any future static use) point elsewhere.",
+              "date": "2026-10-15"
+            }
+          ],
+          "knownLimitations": [
+            "The demo audio is one shared file across the three fake clips; only stamps and cuts differ",
+            "Votes and comments are static tallies — the collaboration loop is described, not simulated",
+            "The record screen is not represented; a sandboxed iframe cannot get mic permission anyway"
+          ],
+          "tags": [
+            "demo",
+            "public",
+            "showcase",
+            "marcportal"
+          ],
+          "successCriteria": "An anonymous visit to /apercu (direct or inside the marcportal.com card iframe) plays the jam, jumps to stamps, and switching Riff in E to v2 audibly skips the masked intro — with zero 3xx/4xx/5xx requests on the page.",
+          "priority": 4,
+          "userGuide": "Open /apercu (no account needed). Pick a clip, tap a stamp chip to jump to that moment, and switch between versions to hear cut regions get skipped. The real app adds recording, Drive storage, voting and frozen shareable mixes — sign in from the button at the bottom."
+        },
+        "support": {
+          "problem": "The marcportal.com project gallery embeds this app in a sandboxed iframe, but every anonymous visit 307s to /login — the portfolio card only ever showed a login form. Strangers had no way to feel the core loop (stamp, trim, version) without a Google sign-in and a band.",
+          "owner": "marc",
+          "knownLimitations": [
+            "The demo audio is one shared file across the three fake clips; only stamps and cuts differ",
+            "Votes and comments are static tallies — the collaboration loop is described, not simulated",
+            "The record screen is not represented; a sandboxed iframe cannot get mic permission anyway"
+          ],
+          "tags": [
+            "demo",
+            "public",
+            "showcase",
+            "marcportal"
+          ],
+          "userGuide": "Open /apercu (no account needed). Pick a clip, tap a stamp chip to jump to that moment, and switch between versions to hear cut regions get skipped. The real app adds recording, Drive storage, voting and frozen shareable mixes — sign in from the button at the bottom."
+        },
+        "musician": {
+          "problem": "The marcportal.com project gallery embeds this app in a sandboxed iframe, but every anonymous visit 307s to /login — the portfolio card only ever showed a login form. Strangers had no way to feel the core loop (stamp, trim, version) without a Google sign-in and a band.",
+          "tags": [
+            "demo",
+            "public",
+            "showcase",
+            "marcportal"
+          ],
+          "successCriteria": "An anonymous visit to /apercu (direct or inside the marcportal.com card iframe) plays the jam, jumps to stamps, and switching Riff in E to v2 audibly skips the masked intro — with zero 3xx/4xx/5xx requests on the page.",
+          "userGuide": "Open /apercu (no account needed). Pick a clip, tap a stamp chip to jump to that moment, and switch between versions to hear cut regions get skipped. The real app adds recording, Drive storage, voting and frozen shareable mixes — sign in from the button at the bottom."
+        },
+        "sprint": {
+          "problem": "The marcportal.com project gallery embeds this app in a sandboxed iframe, but every anonymous visit 307s to /login — the portfolio card only ever showed a login form. Strangers had no way to feel the core loop (stamp, trim, version) without a Google sign-in and a band.",
+          "owner": "marc",
+          "analysis": "Every clip view already takes serializable props, and useWaveSurfer accepts any URL. A static page can therefore feed the REAL WaveformPlayer canned data plus a bundled audio file, with zero reach into auth, Prisma, Drive or FFmpeg. The only blockers were the hardcoded /api/audio/:id URL (now an optional audioUrl prop), the proxy matcher, and avoiding ClipDetailClient's polling Team tab.",
+          "decisions": [
+            {
+              "decision": "Compose safe primitives instead of reusing ClipDetailClient",
+              "rationale": "ClipDetailClient's Team tab polls votes/comments every few seconds and its action bar PATCHes — all of which 307 to /login for an anonymous visitor and fail JSON parsing. A thin page over WaveformPlayer keeps the demo path free of any network call that can fail.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "Generated audio instead of a licensed sample",
+              "rationale": "public/demo/jam.mp3 is synthesized by a throwaway script (bass riff, kick, hats, late lead) — recognizably a jam, zero license baggage, ~1.1 MB.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "audioUrl prop on WaveformPlayer, duration-PATCH skipped when set",
+              "rationale": "The player hardcoded /api/audio/:id and PATCHed the clip row when durations drifted. A static file has no row to patch; the prop keeps the authed path byte-identical while letting the demo (and any future static use) point elsewhere.",
+              "date": "2026-10-15"
+            }
+          ],
+          "knownLimitations": [
+            "The demo audio is one shared file across the three fake clips; only stamps and cuts differ",
+            "Votes and comments are static tallies — the collaboration loop is described, not simulated",
+            "The record screen is not represented; a sandboxed iframe cannot get mic permission anyway"
+          ],
+          "tags": [
+            "demo",
+            "public",
+            "showcase",
+            "marcportal"
+          ],
+          "successCriteria": "An anonymous visit to /apercu (direct or inside the marcportal.com card iframe) plays the jam, jumps to stamps, and switching Riff in E to v2 audibly skips the masked intro — with zero 3xx/4xx/5xx requests on the page.",
+          "priority": 4,
+          "userGuide": "Open /apercu (no account needed). Pick a clip, tap a stamp chip to jump to that moment, and switch between versions to hear cut regions get skipped. The real app adds recording, Drive storage, voting and frozen shareable mixes — sign in from the button at the bottom."
+        },
+        "dev-deep": {
+          "problem": "The marcportal.com project gallery embeds this app in a sandboxed iframe, but every anonymous visit 307s to /login — the portfolio card only ever showed a login form. Strangers had no way to feel the core loop (stamp, trim, version) without a Google sign-in and a band.",
+          "owner": "marc",
+          "analysis": "Every clip view already takes serializable props, and useWaveSurfer accepts any URL. A static page can therefore feed the REAL WaveformPlayer canned data plus a bundled audio file, with zero reach into auth, Prisma, Drive or FFmpeg. The only blockers were the hardcoded /api/audio/:id URL (now an optional audioUrl prop), the proxy matcher, and avoiding ClipDetailClient's polling Team tab.",
+          "decisions": [
+            {
+              "decision": "Compose safe primitives instead of reusing ClipDetailClient",
+              "rationale": "ClipDetailClient's Team tab polls votes/comments every few seconds and its action bar PATCHes — all of which 307 to /login for an anonymous visitor and fail JSON parsing. A thin page over WaveformPlayer keeps the demo path free of any network call that can fail.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "Generated audio instead of a licensed sample",
+              "rationale": "public/demo/jam.mp3 is synthesized by a throwaway script (bass riff, kick, hats, late lead) — recognizably a jam, zero license baggage, ~1.1 MB.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "audioUrl prop on WaveformPlayer, duration-PATCH skipped when set",
+              "rationale": "The player hardcoded /api/audio/:id and PATCHed the clip row when durations drifted. A static file has no row to patch; the prop keeps the authed path byte-identical while letting the demo (and any future static use) point elsewhere.",
+              "date": "2026-10-15"
+            }
+          ],
+          "implementation": "app/apercu/page.tsx (outside app/(auth)) renders components/apercu/ApercuClient.tsx: three canned clips from lib/apercuDemo.ts over one generated 72s jam (public/demo/jam.mp3 — synthesized, license-free), each with stamps and a version chain whose cutMarks drive the real cut-masking playback. proxy.ts excludes apercu|demo from the session check. Static vote tallies; the sign-in CTA routes to /login.",
+          "knownLimitations": [
+            "The demo audio is one shared file across the three fake clips; only stamps and cuts differ",
+            "Votes and comments are static tallies — the collaboration loop is described, not simulated",
+            "The record screen is not represented; a sandboxed iframe cannot get mic permission anyway"
+          ],
+          "tags": [
+            "demo",
+            "public",
+            "showcase",
+            "marcportal"
+          ],
+          "successCriteria": "An anonymous visit to /apercu (direct or inside the marcportal.com card iframe) plays the jam, jumps to stamps, and switching Riff in E to v2 audibly skips the masked intro — with zero 3xx/4xx/5xx requests on the page.",
+          "priority": 4,
+          "componentFile": "components/apercu/ApercuClient.tsx",
+          "externalDependencies": [
+            "odio-2026-013"
+          ]
+        },
+        "code-focus": {
+          "tags": [
+            "demo",
+            "public",
+            "showcase",
+            "marcportal"
+          ],
+          "componentFile": "components/apercu/ApercuClient.tsx"
+        },
+        "shipped": {
+          "problem": "The marcportal.com project gallery embeds this app in a sandboxed iframe, but every anonymous visit 307s to /login — the portfolio card only ever showed a login form. Strangers had no way to feel the core loop (stamp, trim, version) without a Google sign-in and a band.",
+          "decisions": [
+            {
+              "decision": "Compose safe primitives instead of reusing ClipDetailClient",
+              "rationale": "ClipDetailClient's Team tab polls votes/comments every few seconds and its action bar PATCHes — all of which 307 to /login for an anonymous visitor and fail JSON parsing. A thin page over WaveformPlayer keeps the demo path free of any network call that can fail.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "Generated audio instead of a licensed sample",
+              "rationale": "public/demo/jam.mp3 is synthesized by a throwaway script (bass riff, kick, hats, late lead) — recognizably a jam, zero license baggage, ~1.1 MB.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "audioUrl prop on WaveformPlayer, duration-PATCH skipped when set",
+              "rationale": "The player hardcoded /api/audio/:id and PATCHed the clip row when durations drifted. A static file has no row to patch; the prop keeps the authed path byte-identical while letting the demo (and any future static use) point elsewhere.",
+              "date": "2026-10-15"
+            }
+          ],
+          "knownLimitations": [
+            "The demo audio is one shared file across the three fake clips; only stamps and cuts differ",
+            "Votes and comments are static tallies — the collaboration loop is described, not simulated",
+            "The record screen is not represented; a sandboxed iframe cannot get mic permission anyway"
+          ],
+          "tags": [
+            "demo",
+            "public",
+            "showcase",
+            "marcportal"
+          ],
+          "successCriteria": "An anonymous visit to /apercu (direct or inside the marcportal.com card iframe) plays the jam, jumps to stamps, and switching Riff in E to v2 audibly skips the masked intro — with zero 3xx/4xx/5xx requests on the page.",
+          "priority": 4,
+          "userGuide": "Open /apercu (no account needed). Pick a clip, tap a stamp chip to jump to that moment, and switch between versions to hear cut regions get skipped. The real app adds recording, Drive storage, voting and frozen shareable mixes — sign in from the button at the bottom."
+        },
+        "onboarding": {
+          "problem": "The marcportal.com project gallery embeds this app in a sandboxed iframe, but every anonymous visit 307s to /login — the portfolio card only ever showed a login form. Strangers had no way to feel the core loop (stamp, trim, version) without a Google sign-in and a band.",
+          "owner": "marc",
+          "analysis": "Every clip view already takes serializable props, and useWaveSurfer accepts any URL. A static page can therefore feed the REAL WaveformPlayer canned data plus a bundled audio file, with zero reach into auth, Prisma, Drive or FFmpeg. The only blockers were the hardcoded /api/audio/:id URL (now an optional audioUrl prop), the proxy matcher, and avoiding ClipDetailClient's polling Team tab.",
+          "decisions": [
+            {
+              "decision": "Compose safe primitives instead of reusing ClipDetailClient",
+              "rationale": "ClipDetailClient's Team tab polls votes/comments every few seconds and its action bar PATCHes — all of which 307 to /login for an anonymous visitor and fail JSON parsing. A thin page over WaveformPlayer keeps the demo path free of any network call that can fail.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "Generated audio instead of a licensed sample",
+              "rationale": "public/demo/jam.mp3 is synthesized by a throwaway script (bass riff, kick, hats, late lead) — recognizably a jam, zero license baggage, ~1.1 MB.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "audioUrl prop on WaveformPlayer, duration-PATCH skipped when set",
+              "rationale": "The player hardcoded /api/audio/:id and PATCHed the clip row when durations drifted. A static file has no row to patch; the prop keeps the authed path byte-identical while letting the demo (and any future static use) point elsewhere.",
+              "date": "2026-10-15"
+            }
+          ],
+          "implementation": "app/apercu/page.tsx (outside app/(auth)) renders components/apercu/ApercuClient.tsx: three canned clips from lib/apercuDemo.ts over one generated 72s jam (public/demo/jam.mp3 — synthesized, license-free), each with stamps and a version chain whose cutMarks drive the real cut-masking playback. proxy.ts excludes apercu|demo from the session check. Static vote tallies; the sign-in CTA routes to /login.",
+          "knownLimitations": [
+            "The demo audio is one shared file across the three fake clips; only stamps and cuts differ",
+            "Votes and comments are static tallies — the collaboration loop is described, not simulated",
+            "The record screen is not represented; a sandboxed iframe cannot get mic permission anyway"
+          ],
+          "tags": [
+            "demo",
+            "public",
+            "showcase",
+            "marcportal"
+          ],
+          "successCriteria": "An anonymous visit to /apercu (direct or inside the marcportal.com card iframe) plays the jam, jumps to stamps, and switching Riff in E to v2 audibly skips the masked intro — with zero 3xx/4xx/5xx requests on the page.",
+          "priority": 4,
+          "userGuide": "Open /apercu (no account needed). Pick a clip, tap a stamp chip to jump to that moment, and switch between versions to hear cut regions get skipped. The real app adds recording, Drive storage, voting and frozen shareable mixes — sign in from the button at the bottom.",
+          "componentFile": "components/apercu/ApercuClient.tsx",
+          "externalDependencies": [
+            "odio-2026-013"
+          ]
+        },
+        "architect": {
+          "problem": "The marcportal.com project gallery embeds this app in a sandboxed iframe, but every anonymous visit 307s to /login — the portfolio card only ever showed a login form. Strangers had no way to feel the core loop (stamp, trim, version) without a Google sign-in and a band.",
+          "analysis": "Every clip view already takes serializable props, and useWaveSurfer accepts any URL. A static page can therefore feed the REAL WaveformPlayer canned data plus a bundled audio file, with zero reach into auth, Prisma, Drive or FFmpeg. The only blockers were the hardcoded /api/audio/:id URL (now an optional audioUrl prop), the proxy matcher, and avoiding ClipDetailClient's polling Team tab.",
+          "decisions": [
+            {
+              "decision": "Compose safe primitives instead of reusing ClipDetailClient",
+              "rationale": "ClipDetailClient's Team tab polls votes/comments every few seconds and its action bar PATCHes — all of which 307 to /login for an anonymous visitor and fail JSON parsing. A thin page over WaveformPlayer keeps the demo path free of any network call that can fail.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "Generated audio instead of a licensed sample",
+              "rationale": "public/demo/jam.mp3 is synthesized by a throwaway script (bass riff, kick, hats, late lead) — recognizably a jam, zero license baggage, ~1.1 MB.",
+              "date": "2026-10-15"
+            },
+            {
+              "decision": "audioUrl prop on WaveformPlayer, duration-PATCH skipped when set",
+              "rationale": "The player hardcoded /api/audio/:id and PATCHed the clip row when durations drifted. A static file has no row to patch; the prop keeps the authed path byte-identical while letting the demo (and any future static use) point elsewhere.",
+              "date": "2026-10-15"
+            }
+          ],
+          "knownLimitations": [
+            "The demo audio is one shared file across the three fake clips; only stamps and cuts differ",
+            "Votes and comments are static tallies — the collaboration loop is described, not simulated",
+            "The record screen is not represented; a sandboxed iframe cannot get mic permission anyway"
+          ],
+          "tags": [
+            "demo",
+            "public",
+            "showcase",
+            "marcportal"
+          ],
+          "priority": 4
+        }
+      }
+    },
     {
       "featureKey": "odio-2026-017",
       "title": "Storage Management — Drive Quota, Cleanup, Archive",

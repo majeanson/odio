@@ -294,7 +294,7 @@ body{
   <div id="topbar-brand">◈ lac · story</div>
   <div id="topbar-project">Odio</div>
   <div id="topbar-right">
-    <div id="reading-time">74 min read · 14,738 words</div>
+    <div id="reading-time">75 min read · 14,993 words</div>
     <button id="print-btn" onclick="window.print()">⎙ Print</button>
   </div>
 </div>
@@ -307,10 +307,10 @@ body{
     <section class="opening-section">
       <div class="opening-eyebrow">Life as Code · Product Story</div>
       <h1 class="opening-title">Odio</h1>
-      <p class="opening-summary">Odio is a system built around 55 features spanning 11 domains: app-shell, recording, editing, versioning, band, sessions, render, collaboration, storage, auth and audio/collaboration. It addresses challenges including: Audio files in Google Drive grow over time (~43MB per raw clip, ~10MB per frozen…; When a version is frozen, a real audio file must be produced — so the band can d…; A raw recording needs to evolve from v1 (messy, includes setup and dead air) to ….</p>
+      <p class="opening-summary">Odio is a system built around 56 features spanning 12 domains: app-shell, recording, editing, versioning, band, sessions, render, collaboration, public, storage, auth and audio/collaboration. It addresses challenges including: The marcportal; Audio files in Google Drive grow over time (~43MB per raw clip, ~10MB per frozen…; When a version is frozen, a real audio file must be produced — so the band can d….</p>
       <div class="stats-row">
         <div class="stat-item">
-          <div class="stat-num">55</div>
+          <div class="stat-num">56</div>
           <div class="stat-label">Total features</div>
         </div>
         <div class="stat-item">
@@ -318,7 +318,7 @@ body{
           <div class="stat-label">Frozen (shipped)</div>
         </div>
         <div class="stat-item">
-          <div class="stat-num">29</div>
+          <div class="stat-num">30</div>
           <div class="stat-label">Active (in progress)</div>
         </div>
         <div class="stat-item">
@@ -326,7 +326,7 @@ body{
           <div class="stat-label">Draft (planned)</div>
         </div>
         <div class="stat-item">
-          <div class="stat-num">11</div>
+          <div class="stat-num">12</div>
           <div class="stat-label">Domains</div>
         </div>
       </div>
@@ -346,7 +346,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">All authenticated pages need shared layout elements: the BottomTabBar, the UploadBanner (persistent upload progress), and eventually the OfflineBanner (global offline indicator). These cannot live at the page level — they'd need to be duplicated on every route. A single client-side shell mounts them once.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-28">
+         <div class="impl-wrap" id="impl-29">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/layout/AuthShell.tsx: 'use client'. Uses usePathname() to extract bandId/sessionId from URL segments. Renders: &lt;UploadBanner /&gt;, &lt;OfflineBanner /&gt; (when ready), &lt;div className='flex-1'&gt;{children}&lt;/div&gt;, &lt;BottomTabBar bandId={...} sessionId={...} /&gt;.</p></span>
            </div>
@@ -375,7 +375,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The app has four distinct areas (Sessions, Record, Clips, Band) that need to be reachable in one tap from anywhere in the app. Hierarchical-only navigation (back buttons) would require 3+ taps to switch from editing a clip to starting a new recording mid-jam.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-29">
+         <div class="impl-wrap" id="impl-30">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/layout/BottomTabBar.tsx: client component. usePathname() to detect /edit routes + extract sessionId. useBandRole() hook for role check. useRecordingStore() for active-recording ring. Renders fixed bottom-0 flex-row nav with 4 items.</p></span>
            </div>
@@ -404,11 +404,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The app needs a solid foundation: a responsive web app that works on any device, navigates between recording/editing/collaboration screens fluidly, enforces auth correctly, handles first-time setup (create a band, link a Drive folder) with minimal friction, and never shows a blank screen.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-30">
+         <div class="impl-wrap" id="impl-31">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. app/layout.tsx: root layout with dark theme CSS variables, system font stack. 2. components/layout/BottomTabBar.tsx: client component — 4 tabs. Hidden on /edit routes via usePathname(). Clips tab hidden when !sessionId (avoids same-URL duplicate). Record tab hidden for MEMBER role via bandMe API query. 3. components/layout/PageLayout.tsx: standard page wrapper. Back button uses Next.js &lt;Link&gt; n</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/layout.tsx: root layout with dark theme CSS variables, system font stack. 2. components/layout/BottomTabBar.tsx: client component — 4 tabs. Hidden on /edit routes via usePathname(). Clips tab hidden when !sessionId (avoids same-URL duplicate). Record tab hidden for MEMBER role via bandMe API query. 3. components/layout/PageLayout.tsx: standard page wrapper. Back button uses Next.js &lt;Link&gt; not &lt;a href&gt; for client-side navigation. Bottom padding: pb-[calc(56px+env(safe-area-inset-bottom))]. 4. components/layout/AuthShell.tsx: client shell — mounts BottomTabBar + UploadBanner. Extracts bandId/sessionId from pathname. 5. app/(auth)/layout.tsx: server layout — auth guard, renders AuthShell. 6. components/ui/EmptyState.tsx: reusable empty state with icon, title, description, action. 7. components/ui/Button.tsx, ButtonLink.tsx: shared button components. 8. components/ui/BottomSheet.tsx: slide-up modal for confirmations and input sheets. 9. components/ui/InlineEdit.tsx: in-place editable text field. 10. tailwind.config.ts: dark theme color tokens.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-30')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-31')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -457,7 +457,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Every deep-navigation page (clip detail, band settings, editor, band creation) needs a standard header with a back button and page title, plus correct bottom padding to clear the fixed tab bar and device safe area. Without a shared PageLayout, every page reimplements this boilerplate differently.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-31">
+         <div class="impl-wrap" id="impl-32">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/layout/PageLayout.tsx: props { title, backHref, backLabel?: string, headerRight?: ReactNode, children }. Renders &lt;header&gt; (sticky top-0 bg-elevated z-10), &lt;main className='pb-[calc(56px+env(safe-area-inset-bottom))]'&gt;{children}&lt;/main&gt;.</p></span>
            </div>
@@ -486,7 +486,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Several screens (Session List, Clip List, Band Members) can be empty on first visit or after deletes. A blank screen gives no guidance on what to do next — users need a visual cue that emptiness is intentional plus a clear next action.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-46">
+         <div class="impl-wrap" id="impl-47">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/ui/EmptyState.tsx: props { icon: LucideIcon, heading: string, subtext?: string, actionLabel?: string, actionHref?: string, onAction?: () =&gt; void }. Renders icon via <code>&lt;Icon className='w-12 h-12 text-muted' /&gt;</code>. ButtonLink if actionHref provided; Button with onClick if onAction provided. Neither if no actionLabel.</p></span>
            </div>
@@ -515,11 +515,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Session names, clip names, and band name are all editable. Adding a separate 'Edit' icon/button next to each name clutters the UI, especially on small-screen cards. The standard pattern in mobile UIs is tap-the-text-to-edit.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-48">
+         <div class="impl-wrap" id="impl-49">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">components/ui/InlineEdit.tsx: props { value: string, onSave: (newValue: string) =&gt; Promise&lt;void&gt;, maxLength?: number, className?: string }. Internal state: editing (bool) + draft (string). On tap → setEditing(true), autofocus input. On submit/blur: if draft !== value &amp;&amp; draft.trim() !== '' → call onSave → setEditing(false) on success. Input styled to match the parent text class via <code>className</code> pro</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">components/ui/InlineEdit.tsx: props { value: string, onSave: (newValue: string) =&gt; Promise&lt;void&gt;, maxLength?: number, className?: string }. Internal state: editing (bool) + draft (string). On tap → setEditing(true), autofocus input. On submit/blur: if draft !== value &amp;&amp; draft.trim() !== '' → call onSave → setEditing(false) on success. Input styled to match the parent text class via <code>className</code> prop passthrough.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-48')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-49')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -544,7 +544,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Clip cards need to display version count, frozen status, and activity state as compact labels without consuming layout space. A shared badge component prevents inconsistent pill styling across the app.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-43">
+         <div class="impl-wrap" id="impl-44">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/ui/Badge.tsx: props { variant?: 'default'|'amber'|'success'|'danger', children }. Pure presentational — no state.</p></span>
            </div>
@@ -568,7 +568,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Destructive and important actions (freeze, delete, unfreeze, leave band, stage change) need a deliberate user confirmation step. Inline buttons can be accidentally tapped; a slide-up sheet forces a conscious second action and provides space for consequence copy.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-44">
+         <div class="impl-wrap" id="impl-45">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/ui/BottomSheet.tsx: <code>open</code> + <code>onClose</code> props. Uses React portal (document.body). CSS transition on transform: translateY(0) ↔ translateY(100%). useEffect adds/removes <code>overflow:hidden</code> on document.body. useFocusTrap hook (tab/shift-tab cycle inside sheet). Children slot for arbitrary content.</p></span>
            </div>
@@ -597,7 +597,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The app needs consistent interactive button styling across all screens with reliable touch targets (≥44px), accessible focus states, loading states, and semantic variants (primary, danger, ghost) that don't need to be reimplemented per screen.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-45">
+         <div class="impl-wrap" id="impl-46">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/ui/Button.tsx: <code>variant</code>, <code>disabled</code>, <code>loading</code>, <code>fullWidth</code>, <code>children</code>, standard button HTML props. components/ui/ButtonLink.tsx: same props + <code>href</code>, renders Next.js <code>&lt;Link&gt;</code>. Spinner: small white/dark svg rotating animation.</p></span>
            </div>
@@ -626,7 +626,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Pages that fetch data from Postgres (session list, clip list, waveform) need to show a loading state that communicates structure before content arrives. A blank screen or spinner gives no sense of what's coming.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-50">
+         <div class="impl-wrap" id="impl-51">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/ui/Skeleton.tsx: <code>className</code> prop + optional <code>width</code>/<code>height</code>. Renders <code>&lt;div className={cn('animate-pulse bg-surface rounded', className)} style={{ width, height }} /&gt;</code>.</p></span>
            </div>
@@ -649,7 +649,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Users have no in-app documentation — they must guess how features work or leave the app to find answers. Developers and the product team also have no quick way to surface feature context from within the running app.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-47">
+         <div class="impl-wrap" id="impl-48">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">Floating '?' pill button (fixed top-right, below topbar). On click, opens BottomSheet. Fetches /lac/lac-data.json once, caches in module scope. Resolves featureKeys from ROUTE_FEATURES (lib/routeFeatureMap.ts). Shows user view (userGuide + knownLimitations) and dev view (componentFile + decisions + deps) as tabs. Markdown rendered via lightweight mdToHtml() inline function.</p></span>
            </div>
@@ -686,13 +686,13 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">When a user loses their network connection mid-session, the app currently fails silently — vote buttons appear interactive but fail on submit, session lists appear to work but show stale data with no indication. This creates confusion and distrust.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-49">
+         <div class="impl-wrap" id="impl-50">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">TODO: implement after Auth Shell layout is stable.</p>
 <p class="md-p">1. components/ui/OfflineBanner/OfflineBanner.tsx: client component. <code>useOnlineStatus()</code> hook (see below). Renders fixed top-0 banner when offline. Uses CSS var <code>--offline-banner-h</code> (similar to --upload-banner-h pattern) so sticky headers can offset. 2. hooks/useOnlineStatus.ts: <code>useState(navigator.onLine)</code> + window event listeners for <code>online</code>/`o</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">TODO: implement after Auth Shell layout is stable.</p>
 <p class="md-p">1. components/ui/OfflineBanner/OfflineBanner.tsx: client component. <code>useOnlineStatus()</code> hook (see below). Renders fixed top-0 banner when offline. Uses CSS var <code>--offline-banner-h</code> (similar to --upload-banner-h pattern) so sticky headers can offset. 2. hooks/useOnlineStatus.ts: <code>useState(navigator.onLine)</code> + window event listeners for <code>online</code>/<code>offline</code>. Returns <code>{ isOnline, justReconnected }</code>. 3. AuthShell.tsx: mount OfflineBanner. 4. Mutation components (VotePanel, CommentComposer, StageSelector, SubmitVersionSheet): consume <code>useOnlineStatus().isOnline</code> and apply <code>disabled</code> when false.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-49')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-50')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -721,13 +721,13 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Multiple screens need to surface transient feedback (upload done, vote saved, copy confirmed, offline detected) without navigating away or blocking the UI. Currently each screen implements its own ad-hoc feedback UI, creating inconsistent timing, placement, and styling.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-51">
+         <div class="impl-wrap" id="impl-52">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">TODO: implement after BottomSheet and layout primitives are stable.</p>
 <p class="md-p">1. lib/toast.ts: <code>showToast({ message, type, duration? })</code> — writes to Zustand toastStore. Queue is an array; dequeue on dismiss or timeout. 2. components/ui/Toast/Toast.tsx: client component mounted in AuthShell (same level as UploadBanner). Reads from toastStore. Renders fixed bottom-0 container. Animates in/out with CSS transi</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">TODO: implement after BottomSheet and layout primitives are stable.</p>
 <p class="md-p">1. lib/toast.ts: <code>showToast({ message, type, duration? })</code> — writes to Zustand toastStore. Queue is an array; dequeue on dismiss or timeout. 2. components/ui/Toast/Toast.tsx: client component mounted in AuthShell (same level as UploadBanner). Reads from toastStore. Renders fixed bottom-0 container. Animates in/out with CSS transition (translateY + opacity). Each toast item: bg-elevated div, optional left border, message text, × button. 3. hooks/useToast.ts: helper for components to call showToast without importing the store directly.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-51')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-52')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -761,11 +761,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">After stopping a recording, the band member needs to navigate away (to another song, to the session list, to collaborate) without losing visibility into whether the upload succeeded. The upload progress must persist across all pages — not just the record screen — as a fixed top banner.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-27">
+         <div class="impl-wrap" id="impl-28">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. components/common/UploadBanner.tsx: client component. Fixed position top-0, full-width, z-50. On desktop (md+) offset right to avoid sidebar: md:left-[220px]. Progress percentage computed as a dedicated numeric variable (not inline JSX short-circuit, which renders literal '0' when byteOffset is 0): progressPercent = blob.size &gt; 0 &amp;&amp; byteOffset != null ? Math.round(byteOffset / blob.size * 100)</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. components/common/UploadBanner.tsx: client component. Fixed position top-0, full-width, z-50. On desktop (md+) offset right to avoid sidebar: md:left-[220px]. Progress percentage computed as a dedicated numeric variable (not inline JSX short-circuit, which renders literal '0' when byteOffset is 0): progressPercent = blob.size &gt; 0 &amp;&amp; byteOffset != null ? Math.round(byteOffset / blob.size * 100) : 0. Progress bar is absolute bottom-0 (2px strip, stable height). Error states (token-error, session-error) include a dismiss ✕ button — active/paused uploads do not. Uses ResizeObserver to write its height to --upload-banner-h CSS variable so sticky headers below can offset correctly. Returns null when uploads.length === 0. 2. components/layout/AuthShell.tsx: mounts UploadBanner + BottomTabBar at auth layout level. Passes upload state from usePendingUploads hook. 3. hooks/usePendingUploads.ts: reads IndexedDB on mount, drives retry state machine, exposes uploads[], retry/discard/saveToDevice handlers to AuthShell. 4. app/record/post/page.tsx: PostRecordScreen.doUpload() calls usePendingUploadsStore.getState().refresh() on every status-changing path (success, session-error, token-error, paused, catch) so the Zustand store stays in sync with IndexedDB and the banner dismisses immediately after upload completes without requiring a page refresh.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-27')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-28')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -794,7 +794,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The recorder needs immediate visual confirmation that their microphone is active and capturing audio. A static screen during recording creates anxiety — is it actually recording? Is the mic too quiet? Is anything happening?</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-34">
+         <div class="impl-wrap" id="impl-35">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/recording/LiveWaveform.tsx: receives <code>analyserNode: AnalyserNode | null</code> prop. Internal requestAnimationFrame loop reads frequency data, computes RMS → sets level state with decay. Renders a div with <code>width: ${level * 100}%</code> inline style. When analyserNode is null (mic not yet acquired): bar stays at 0.</p></span>
            </div>
@@ -823,7 +823,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">During a live recording, a band member wants to mark interesting moments (a great riff, an uncertain section, an idea) without interrupting the take. Any UI with confirmation dialogs or text input is too slow and disruptive mid-jam.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-36">
+         <div class="impl-wrap" id="impl-37">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/recording/StampRow.tsx: props { onStamp: (type: StampType, timestampMs: number) =&gt; void }. StampType = 'FIRE' | 'KEEP' | 'UNCERTAIN' | 'IDEA'. Renders 4 buttons in flex-row gap-4. Each button: rounded-full, 72px, emoji centered, colored ring. onPointerDown (not onClick) fires for minimum tap latency. Scale animation via CSS class toggle.</p></span>
            </div>
@@ -856,11 +856,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">On jam night, the person who created the band may not always be the one with a phone free to record. Any Editor-role band member should be able to hit Record and have the audio land in the band's shared Drive — without requiring each member to set up their own Drive folder or the band creator to be physically present.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-4">
+         <div class="impl-wrap" id="impl-5">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. app/api/upload/init/route.ts: POST — role check <code>['RECORDER', 'EDITOR'].includes(membership.role)</code>. Fetches band creator's email from bands table. Queries NextAuth accounts table for creator's access<em>token + refresh</em>token. Attempts token refresh via Google OAuth token endpoint if expires_at &lt; now. Generates Drive resumable upload session URL using creator's token. Returns { uploadUrl, clipId, s</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/api/upload/init/route.ts: POST — role check <code>['RECORDER', 'EDITOR'].includes(membership.role)</code>. Fetches band creator's email from bands table. Queries NextAuth accounts table for creator's access<em>token + refresh</em>token. Attempts token refresh via Google OAuth token endpoint if expires_at &lt; now. Generates Drive resumable upload session URL using creator's token. Returns { uploadUrl, clipId, sessionId }. 2. app/api/upload/finalize/route.ts: POST — same role check. Runs FFmpeg transcode on uploaded file. Creates Clip row with recordedByEmail = currentUser.email. Creates v1 ClipVersion row. Updates clip transcodeStatus to DONE. 3. Error handling: if creator token refresh fails, returns 503 with { error: 'CREATOR<em>TOKEN</em>INVALID', creatorEmail }. Client shows 'Drive connection needs renewal — ask [creator name] to re-authorize'. 4. components/layout/BottomTabBar.tsx: Record tab hidden when <code>membership.role === 'MEMBER'</code>. 5. Prisma schema Clip: recordedByEmail TEXT nullable. clips table stores both fields. 6. components/clips/ClipCard.tsx: shows 'Recorded by X' when recordedByEmail differs from band creator.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-4')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-5')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -893,11 +893,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The recording always uses the device's default microphone. Bands that record with an external condenser mic, USB audio interface, or headset mic plugged in cannot select it — the app always captures from the built-in mic. This limits recording quality for bands that bring audio gear.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-33">
+         <div class="impl-wrap" id="impl-34">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. hooks/useRecorder.ts: on mount, calls navigator.mediaDevices.enumerateDevices(), filters for audioinput, maps to AudioDevice[]. Re-enumerates on devicechange event. Initializes selectedDeviceId from localStorage (key: odio:selectedDeviceId). Passes deviceId: { exact: selectedDeviceId } to getUserMedia constraints when selectedDeviceId is set. Falls back to default getUserMedia on Overconstraine</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. hooks/useRecorder.ts: on mount, calls navigator.mediaDevices.enumerateDevices(), filters for audioinput, maps to AudioDevice[]. Re-enumerates on devicechange event. Initializes selectedDeviceId from localStorage (key: odio:selectedDeviceId). Passes deviceId: { exact: selectedDeviceId } to getUserMedia constraints when selectedDeviceId is set. Falls back to default getUserMedia on OverconstrainedError — sets deviceFallbackWarning=true for 4s. 2. components/recording/DevicePicker.tsx: BottomSheet with list of AudioDevice items. Highlights current selection. Calls onSelect(deviceId) on tap. 3. app/record/page.tsx: renders mic button (left of record button) when devices.length &gt; 1 and !isRecording. Tapping opens DevicePicker. Renders deviceFallbackWarning toast when active.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-33')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-34')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -922,7 +922,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">During recording, the user needs visual confirmation that the microphone is picking up sound. Without a level indicator, they cannot tell if the mic is connected, if it's recording silence, or if audio is clipping.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-42">
+         <div class="impl-wrap" id="impl-43">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/ui/AudioBars.tsx: props { level: number (0-1), barCount?: number }. Pure visual component — no audio API. Level is passed in from the parent recording hook (useAudioLevel or equivalent). Bars rendered as inline flex divs with height computed as <code>min + (level * range) + noise</code>.</p></span>
            </div>
@@ -951,11 +951,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The recorder needs to capture multiple songs during a live jam — from a phone browser, one hand, dim room. Between songs the transition to the next recording must be instant. Moments worth keeping must be stampable without interrupting the performance.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-52">
+         <div class="impl-wrap" id="impl-53">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. app/record/page.tsx: full-screen recording screen — timer, level meter, stamp row, Add note link, record/stop button. Tab bar hidden via usePathname(). 2. hooks/useRecorder.ts: core hook managing MediaRecorder lifecycle, Web Audio AnalyserNode for level meter, Wake Lock API, stamps buffer, annotations buffer, device enumeration and selection, IndexedDB write on stop (via savePendingUpload), upl</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/record/page.tsx: full-screen recording screen — timer, level meter, stamp row, Add note link, record/stop button. Tab bar hidden via usePathname(). 2. hooks/useRecorder.ts: core hook managing MediaRecorder lifecycle, Web Audio AnalyserNode for level meter, Wake Lock API, stamps buffer, annotations buffer, device enumeration and selection, IndexedDB write on stop (via savePendingUpload), upload start. 3. components/recording/DevicePicker.tsx: bottom sheet listing available audio input devices. 4. app/record/post/page.tsx: post-record screen — clip name (inline edit), duration, stamp count, upload progress bar, Next Song button, Delete recording button. 5. hooks/useUploadProgress.ts: polls /api/clips/[clipId] every 3s until transcodeStatus is DONE or FAILED. 6. lib/pendingUploads.ts: IndexedDB helpers for pending upload persistence. 7. app/api/upload/init/route.ts: generates Drive resumable upload session URL using creator's stored token. 8. app/api/upload/finalize/route.ts: transcodes uploaded audio with FFmpeg, creates Clip + ClipVersion rows in Postgres. 9. STAMP<em>EMOJI and STAMP</em>COLORS constants in types/index.ts.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-52')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-53')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -992,11 +992,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">A recording is a one-time, irreplaceable event. Currently, if the internet drops during upload or the band creator's Drive token is invalid, the audio blob — which only exists in memory — is permanently lost when the user navigates away or the tab closes. A live jam session cannot be re-played. The recording must survive any upload failure and remain recoverable until it reaches Drive.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-53">
+         <div class="impl-wrap" id="impl-54">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. lib/pendingUploads.ts: IndexedDB helpers using idb library. Database 'odio-recordings', object store 'pending-uploads'. Functions: savePendingUpload(upload), getPendingUploads(), deletePendingUpload(tempId), updatePendingUpload(tempId, patch). 2. hooks/useRecorder.ts: calls savePendingUpload immediately on MediaRecorder onstop before any network request. 3. hooks/usePendingUploads.ts: checks In</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. lib/pendingUploads.ts: IndexedDB helpers using idb library. Database 'odio-recordings', object store 'pending-uploads'. Functions: savePendingUpload(upload), getPendingUploads(), deletePendingUpload(tempId), updatePendingUpload(tempId, patch). 2. hooks/useRecorder.ts: calls savePendingUpload immediately on MediaRecorder onstop before any network request. 3. hooks/usePendingUploads.ts: checks IndexedDB on mount, drives retry logic, manages upload state machine (idle/uploading/paused/error), listens to window 'online' event for auto-retry. 4. components/recording/PendingUploadsBanner.tsx: recovery banner shown when usePendingUploads reports pending items. Shows count, retry button, save-to-device button, discard button with confirmation. 5. app/(auth)/layout.tsx: renders PendingUploadsBanner at top of all authenticated pages. 6. lib/uploadAudio.ts: manages the Drive resumable upload from browser — tracks byte offset, handles chunking, updates IndexedDB with uploadSessionUrl on each successful chunk. 7. 'Save to device': URL.createObjectURL(blob) + programmatic anchor download. Extension .aac or .webm based on mimeType.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-53')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-54')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1033,7 +1033,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">During recording, a band member sometimes wants to capture a longer thought than a stamp allows — 're-record the bridge', 'drummer was off-tempo here', 'strong verse'. Stamps are single-emoji; notes allow free text. But the note input must not disrupt the recording or require navigating away.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-32">
+         <div class="impl-wrap" id="impl-33">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">TODO: 1. components/recording/AddNoteSheet/AddNoteSheet.tsx: props { open, onSave: (text: string, timestampMs: number) =&gt; void, onClose: () =&gt; void, currentTimestampMs: number }. Uses CSS <code>env(keyboard-inset-height)</code> via inline style or Tailwind arbitrary value for bottom positioning. Internal state: text (string). Save button disabled if text.trim() === ''.</p></span>
            </div>
@@ -1062,7 +1062,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The StampRow buttons show emoji only (🔥⭐❓💡) with no labels for maximum recording-screen clarity. First-time users don't know what each stamp means. A permanent label row would clutter the recording screen; a one-time hint achieves onboarding without ongoing noise.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-35">
+         <div class="impl-wrap" id="impl-36">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">TODO: 1. components/recording/StampHint/StampHint.tsx: reads <code>odio-stamps-hint-shown</code> from localStorage on mount. Returns null if set. Otherwise: render label row, setTimeout(5000) → dismiss. Receives <code>onStampFired</code> prop from parent — on first call, dismiss early. 2. Recording page passes <code>onStampFired</code> callback that also calls StampHint dismiss ref.</p></span>
            </div>
@@ -1091,7 +1091,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">iOS below 16.4 and any browser where Wake Lock API is denied will allow the screen to lock during recording. When the screen locks, iOS stops MediaRecorder — the recording silently ends. The user doesn't know until they look at their phone and find a partial clip. This warning must appear BEFORE recording starts, not mid-session.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-37">
+         <div class="impl-wrap" id="impl-38">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">TODO: 1. components/recording/WakeLockWarning/WakeLockWarning.tsx: props { recording: boolean, onInterrupt: () =&gt; void }. Checks <code>'wakeLock' in navigator</code> on mount. State: visible (bool), dismissed (bool). When !dismissed &amp;&amp; !supported: render banner. useEffect on recording: when recording = true, add visibilitychange listener → if hidden, call onInterrupt().</p></span>
            </div>
@@ -1125,7 +1125,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Dragging cut region handles on a waveform on mobile is imprecise for fine adjustments (±100ms range). Users need a fallback precision control for exact trimming without requiring zooming in and dragging handles at the pixel level.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-15">
+         <div class="impl-wrap" id="impl-16">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/clips/CutList.tsx: props { cutMarks, expandedCutId, onExpandChange, onNudge, onRemove, onZoomToCut, onJumpToStart }. Renders one expandable row per cutMark. Nudge: onNudge(cutId, edge: 'start'|'end', deltaMs) — parent applies delta with constraint checks. No local state except animation helpers.</p></span>
            </div>
@@ -1154,7 +1154,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">If a user's browser crashes or the page reloads mid-edit, all cut regions are lost — the editor opens blank. The user may not realise their work was saved in localStorage and abandon the session assuming the work is gone.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-16">
+         <div class="impl-wrap" id="impl-17">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/clips/DraftRestoreBanner.tsx: props { show: boolean, onResume: () =&gt; void, onDismiss: () =&gt; void }. show = hasDraft &amp;&amp; cutMarks.length === 0 (computed in WaveformEditor). Renders an amber-bordered info banner with two buttons. Returns null when show=false.</p></span>
            </div>
@@ -1183,7 +1183,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Creating cut regions by dragging is precise but slow for the most common editing tasks: trimming dead air from the start and end (80% of edits), and splitting a clip at a specific time. Quick-action buttons accelerate these workflows without requiring manual dragging.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-17">
+         <div class="impl-wrap" id="impl-18">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/clips/EditorToolbar.tsx: props { hasCuts, duration, onTrim, onClearAll, onEnterSplitMode }. Three Button components (ghost or secondary variant). Trim: calls onTrim() which adds [{ startMs: 0, endMs: dur<em>0.2 }, { startMs: dur</em>0.8, endMs: dur }] to cutMarks. Clear All: calls onClearAll(). Split: calls onEnterSplitMode().</p></span>
            </div>
@@ -1212,11 +1212,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Submitting a new version is the final step of the editing workflow. The sheet provides one last chance to add a description ('removed setup noise', 'trimmed to 3:20') before committing. It also guards against submitting a version with no cuts.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-21">
+         <div class="impl-wrap" id="impl-22">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">components/clips/SubmitVersionSheet.tsx: props { open, onClose, onSubmit: (desc: string) =&gt; Promise&lt;void&gt;, nextVersionNumber: number, hasCuts: boolean }. Internal state: description, submitting, error. Submit button disabled when submitting or !hasCuts. Shows inline error message when error is set. Calls onSubmit(description.trim()) on submit tap — throws = shows error inline; resolves = parent cl</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">components/clips/SubmitVersionSheet.tsx: props { open, onClose, onSubmit: (desc: string) =&gt; Promise&lt;void&gt;, nextVersionNumber: number, hasCuts: boolean }. Internal state: description, submitting, error. Submit button disabled when submitting or !hasCuts. Shows inline error message when error is set. Calls onSubmit(description.trim()) on submit tap — throws = shows error inline; resolves = parent closes sheet + navigates.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-21')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-22')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1245,11 +1245,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Band members need to trim dead air and setup noise from a recording — visually, in a browser, on a phone in a car or on a laptop at home — and preview the result before committing it as a new version. The clip detail page needs a pure playback experience that skips cuts during listen; the edit page needs a full-screen editor for creating cut regions.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-22">
+         <div class="impl-wrap" id="impl-23">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. components/clips/WaveformEditor.tsx: thin coordinator. Owns: cutMarks[] state + ref, zoom level + ref, submit/split async flows, sheet open states. Delegates all UI and interaction to the 15 sub-modules below. Architecture note: the waveform card is never conditionally unmounted — unmounting WaveSurfer's containerRef div at 0px breaks the canvas. 2. components/clips/useWaveSurfer.ts: WaveSurfer</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. components/clips/WaveformEditor.tsx: thin coordinator. Owns: cutMarks[] state + ref, zoom level + ref, submit/split async flows, sheet open states. Delegates all UI and interaction to the 15 sub-modules below. Architecture note: the waveform card is never conditionally unmounted — unmounting WaveSurfer's containerRef div at 0px breaks the canvas. 2. components/clips/useWaveSurfer.ts: WaveSurfer 7.x lifecycle (create, load, destroy, retry). interact:false — no built-in click/drag. Exposes: containerRef, scrollContainerRef, basePxPerSecRef, effectiveDurMsRef, wsState, isPlaying, currentTimeMs, effectiveDurationMs, seek, togglePlay, applyZoom, retry, waveScrollLeft, waveTotalWidth, audioDurationMismatch, audioErrorStatus. 3. components/clips/useCutInteraction.ts: pointer state machine for trim mode. Reads cutMarksRef + basePxPerSecRef for hit detection. Tap (&lt;8px delta) → seek; drag start → create new cut; drag within 24px of a cut edge → resize that edge. setPointerCapture on pointerDown for mobile reliability. Returns { pointerHandlers, cursorStyle, previewCut }. 4. components/clips/useSplitInteraction.ts: pointer state machine for split mode. Tap → seek; drag → call onSetSplitMs live. setPointerCapture pattern. Returns { pointerHandlers, cursorStyle }. 5. components/clips/useCutDraft.ts: localStorage auto-save on every cutMarks change. Key: odio:draft:{clipId}. Reads on mount, clears on submit. Returns { hasDraft, resume, dismiss, clear }. 6. components/clips/WaveformCanvas.tsx: pure presenter — no state, no WaveSurfer access. Renders: WaveSurfer mount div (interact:false), cut bands (CSS divs, pointer-events:none), preview cut band (during drag-create), edge grip indicators (24px hit zones as visual markers), drag overlay div (single div at z-20 that intercepts all pointer events), split marker (cyan vertical line with drag handle). variant='edit' uses red bands + edge handles; variant='player' uses dark masking bands with no handles. 7. components/clips/WaveformSplitter.tsx: split mode controls panel — Part A duration / split marker time / Part B duration + Mark Here / Confirm / Cancel buttons. 8. components/clips/WaveformZoomControls.tsx: zoom in/out buttons + visible-duration label. ZOOM_LEVELS = [1, 2, 4, 8, 16, 32, 64]x. 9. components/clips/WaveformPlayButton.tsx: shared amber circular play/pause button (80px). Used by WaveformEditor, WaveformPlayer, PublicPlayer. 10. components/clips/StampJumpRow.tsx: row of tappable stamp chips that seek to timestamp on tap. Used by WaveformEditor, WaveformPlayer, PublicPlayer. Accepts optional className for layout customisation. 11. components/clips/EditorToolbar.tsx: Trim / Clear all / Split quick-action buttons. hasCuts prop enables/disables Clear all. 12. components/clips/CutList.tsx: cut list rows with expand/collapse, nudge controls (±10ms, ±100ms), remove button, zoom-to-cut, jump-to-start. expandedCutId controlled externally by WaveformEditor. 13. components/clips/DraftRestoreBanner.tsx: banner offering to resume a saved draft. Only shown when show=true (controlled by hasDraft &amp;&amp; cutMarks.length === 0). 14. components/clips/VersionStartPicker.tsx: 'Start from vN' shortcut buttons that load a version's cutMarks into the editor. Returns null when versions.length === 0. 15. components/clips/SubmitVersionSheet.tsx: bottom sheet — description input + submit button. Owns description/submitting/error state. Parent passes onSubmit(description): Promise&lt;void&gt; that throws on error; sheet catches and displays error inline. 16. components/clips/SplitConfirmSheet.tsx: bottom sheet — split confirmation with splitMs display. Owns splitting/error state. Parent passes onConfirm(): Promise&lt;void&gt; that throws on error. 17. app/api/audio/[clipId]/route.ts: proxies Drive audio with Range header forwarding. Fetches band member's token from NextAuth accounts table. 18. lib/utils.ts: formatPosition(ms) → H:MM:SS. formatDuration(ms) → M:SS. calcResultDuration(sourceDurationMs, cuts[]) → virtual result duration. formatDurationDiff(ms, cuts[]) → result duration string with diff indicator.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-22')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-23')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1302,7 +1302,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The waveform display needs to show the audio waveform, cut regions (red or dark overlays), stamp dots, annotation pins, and a drag-interaction overlay — all layered correctly without WaveSurfer's built-in interactions (which conflict with custom cut region handling).</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-26">
+         <div class="impl-wrap" id="impl-27">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/clips/WaveformCanvas.tsx: props { containerRef, scrollContainerRef, cutMarks, previewCut, suggestedCuts, stamps, splitMarkerMs, mode: 'edit'|'player', waveTotalWidth, waveScrollLeft, effectiveDurationMs, pointerHandlers? }. Pure function component. All positions computed inline: <code>left = (ms / effectiveDurationMs) * waveTotalWidth - waveScrollLeft</code>.</p></span>
            </div>
@@ -1331,7 +1331,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Waveform players and editors display stamps (🔥⭐❓💡) at their recorded timestamps. These stamps are most useful when tappable — jumping to the timestamp lets the band quickly find the moments that were marked during recording.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-20">
+         <div class="impl-wrap" id="impl-21">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/clips/StampJumpRow.tsx: props { stamps: Stamp[], onSeek: (timeSecs: number) =&gt; void, className?: string }. Maps stamps to button elements. formatTime(ms) → 'M:SS' helper. Returns null when stamps.length === 0.</p></span>
            </div>
@@ -1360,7 +1360,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">If a user taps the back button in the Timeline Editor while they have unsaved cut regions, they will lose their work silently. The UX spec v2.0 requires an explicit confirmation with three options: keep the draft for later, discard, or cancel.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-11">
+         <div class="impl-wrap" id="impl-12">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">TODO: 1. components/clips/BackNavSheet/BackNavSheet.tsx: props { open, onClose, onKeepDraft: () =&gt; void, onDiscard: () =&gt; void }. Uses BottomSheet. Three options rendered in flex-col gap-3. 'Keep draft' is a primary Button (full width). 'Discard' is a small text-sm text-danger button (no background). 'Cancel' is a ghost Button.</p></span>
            </div>
@@ -1389,7 +1389,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The Timeline Editor's top bar shows the back button and the duration readout. When the user has added cut regions that haven't been submitted yet, there's no clear visual indicator. Tapping the back button with unsaved cuts would silently discard them — but the user doesn't know they're unsaved.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-23">
+         <div class="impl-wrap" id="impl-24">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">TODO: 1. components/clips/UnsavedBadge/UnsavedBadge.tsx: props { visible: boolean }. Returns null when !visible. Renders: amber dot (w-2 h-2 rounded-full bg-accent) + 'Unsaved' text-xs text-secondary, inline flex items-center gap-1.5.</p></span>
            </div>
@@ -1423,11 +1423,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">A raw recording needs to evolve from v1 (messy, includes setup and dead air) to vFinal (clean, trimmed) through collaborative edits — with full history and a clear end state (freeze). The band needs to listen to any version, compare versions, and hear exactly what a cut sounds like before committing.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-2">
+         <div class="impl-wrap" id="impl-3">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. components/clips/WaveformPlayer.tsx: pure player component. Props: clipId, sourceDurationMs, activeCuts[], stamps[]. Regions rendered with pointerEvents:none (display only, don't intercept seek clicks). timeupdate handler: position tracking (currentTimeMsRef + setCurrentTimeMs) runs unconditionally — isPlaying() guard wraps only the cut-skip section so currentTimeMs updates correctly even while</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. components/clips/WaveformPlayer.tsx: pure player component. Props: clipId, sourceDurationMs, activeCuts[], stamps[]. Regions rendered with pointerEvents:none (display only, don't intercept seek clicks). timeupdate handler: position tracking (currentTimeMsRef + setCurrentTimeMs) runs unconditionally — isPlaying() guard wraps only the cut-skip section so currentTimeMs updates correctly even while paused (needed for re-seek before play). finish event: ws.setTime(0) resets cursor to start. Stamp chips are &lt;button&gt; elements that call ws.setTime(). No enableDragSelection. 2. components/clips/WaveformEditor.tsx: edit-only component. Props: clipId, sourceDurationMs, frozenVersionId, initialVersions, stamps, sessionHref. Custom pointer overlay (onPointerDown/Move/Up + setPointerCapture, touch-action:none) handles tap-to-seek + drag-to-create. Trim/Clear all/Split tool buttons. Split confirmation sheet updated to reflect Drive file creation ('Each part gets its own audio file in Drive. Takes a few seconds — hang tight.'). Split navigates to sessionHref after success. Auto-saves draft on every cut change. router.back() after version submit. No provenance UI (splitInto prop removed, scissors icon removed from 'Start from' version buttons). 3. components/clips/ClipDetailClient.tsx: coordinator. Owns selectedVersionId state (auto-selects latest, no deselect). Passes activeCuts to WaveformPlayer. Passes activeVersionId to CollaborationSection. Actions section hidden when !canEdit &amp;&amp; !frozen. 4. app/(auth)/.../clips/[clipId]/page.tsx: server component — loads clip, versions, stamps, votes, comments, membership. Renders ClipDetailClient. 5. app/(auth)/.../clips/[clipId]/edit/page.tsx: server component — loads clip, versions, stamps, splitInto (select id, name). Auth guard (MEMBER redirect + frozen redirect). Maps splitInto and passes to WaveformEditor. 6. app/api/clips/[clipId]/versions/route.ts: POST creates a new version. 7. app/api/clips/[clipId]/split/route.ts: POST { splitMs } — downloads X's source audio once, runs renderAudioWithCuts twice in parallel (Part A: atrim tail, Part B: atrim head), uploads both trimmed files to Drive with distinct names, creates two Clip rows with own driveFileId + correct sourceDurationMs + empty v1 cutMarks. Both have sourceClipId pointing to the original. Original clip is completely unchanged. Returns { clipA: {id, name}, clipB: {id, name} }. Vercel runtime: nodejs, maxDuration: 300. 8. lib/utils.ts: formatPosition(ms) → H:MM:SS always. formatDuration(ms) → M:SS. calcResultDuration(sourceDurationMs, cuts) → virtual duration after removing cut segments. 9. prisma/schema.prisma: Clip.sourceClipId String? (nullable) + SplitFrom self-relation (sourceClip / splitInto) with onDelete: SetNull — deleting a child clip does not cascade to the original.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-2')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-3')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1480,11 +1480,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The clip detail page must coordinate multiple independent concerns — playback, version selection, actions, and collaboration — without letting any one section own state that another needs. A band member should be able to select a version, hear exactly that version's cuts, vote on it, and trigger lifecycle actions (stage change, freeze, share, cleanup) all from one screen.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-12">
+         <div class="impl-wrap" id="impl-13">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. components/clips/ClipDetailClient.tsx: coordinator. TabId = 'edit' | 'team'. Owns selectedVersionId (useState: auto-selects versions[last].id). Derives activeCuts from selectedVersion.cutMarks → WaveformPlayer. Edit tab: Edit cuts &lt;Link&gt; first (canEdit &amp;&amp; !frozen), then versionsNewestFirst ([...versions].reverse()).map(VersionCard), then ClipActionsClient at bottom. Team tab: 'Voting on v{N}' c</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. components/clips/ClipDetailClient.tsx: coordinator. TabId = 'edit' | 'team'. Owns selectedVersionId (useState: auto-selects versions[last].id). Derives activeCuts from selectedVersion.cutMarks → WaveformPlayer. Edit tab: Edit cuts &lt;Link&gt; first (canEdit &amp;&amp; !frozen), then versionsNewestFirst ([...versions].reverse()).map(VersionCard), then ClipActionsClient at bottom. Team tab: 'Voting on v{N}' context card (version number + description, 'change' button → setTab('edit')), then CollaborationSection scope='full'. No chat badge (comments merged into Team tab). 2. components/clips/CollaborationSection.tsx: added scope='full' — renders both vote-stage and comments sections from a single hook instance, separated by a divider (h-px bg-white/10). 3. components/clips/ClipActionsClient.tsx: actions panel. justFrozen state set on successful freeze → shows post-freeze callout banner. Share, cleanup, unfreeze unchanged. 4. app/(auth)/bands/[bandId]/sessions/[sessionId]/clips/[clipId]/page.tsx: server component — loads clip, versions (ordered), stamps, votes, comments, membership via Prisma. Passes canEdit (role !== 'MEMBER' &amp;&amp; !frozen), currentUserRole, editHref. Renders PageLayout + ClipDetailClient.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-12')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-13')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1521,7 +1521,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">A band tracks each clip's creative stage (idea / sketch / developing / demo-ready) to know which songs are close to done vs. just started. This needs to be changeable from both the clip list (quick update inline) and the clip detail page without navigating.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-19">
+         <div class="impl-wrap" id="impl-20">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/clips/StageSelector.tsx: props { clipId, sessionId, currentStage, canEdit, onStageChange? }. Internal state: sheetOpen. Renders badge-button if canEdit; static Badge if not. BottomSheet contains 4 option rows. On select: call PATCH API → update state → onStageChange callback for parent to refresh.</p></span>
            </div>
@@ -1550,7 +1550,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The clip detail page lists all versions of a clip newest-first. Each row must communicate: which version it is, who made it, when, and how long the result is — plus allow selecting it for playback and jumping into the editor. This is the highest-frequency interaction on the clip detail screen.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-24">
+         <div class="impl-wrap" id="impl-25">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/clips/VersionCard.tsx: props { version, isSelected, isFrozen, isTheFrozenVersion, isPlaying, onSelect, onPlayToggle, onVote, currentUserVote, voteTally, canEdit }. Renders in flex-col. Tap handler on wrapping div calls onSelect. Mini-player calls onPlayToggle. Vote buttons call onVote(value). 'Edit from this version': &lt;Link href={editHref} /&gt; hidden when isFrozen.</p></span>
            </div>
@@ -1583,11 +1583,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">On the clip detail version list, a band member wants to quickly audition a specific version to check if an edit worked — without opening the full editor or navigating to a separate playback screen. They need a play button directly on the version card.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-18">
+         <div class="impl-wrap" id="impl-19">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">TODO: 1. components/clips/MiniPlayer/MiniPlayer.tsx: props { clipId, versionId, cutMarks, isPlaying, onToggle, disabled }. Internal: audioRef (HTMLAudioElement), elapsedMs (for timer). On isPlaying change: audio.play() / audio.pause(). Audio src: <code>/api/audio/${clipId}</code>. Skip-cuts via timeupdate handler (same approach as WaveformPlayer in useWaveSurfer). Elapsed timer: setInterval when playing, cle</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">TODO: 1. components/clips/MiniPlayer/MiniPlayer.tsx: props { clipId, versionId, cutMarks, isPlaying, onToggle, disabled }. Internal: audioRef (HTMLAudioElement), elapsedMs (for timer). On isPlaying change: audio.play() / audio.pause(). Audio src: <code>/api/audio/${clipId}</code>. Skip-cuts via timeupdate handler (same approach as WaveformPlayer in useWaveSurfer). Elapsed timer: setInterval when playing, clears on pause/unmount.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-18')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-19')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1617,7 +1617,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Band creators need to bring bandmates into the app quickly — ideally by showing a QR code that others can scan, or by sharing a link. The invite mechanism must work in a rehearsal space (QR scan) and asynchronously (link via message).</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-6">
+         <div class="impl-wrap" id="impl-7">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/bands/BandShareButton.tsx: props { inviteUrl, onRevoke? }. Renders QR (qrcode.react) + copy button. Copy: navigator.clipboard.writeText(inviteUrl) → setCopied(true) → setTimeout 2s → setCopied(false). Revoke: calls onRevoke() which POSTs to /api/bands/[bandId]/invite/revoke.</p></span>
            </div>
@@ -1646,11 +1646,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Band members need a shared space where all sessions are visible and access is controlled. Joining must be frictionless. The recorder's Google Drive folder is the audio source of truth — the app needs to bridge from 'here is an invite link' to 'you now have access to the band's recordings'.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-8">
+         <div class="impl-wrap" id="impl-9">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. app/(auth)/bands/page.tsx: lists all bands for current user. 2. app/(auth)/bands/[bandId]/page.tsx: session list for a band. 3. app/api/bands/route.ts: POST creates a new band. 4. app/api/bands/[bandId]/members/route.ts: PATCH updates member role; DELETE removes member. 5. components/bands/BandSettingsClient.tsx: member list with inline pill buttons for role change (Editor/Member — active pill</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/(auth)/bands/page.tsx: lists all bands for current user. 2. app/(auth)/bands/[bandId]/page.tsx: session list for a band. 3. app/api/bands/route.ts: POST creates a new band. 4. app/api/bands/[bandId]/members/route.ts: PATCH updates member role; DELETE removes member. 5. components/bands/BandSettingsClient.tsx: member list with inline pill buttons for role change (Editor/Member — active pill highlighted, tap other pill to switch), Remove and Leave band buttons both open a BottomSheet confirmation before executing, storage quota bar, invite link copy, "Manage files / sync" link to /bands/[bandId]/drive (Editor+ only). 6. app/(auth)/bands/[bandId]/settings/page.tsx: server component — loads band + membership, renders BandSettingsClient. 7. QR code for session URL rendered via react-qr-code in SessionHeaderClient. 8. app/(auth)/bands/[bandId]/drive/page.tsx: Drive file management server component — loads all clips with Drive file IDs across all sessions, redirects MEMBER role, renders DriveFilesClient. 9. components/bands/DriveFilesClient.tsx: Drive management UI — clips grouped by session with source/final status dots (grey=unchecked, green=ok, red=missing). Sync button checks all file IDs via /api/drive/check-file in batches of 5. Per-clip actions: Delete source (removes Drive file + clears driveFileId), Delete clip (removes entire clip record + both Drive files). Both actions require confirmation via BottomSheet with distinct destructive copy. 10. app/api/drive/check-file/route.ts: GET — checks if a Drive file exists (id,trashed fields). Verifies caller is a band member first. 11. app/api/clips/[clipId]/delete-source/route.ts: DELETE — removes source Drive file (best-effort), nulls driveFileId in DB. Editor+ only.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-8')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-9')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1687,7 +1687,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Most users arrive in Odio as joiners — they received an invite link from a band creator. The join flow must be frictionless: one tap to join, then immediately into the band's session list. No Drive authorization needed for joiners (they don't upload).</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-9">
+         <div class="impl-wrap" id="impl-10">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/bands/JoinBandClient.tsx: 'use client'. Props { bandName, bandId, inviteToken }. Internal: joining (bool), error (string|null). On join: POST /api/bands/[bandId]/members { inviteToken } → router.push(/bands/[bandId]).</p></span>
            </div>
@@ -1716,7 +1716,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Band Settings lists all members with their roles. The Recorder needs to change roles and remove members from within the same row — without navigating to a separate member-management screen.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-10">
+         <div class="impl-wrap" id="impl-11">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/bands/MemberRow.tsx: props { member, isSelf, canManage (=isRecorder), onRoleChange, onRemove }. Role chip: Button (canManage &amp;&amp; !isSelf) or Badge (others). Delete: touch event handling for swipe/long-press. Both delete paths call onRemove(memberId) after confirmation.</p></span>
            </div>
@@ -1745,11 +1745,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The entire band's audio access depends on the Recorder's Google Drive token. If that token expires, is revoked, or Google account permissions change, all band members lose access to all audio — waveforms fail to load, editors error, the public share player goes dark. The Recorder needs a clear path to restore access without losing any data.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-7">
+         <div class="impl-wrap" id="impl-8">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">TODO: 1. components/bands/DriveRelink/DriveRelink.tsx: banner component for Band Settings. Props { show, onReconnect }. Renders danger-red full-width banner with 'Reconnect' Button. 2. hooks/useDriveTokenStatus.ts: polls or reads a status endpoint to detect expired token. Alternatively: flag set when audio proxy returns 503 with drive-token-expired reason. 3. WaveformPlayer/WaveformEditor: catch 5</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">TODO: 1. components/bands/DriveRelink/DriveRelink.tsx: banner component for Band Settings. Props { show, onReconnect }. Renders danger-red full-width banner with 'Reconnect' Button. 2. hooks/useDriveTokenStatus.ts: polls or reads a status endpoint to detect expired token. Alternatively: flag set when audio proxy returns 503 with drive-token-expired reason. 3. WaveformPlayer/WaveformEditor: catch 503 from audio proxy → show 'Audio unavailable' inline message. Pass isDriveDisconnected state up to DriveRelink banner. 4. /api/auth/drive-relink route: initiates OAuth flow specifically for the drive.file scope re-grant.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-7')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-8')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1779,7 +1779,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The session clip list is the primary navigation surface for the editing workflow. Each row must communicate a clip's name, duration, version count, stage, and activity state at a glance — plus support quick-delete for the Recorder without leaving the list.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-13">
+         <div class="impl-wrap" id="impl-14">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/clips/ClipCard.tsx: props { clip, sessionId, bandId, canEdit, canDelete, hasNewActivity, onDelete }. Uses InlineEdit for clip name. StageSelector for stage chip. Badge for version count. Handles touch events for swipe-left (iOS) and long-press (Android/desktop) delete. Tap handler: router.push(clipDetailHref). Processing check: clip.transcodeStatus === 'PENDING'.</p></span>
            </div>
@@ -1808,11 +1808,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">A jam night produces 3-8 clips. Band members need to find, name, and navigate them easily. The recorder needs to delete mistakes. After many sessions, the band needs to track which songs are developed vs. still just ideas.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-38">
+         <div class="impl-wrap" id="impl-39">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. app/(auth)/bands/[bandId]/sessions/[sessionId]/page.tsx: server component — loads session + clips via Prisma (includes latest version resultDurationMs for correct display on split children), renders SessionHeaderClient + ClipCard list. Uses pb-[calc(56px+env(safe-area-inset-bottom))] for correct clearance. 2. components/sessions/SessionHeaderClient.tsx: client component — inline name edit, note</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/(auth)/bands/[bandId]/sessions/[sessionId]/page.tsx: server component — loads session + clips via Prisma (includes latest version resultDurationMs for correct display on split children), renders SessionHeaderClient + ClipCard list. Uses pb-[calc(56px+env(safe-area-inset-bottom))] for correct clearance. 2. components/sessions/SessionHeaderClient.tsx: client component — inline name edit, notes bottom sheet, QR code bottom sheet. Sticky with top offset from --upload-banner-h CSS variable. Delegates to two extracted sub-components: SessionNotesSheet (owns draft+saving state, syncs to notes on open) and SessionQrSheet (renders QRCode in BottomSheet — pure UI, no state). 3. components/clips/ClipCard.tsx: clip list row — name (tap to edit inline via useClipRename hook from hooks/useClipRename.ts), shuffle button (small icon, generates new death metal name via generateDeathMetalName() from lib/clipNames.ts + direct PATCH /api/clips/{clipId} + router.refresh(); only shown when !clip.frozen), stage chip in meta row (STAGE_CHIP map: {label, className} per ClipStage; only shown when !clip.frozen), duration (latestResultDurationMs ?? sourceDurationMs so split children show correct virtual duration), version count, frozen lock, processing spinner. '···' button opens delete confirmation sheet. Long-press removed (undiscoverable pattern replaced by explicit button). hooks/useClipRename.ts: encapsulates inline rename state (name, editingName, nameInput, saving), PATCH /api/clips/{clipId} call, and keyboard handlers (Enter → confirm, Escape → cancel). 4. app/api/clips/[clipId]/route.ts: GET clip, PATCH (name, stage, generatePublicToken, removePublicToken), DELETE (RECORDER only). 5. lib/clipNames.ts: custom death metal adjective + noun word lists + generateDeathMetalName() using unique-names-generator. 6. lib/utils.ts: generateClipName() delegates to generateDeathMetalName(). formatDuration() for M:SS display. formatPosition() for H:MM:SS clock display. calcResultDuration() for virtual cut preview.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-38')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-39')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1849,7 +1849,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">The session clip list needs a page title that shows the session name and allows inline rename (tap to edit). The rename must PATCH to Postgres immediately — no separate save button.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-39">
+         <div class="impl-wrap" id="impl-40">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/sessions/SessionHeaderClient.tsx: 'use client'. Props { session, canEdit }. Uses InlineEdit for session.name with onSave calling PATCH API.</p></span>
            </div>
@@ -1867,7 +1867,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">A band may want to capture session-level context — 'rehearsal at Marco's place, trying the new bridge section' — that doesn't belong on any individual clip. Session notes give the band a shared scratchpad for each jam night.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-40">
+         <div class="impl-wrap" id="impl-41">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/sessions/SessionNotesSheet.tsx: props { open, onClose, sessionId, initialNotes }. Internal state: notes (string), saving (bool). Textarea with defaultValue=initialNotes. Save: PATCH → onClose(). Cancel: onClose() directly. No character counter (notes are low-frequency).</p></span>
            </div>
@@ -1895,11 +1895,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">A frozen clip should be shareable outside the band — with a producer, a friend, or social media. The listener should not need a Google account or any signup. Only the frozen render is exposed; no session metadata, band data, or version history leaks through the public page.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-41">
+         <div class="impl-wrap" id="impl-42">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. components/share/PublicPlayer.tsx: client component. Props: token, sourceDurationMs, stamps[]. Uses useWaveSurfer({ url: /api/audio/public/{token}, interact: false — no cutMarksRef, no patchDurationUrl, public read-only }). Uses WaveformPlayButton for play/pause. Uses StampJumpRow for stamp chips (tappable, seek on tap) with custom className for layout. No WaveformCanvas overlay — no editing or</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. components/share/PublicPlayer.tsx: client component. Props: token, sourceDurationMs, stamps[]. Uses useWaveSurfer({ url: /api/audio/public/{token}, interact: false — no cutMarksRef, no patchDurationUrl, public read-only }). Uses WaveformPlayButton for play/pause. Uses StampJumpRow for stamp chips (tappable, seek on tap) with custom className for layout. No WaveformCanvas overlay — no editing or seeking via waveform drag needed (play-only). 2. app/share/[token]/page.tsx: server component. Fetches clip by publicToken from Postgres (clips table). If not found or clip.frozen=false: returns 404 page. Renders clip name, duration, PublicPlayer with stamps. 3. app/api/audio/public/[token]/route.ts: streams audio from Drive. Looks up clip by publicToken, gets finalDriveFileId, fetches recorder's token from NextAuth accounts table, proxies Drive stream with Range header support. No auth middleware — open to public traffic.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-41')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-42')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1928,11 +1928,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">When a version is frozen, a real audio file must be produced — so the band can download it, share it outside the band, or export it. This cannot happen client-side. The frozen clip should also be shareable publicly without requiring sign-in.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-1">
+         <div class="impl-wrap" id="impl-2">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. app/api/clips/[clipId]/freeze/route.ts: POST — Editor+ role. Validates versionId. Fetches creator's Drive token from NextAuth accounts table. Downloads source .aac to /tmp. Runs fluent-ffmpeg atrim+aconcat with cutMarks from the version. Uploads output as {clipId}-final.aac to band's Drive folder. Sets clip.frozen=true, clip.frozenVersionId, clip.finalDriveFileId. Returns updated clip. 2. app/a</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/api/clips/[clipId]/freeze/route.ts: POST — Editor+ role. Validates versionId. Fetches creator's Drive token from NextAuth accounts table. Downloads source .aac to /tmp. Runs fluent-ffmpeg atrim+aconcat with cutMarks from the version. Uploads output as {clipId}-final.aac to band's Drive folder. Sets clip.frozen=true, clip.frozenVersionId, clip.finalDriveFileId. Returns updated clip. 2. app/api/clips/[clipId]/unfreeze/route.ts: POST — RECORDER only. Sets clip.frozen=false, clip.frozenVersionId=null. Keeps finalDriveFileId. 3. app/api/clips/[clipId]/route.ts: PATCH handles generatePublicToken (requires frozen=true — sets publicToken=crypto.randomUUID(), sets Drive public permission) and removePublicToken (clears publicToken, removes Drive public permission). 4. app/share/[token]/page.tsx: public page — no auth. Fetches clip by publicToken from Postgres. Renders waveform player with Drive public audio URL + clip name + stamps. 5. FFmpeg atrim+aconcat filter chain: for each non-cut segment, atrim=start=X:end=Y, asetpts=PTS-STARTPTS, then aconcat=n=N. Output: -b:a 192k -f adts (AAC). 6. lib/drive.ts: downloadToTemp(fileId, token) → /tmp/{fileId}.aac. uploadFromTemp(path, folderId, token) → new driveFileId. setPublicPermission(fileId, token). removePublicPermission(fileId, permissionId, token).</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-1')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-2')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1961,11 +1961,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">@ffmpeg-installer/ffmpeg bundles the FFmpeg binary at ~38MB compressed. Vercel's serverless function size limit is ~50MB (250MB uncompressed). This is the single highest-risk technical constraint in the project. If the bundle is too large or the render takes too long (Vercel function timeout: 10s on Hobby), the entire render architecture needs to change before feat-render can be built. This POC must validate or invalidate the approach before any production code is written.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-3">
+         <div class="impl-wrap" id="impl-4">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. Created GET /api/render/poc route that accepts ?url= param pointing to a source audio file. 2. Installed @ffmpeg-installer/ffmpeg + fluent-ffmpeg as production dependencies. 3. Route downloads source audio to /tmp, runs fluent-ffmpeg atrim+aconcat filter with a hard-coded test cut (0-10s removed), outputs trimmed .aac. 4. Returns rendered file as application/octet-stream response. 5. Result: bu</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. Created GET /api/render/poc route that accepts ?url= param pointing to a source audio file. 2. Installed @ffmpeg-installer/ffmpeg + fluent-ffmpeg as production dependencies. 3. Route downloads source audio to /tmp, runs fluent-ffmpeg atrim+aconcat filter with a hard-coded test cut (0-10s removed), outputs trimmed .aac. 4. Returns rendered file as application/octet-stream response. 5. Result: bundle deploys on Vercel Hobby within size limit. Cold start ~8s, warm render ~3s for a 5-min clip. Architecture validated. ComponentFile: app/api/render/poc/route.ts</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-3')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-4')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -1995,7 +1995,7 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">After editing, the band needs to converge on which version is ready. A lightweight vote (Keep/Revise/Pass) scoped per version gives structure to 'should we ship this cut?' without requiring a group call or a long comment thread.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-25">
+         <div class="impl-wrap" id="impl-26">
            <div class="impl-text">
              <span class="impl-full"><p class="md-p">components/clips/VotePanel.tsx: props { versionId, currentUserVote: VoteValue|null, tallies: {KEEP:n, REVISE:n, PASS:n}, onVote: (value: VoteValue) =&gt; void, isFrozen: boolean, isOnline?: boolean }. Three button elements, aria-pressed on active. Tally below. Calls onVote on tap (parent handles optimistic update + API call).</p></span>
            </div>
@@ -2024,11 +2024,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">After editing, the band needs a lightweight way to converge on which version is final — without a group chat thread full of voice notes and confusion. Voting, timestamped comments, and stamp heat maps give structure without overhead.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-14">
+         <div class="impl-wrap" id="impl-15">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. app/api/clips/[clipId]/votes/route.ts: POST upserts a vote (clipId, userEmail unique). PATCH changes vote value. GET returns all votes for clip. 2. app/api/clips/[clipId]/comments/route.ts: POST creates a comment (text, optional timestampMs). GET returns comments ordered by createdAt. 3. app/api/clips/[clipId]/comments/[commentId]/route.ts: PATCH edits own comment (checks authorEmail === curren</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/api/clips/[clipId]/votes/route.ts: POST upserts a vote (clipId, userEmail unique). PATCH changes vote value. GET returns all votes for clip. 2. app/api/clips/[clipId]/comments/route.ts: POST creates a comment (text, optional timestampMs). GET returns comments ordered by createdAt. 3. app/api/clips/[clipId]/comments/[commentId]/route.ts: PATCH edits own comment (checks authorEmail === currentUser). DELETE removes own comment. 4. components/clips/CollaborationSection.tsx: client component. Tabs: Versions (default when not frozen) / Comments (default when frozen). VoteBar sub-component shows Keep/Revise/Pass buttons and tally. CommentThread sub-component lists comments with edit/delete for own. Polls GET /api/clips/[clipId]/votes and /comments every 8s while page is open. 5. usePolling hook: generic hook — takes async fetch fn + intervalMs, calls fn on mount and on interval. 6. Prisma schema Vote: {clipId, versionId, userEmail, value (KEEP/REVISE/PASS), updatedAt}. Unique on (clipId, userEmail). Schema Comment: {id, clipId, versionId?, userEmail, text, timestampMs?, createdAt, updatedAt, editedAt?}. 7. All-voted-Keep notification: CollaborationSection checks if all band members have a KEEP vote pointing to the same versionId. If true, shows a 'All members voted Keep on v[N]' banner with 'Freeze this version' button.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-14')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-15')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -2051,6 +2051,48 @@ body{
       </section>
 <section class="domain-chapter" id="chapter-9">
         <div class="chapter-number">Chapter 9</div>
+        <h2 class="chapter-title">public</h2>
+        <div class="chapter-meta">1 feature</div>
+        <article class="feature-article">
+      <div class="feature-headline">
+        <h3 class="feature-title">Public demo page (/apercu)</h3>
+        <span class="status-badge" style="color:var(--status-active);border-color:var(--status-active)44;background:var(--status-active)18;">active</span>
+      </div>
+      <div class="feature-key-label">odio-2026-056</div>
+      <div class="feature-section-label">The problem it solves</div>
+         <div class="feature-problem"><p class="md-p">The marcportal.com project gallery embeds this app in a sandboxed iframe, but every anonymous visit 307s to /login — the portfolio card only ever showed a login form. Strangers had no way to feel the core loop (stamp, trim, version) without a Google sign-in and a band.</p></div>
+      <div class="feature-section-label">How it was solved</div>
+         <div class="impl-wrap" id="impl-0">
+           <div class="impl-text">
+             <span class="impl-short"><p class="md-p">app/apercu/page.tsx (outside app/(auth)) renders components/apercu/ApercuClient.tsx: three canned clips from lib/apercuDemo.ts over one generated 72s jam (public/demo/jam.mp3 — synthesized, license-free), each with stamps and a version chain whose cutMarks drive the real cut-masking playback. proxy.ts excludes apercu|demo from the session check. Static vote tallies; the sign-in CTA routes to /logi</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">app/apercu/page.tsx (outside app/(auth)) renders components/apercu/ApercuClient.tsx: three canned clips from lib/apercuDemo.ts over one generated 72s jam (public/demo/jam.mp3 — synthesized, license-free), each with stamps and a version chain whose cutMarks drive the real cut-masking playback. proxy.ts excludes apercu|demo from the session check. Static vote tallies; the sign-in CTA routes to /login.</p></span>
+           </div>
+           <button class="read-more-btn" onclick="toggleImpl('impl-0')">Read more ▾</button>
+         </div>
+      <div class="decisions-block">
+            <blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Compose safe primitives instead of reusing ClipDetailClient</div>
+                    <div class="pull-quote-rationale">— ClipDetailClient&#39;s Team tab polls votes/comments every few seconds and its action bar PATCHes — all of which 307 to /login for an anonymous visitor and fail JSON parsing. A thin page over WaveformPlayer keeps the demo path free of any network call that can fail.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; Generated audio instead of a licensed sample</div>
+                    <div class="pull-quote-rationale">— public/demo/jam.mp3 is synthesized by a throwaway script (bass riff, kick, hats, late lead) — recognizably a jam, zero license baggage, ~1.1 MB.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote><blockquote class="pull-quote">
+                    <div class="pull-quote-text">&#10077; audioUrl prop on WaveformPlayer, duration-PATCH skipped when set</div>
+                    <div class="pull-quote-rationale">— The player hardcoded /api/audio/:id and PATCHed the clip row when durations drifted. A static file has no row to patch; the prop keeps the authed path byte-identical while letting the demo (and any future static use) point elsewhere.</div>
+                    <div class="pull-quote-mark">&#10078;</div>
+                  </blockquote>
+          </div>
+      <aside class="caveats-box">
+            <div class="caveats-label">Caveats</div>
+            <ul class="caveats-list">
+              <li>The demo audio is one shared file across the three fake clips; only stamps and cuts differ</li><li>Votes and comments are static tallies — the collaboration loop is described, not simulated</li><li>The record screen is not represented; a sandboxed iframe cannot get mic permission anyway</li>
+            </ul>
+          </aside>
+    </article>
+      </section>
+<section class="domain-chapter" id="chapter-10">
+        <div class="chapter-number">Chapter 10</div>
         <h2 class="chapter-title">storage</h2>
         <div class="chapter-meta">1 feature</div>
         <article class="feature-article">
@@ -2062,11 +2104,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Audio files in Google Drive grow over time (~43MB per raw clip, ~10MB per frozen render). The recorder's free Drive tier (15GB) supports roughly 350 raw clips before action is needed. The app must surface this, and provide a clean way to free space after songs are finalized.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-0">
+         <div class="impl-wrap" id="impl-1">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. app/api/bands/[bandId]/storage/route.ts: GET — fetches Drive API about endpoint using creator's token (returns storageQuota.usage). Also queries Postgres for all driveFileId + finalDriveFileId for this band's clips. Returns { usedBytes, limitBytes, fileCount }. Cached in memory for 5 minutes. 2. app/api/clips/[clipId]/cleanup/route.ts: POST — deletes clip.driveFileId from Drive (source .aac). S</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. app/api/bands/[bandId]/storage/route.ts: GET — fetches Drive API about endpoint using creator's token (returns storageQuota.usage). Also queries Postgres for all driveFileId + finalDriveFileId for this band's clips. Returns { usedBytes, limitBytes, fileCount }. Cached in memory for 5 minutes. 2. app/api/clips/[clipId]/cleanup/route.ts: POST — deletes clip.driveFileId from Drive (source .aac). Sets clip.driveFileId=null. Requires clip.frozen=true. 3. app/api/clips/[clipId]/route.ts DELETE: RECORDER only. Deletes clip from Postgres (cascades to versions, votes, comments). Deletes both driveFileId and finalDriveFileId from Drive via lib/drive.ts deleteFile. 4. components/bands/BandSettingsClient.tsx: fetches /api/bands/[bandId]/storage on mount. Renders storage bar (used / total). Lists members with role management. formatBytes helper: converts bytes to human-readable MB/GB string. 5. components/clips/ClipActionsClient.tsx: shows 'Clean up source audio' button when clip.frozen=true and clip.driveFileId is not null. Shows 'Delete clip' button (RECORDER only). Confirmation bottom sheets for both.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-0')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-1')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -2083,8 +2125,8 @@ body{
           </aside>
     </article>
       </section>
-<section class="domain-chapter" id="chapter-10">
-        <div class="chapter-number">Chapter 10</div>
+<section class="domain-chapter" id="chapter-11">
+        <div class="chapter-number">Chapter 11</div>
         <h2 class="chapter-title">auth</h2>
         <div class="chapter-meta">1 feature</div>
         <article class="feature-article">
@@ -2096,11 +2138,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Band members need a shared identity layer — without creating yet another account. Google sign-in is universal in the target audience and doubles as the credential for Google Drive access.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-5">
+         <div class="impl-wrap" id="impl-6">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p">1. lib/auth.ts: NextAuth.js config with GoogleProvider (scopes: openid + email + profile + drive.file). PrismaAdapter with Neon Postgres. Session strategy: database. 2. app/api/auth/[...nextauth]/route.ts: standard NextAuth route handler. 3. middleware.ts: protects all routes except /, /login, /share/[token]. Redirects unauthenticated requests to /login. 4. lib/prisma.ts: singleton Prisma client.</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p">1. lib/auth.ts: NextAuth.js config with GoogleProvider (scopes: openid + email + profile + drive.file). PrismaAdapter with Neon Postgres. Session strategy: database. 2. app/api/auth/[...nextauth]/route.ts: standard NextAuth route handler. 3. middleware.ts: protects all routes except /, /login, /share/[token]. Redirects unauthenticated requests to /login. 4. lib/prisma.ts: singleton Prisma client. 5. Prisma schema: User, Account (NextAuth tables), Band, BandMember, JamSession, Clip, ClipVersion, Vote, Comment tables. 6. app/(auth) route group: all authenticated pages wrapped in a layout that verifies session. 7. app/login/page.tsx: sign-in page with Google OAuth button. 8. The accounts table managed by PrismaAdapter stores access<em>token + refresh</em>token per user — required for server-side Drive API calls.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-5')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-6')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
@@ -2121,8 +2163,8 @@ body{
           </aside>
     </article>
       </section>
-<section class="domain-chapter" id="chapter-11">
-        <div class="chapter-number">Chapter 11</div>
+<section class="domain-chapter" id="chapter-12">
+        <div class="chapter-number">Chapter 12</div>
         <h2 class="chapter-title">audio/collaboration</h2>
         <div class="chapter-meta">1 feature</div>
         <article class="feature-article">
@@ -2134,11 +2176,11 @@ body{
       <div class="feature-section-label">The problem it solves</div>
          <div class="feature-problem"><p class="md-p">Musicians lose the best moments from their jam sessions. When they do record, the raw file is long, unedited, buried — nobody goes back and cleans it up. No tool lets a small band record on any device, pass the recording around in the car on the way home, each person trimming a song into its final form, and arrive with a clean versioned archive — all from a browser, no install, no DAW.</p></div>
       <div class="feature-section-label">How it was solved</div>
-         <div class="impl-wrap" id="impl-54">
+         <div class="impl-wrap" id="impl-55">
            <div class="impl-text">
              <span class="impl-short"><p class="md-p"><strong>Stack:</strong> Next.js (App Router) + TypeScript + Tailwind CSS, deployed on Vercel <strong>Recording:</strong> Browser MediaRecorder API + Web Audio API (level meter) + Wake Lock API (screen-on) <strong>Waveform editing:</strong> wavesurfer.js 7.x (interact:false; cut bands are pure CSS divs — no RegionsPlugin) <strong>Storage — audio:</strong> Google Drive (resumable upload bypassing Vercel 4.5MB body limit; transcoded to AAC on finalize</p><span class="impl-ellipsis">…</span></span><span class="impl-full" style="display:none;"><p class="md-p"><strong>Stack:</strong> Next.js (App Router) + TypeScript + Tailwind CSS, deployed on Vercel <strong>Recording:</strong> Browser MediaRecorder API + Web Audio API (level meter) + Wake Lock API (screen-on) <strong>Waveform editing:</strong> wavesurfer.js 7.x (interact:false; cut bands are pure CSS divs — no RegionsPlugin) <strong>Storage — audio:</strong> Google Drive (resumable upload bypassing Vercel 4.5MB body limit; transcoded to AAC on finalize) <strong>Storage — metadata:</strong> Neon Postgres free tier (sessions, clips, versions, votes, comments, stamps, bands, members) <strong>Auth:</strong> NextAuth.js + Google OAuth (drive.file scope) + NextAuth DB adapter (Prisma + Neon, required to store recorder's refresh token for audio proxy) <strong>Audio proxy:</strong> Next.js API route fetches audio from recorder's Drive using stored token, streams to client with Range support <strong>Real-time:</strong> Client-side polling every 5-10s when session active <strong>Render:</strong> fluent-ffmpeg + @ffmpeg-installer/ffmpeg in Next.js API route (triggered on freeze only) <strong>Edit safety:</strong> localStorage (cut marks saved on every change, restored on editor reopen, cleared on submit) <strong>External services: 2</strong> — Google (OAuth + Drive) + Neon (Postgres). Cost: $0/month.</p></span>
            </div>
-           <button class="read-more-btn" onclick="toggleImpl('impl-54')">Read more ▾</button>
+           <button class="read-more-btn" onclick="toggleImpl('impl-55')">Read more ▾</button>
          </div>
       <div class="decisions-block">
             <blockquote class="pull-quote">
